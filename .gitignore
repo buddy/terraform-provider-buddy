@@ -1,0 +1,14 @@
+*.dll
+*.exe
+*.test
+*.log
+buddy-terraform
+.DS_Store
+.run
+./*.tfstate
+.idea
+.terraform/
+vendor/
+schemas/
+yaml/
+bin/
