@@ -10,23 +10,23 @@ import (
 
 func Group() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_group` data source allows you to find group by name or group_id\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+		Description: "Get group by name or group_id\n\n" +
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextGroup,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the group",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain": {
-				Description:  "Domain of the workspace",
+				Description:  "The workspace's URL handle",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: util.ValidateDomain,
 			},
 			"name": {
-				Description: "Name of the group",
+				Description: "The group's name",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
@@ -36,7 +36,7 @@ func Group() *schema.Resource {
 				},
 			},
 			"group_id": {
-				Description: "Id of the group",
+				Description: "The group's ID",
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
@@ -46,12 +46,12 @@ func Group() *schema.Resource {
 				},
 			},
 			"html_url": {
-				Description: "Url of the group",
+				Description: "The group's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"description": {
-				Description: "Description of the group",
+				Description: "The group's description",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

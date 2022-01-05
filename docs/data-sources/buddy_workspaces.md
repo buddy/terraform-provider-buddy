@@ -3,15 +3,15 @@
 page_title: "buddy_workspaces Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_workspaces data source allows you to get list of workspaces and filter them by name or domain
-  Required scopes for your token: WORKSPACE
+  List workspaces and optionally filter them by name or URL handle
+  Token scope required: WORKSPACE
 ---
 
 # buddy_workspaces (Data Source)
 
-`buddy_workspaces` data source allows you to get list of workspaces and filter them by name or domain
+List workspaces and optionally filter them by name or URL handle
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -33,12 +33,12 @@ data "buddy_workspaces" "domain_ended" {
 
 ### Optional
 
-- **domain_regex** (String) Regular expression to match domain of the workspace
-- **name_regex** (String) Regular expression to match name of the workspace
+- **domain_regex** (String) The workspace URL handle regular expression to match
+- **name_regex** (String) The workspace name regular expression to match
 
 ### Read-Only
 
-- **id** (String) Compound id of the resource
+- **id** (String) The Terraform resource identifier for this item
 - **workspaces** (List of Object) List of workspaces (see [below for nested schema](#nestedatt--workspaces))
 
 <a id="nestedatt--workspaces"></a>

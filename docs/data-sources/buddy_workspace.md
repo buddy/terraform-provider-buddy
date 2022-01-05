@@ -3,15 +3,15 @@
 page_title: "buddy_workspace Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_workspace data source allows you to find workspace by domain or name
-  Required scopes for your token: WORKSPACE
+  Get workspace by URL handle or name
+  Token scope required: WORKSPACE
 ---
 
 # buddy_workspace (Data Source)
 
-`buddy_workspace` data source allows you to find workspace by domain or name
+Get workspace by URL handle or name
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -30,13 +30,13 @@ data "buddy_webhook" "by_target_url" {
 
 ### Optional
 
-- **domain** (String) Domain of the workspace
-- **id** (String) The ID of this resource.
-- **name** (String) Name of the workspace
+- **domain** (String) The workspace's URL handle
+- **name** (String) The workspace's name
 
 ### Read-Only
 
-- **html_url** (String) Url of the workspace
-- **workspace_id** (Number) Id of the workspace
+- **html_url** (String) The workspace's URL
+- **id** (String) The Terraform resource identifier for this item
+- **workspace_id** (Number) The workspace's ID
 
 

@@ -10,8 +10,8 @@ import (
 
 func Profile() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_profile` allows you to manage your Buddy account.\n\n" +
-			"Required scopes for your token: `USER_INFO`",
+		Description: "Manage a user profile\n\n" +
+			"Token scope required: `USER_INFO`",
 		CreateContext: createContextProfile,
 		ReadContext:   readContextProfile,
 		UpdateContext: updateContextProfile,
@@ -21,27 +21,27 @@ func Profile() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the user",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"name": {
-				Description: "Name of your user",
+				Description: "The user's name",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"member_id": {
-				Description: "Id of your user",
+				Description: "The user's ID",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"avatar_url": {
-				Description: "Avatar url of your user",
+				Description: "The user's avatar URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"html_url": {
-				Description: "Url of your user",
+				Description: "The user's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

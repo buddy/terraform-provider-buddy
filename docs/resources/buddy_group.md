@@ -3,18 +3,18 @@
 page_title: "buddy_group Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_group allows you to create and manage Buddy groups.
-  You will need admin access in workspace for this resource to work.
-  Required scope for your token: WORKSPACE
+  Create and manage a workspace group
+  Workspace admistrator rights are required
+  Token scope required: WORKSPACE
 ---
 
 # buddy_group (Resource)
 
-`buddy_group` allows you to create and manage Buddy groups.
+Create and manage a workspace group
 
-You will need admin access in workspace for this resource to work.
+Workspace admistrator rights are required
 
-Required scope for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -31,18 +31,18 @@ resource "buddy_group" "devs" {
 
 ### Required
 
-- **domain** (String) Workspace domain in which the group will be created
-- **name** (String) Name of the group
+- **domain** (String) The workspace's URL handle
+- **name** (String) The group's name
 
 ### Optional
 
-- **description** (String) Description of the group
+- **description** (String) The group's description
 
 ### Read-Only
 
-- **group_id** (Number) Id of the group
-- **html_url** (String) Url of the group
-- **id** (String) Compound id of the group
+- **group_id** (Number) The group's ID
+- **html_url** (String) The group's URL
+- **id** (String) The Terraform resource identifier for this item
 
 ## Import
 

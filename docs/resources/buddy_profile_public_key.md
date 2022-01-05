@@ -3,15 +3,15 @@
 page_title: "buddy_profile_public_key Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_profile_public_key allows you to manage your Buddy account public keys.
-  Required scope for your token: USER_KEY
+  Create and manage a user profile public key
+  Token scope required: USER_KEY
 ---
 
 # buddy_profile_public_key (Resource)
 
-`buddy_profile_public_key` allows you to manage your Buddy account public keys.
+Create and manage a user profile public key
 
-Required scope for your token: `USER_KEY`
+Token scope required: `USER_KEY`
 
 ## Example Usage
 
@@ -26,16 +26,16 @@ resource "buddy_profile_public_key" "my_key" {
 
 ### Required
 
-- **content** (String) Content of the public key (starts with ssh-rsa)
+- **content** (String) The public key's content (starts with ssh-rsa)
 
 ### Optional
 
-- **title** (String) Title of the public key
+- **title** (String) The public key's title
 
 ### Read-Only
 
-- **html_url** (String) Url of the public key
-- **id** (String) Id of the public key
+- **html_url** (String) The public key's URL
+- **id** (String) The public key's ID
 
 ## Import
 

@@ -12,8 +12,8 @@ import (
 
 func ProfilePublicKey() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_profile_public_key` allows you to manage your Buddy account public keys.\n\n" +
-			"Required scope for your token: `USER_KEY`",
+		Description: "Create and manage a user's public key\n\n" +
+			"Token scope required: `USER_KEY`",
 		CreateContext: createContextProfilePublicKey,
 		ReadContext:   readContextProfilePublicKey,
 		DeleteContext: deleteContextProfilePublicKey,
@@ -22,24 +22,24 @@ func ProfilePublicKey() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Id of the public key",
+				Description: "The public key's ID",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"content": {
-				Description: "Content of the public key (starts with ssh-rsa)",
+				Description: "The public key's content (starts with ssh-rsa)",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"title": {
-				Description: "Title of the public key",
+				Description: "The public key's title",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 			},
 			"html_url": {
-				Description: "Url of the public key",
+				Description: "The public key's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

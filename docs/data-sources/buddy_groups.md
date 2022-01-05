@@ -3,15 +3,15 @@
 page_title: "buddy_groups Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_groups data source allows you to get list of groups in workspace and filter them by name
-  Required scopes for your token: WORKSPACE
+  List groups and optionally filter them by name
+  Token scope required: WORKSPACE
 ---
 
 # buddy_groups (Data Source)
 
-`buddy_groups` data source allows you to get list of groups in workspace and filter them by name
+List groups and optionally filter them by name
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -31,16 +31,16 @@ data "buddy_groups" "filter" {
 
 ### Required
 
-- **domain** (String) Domain of the workspace
+- **domain** (String) The workspace's URL handle
 
 ### Optional
 
-- **name_regex** (String) Regular expression to match name of the group
+- **name_regex** (String) The group's name regular expression to match
 
 ### Read-Only
 
 - **groups** (List of Object) List of groups (see [below for nested schema](#nestedatt--groups))
-- **id** (String) Compound id of the resource
+- **id** (String) The Terraform resource identifier for this item
 
 <a id="nestedatt--groups"></a>
 ### Nested Schema for `groups`

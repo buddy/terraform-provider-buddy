@@ -10,8 +10,8 @@ import (
 
 func ProfileEmail() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_profile_email` allows you to manage your Buddy account email.\n\n" +
-			"Required scopes for your token: `MANAGE_EMAILS`, `USER_EMAIL`",
+		Description: "Create and manage a user's email\n\n" +
+			"Token scopes required: `MANAGE_EMAILS`, `USER_EMAIL`",
 		CreateContext: createContextProfileEmail,
 		ReadContext:   readContextProfileEmail,
 		DeleteContext: deleteContextProfileEmail,
@@ -20,18 +20,18 @@ func ProfileEmail() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the email",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"email": {
-				Description: "Email to add to your account",
+				Description: "The email to add to the user's profile",
 				Type:        schema.TypeString,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"confirmed": {
-				Description: "Is email confirmed",
+				Description: "Is the email confirmed",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},

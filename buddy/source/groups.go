@@ -12,23 +12,23 @@ import (
 
 func Groups() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_groups` data source allows you to get list of groups in workspace and filter them by name\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+		Description: "List groups and optionally filter them by name\n\n" +
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextGroups,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the resource",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain": {
-				Description:  "Domain of the workspace",
+				Description:  "The workspace's URL handle",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: util.ValidateDomain,
 			},
 			"name_regex": {
-				Description:  "Regular expression to match name of the group",
+				Description:  "The group's name regular expression to match",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsValidRegExp,
@@ -40,17 +40,17 @@ func Groups() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"html_url": {
-							Description: "Url of the group",
+							Description: "The group's URL",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"group_id": {
-							Description: "Id of the group",
+							Description: "The group's ID",
 							Type:        schema.TypeInt,
 							Computed:    true,
 						},
 						"name": {
-							Description: "Name of the group",
+							Description: "The group's name",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},

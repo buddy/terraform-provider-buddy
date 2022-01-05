@@ -3,15 +3,15 @@
 page_title: "buddy_profile Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_profile allows you to manage your Buddy account.
-  Required scopes for your token: USER_INFO
+  Manage a user profile
+  Token scope required: USER_INFO
 ---
 
 # buddy_profile (Resource)
 
-`buddy_profile` allows you to manage your Buddy account.
+Manage a user profile
 
-Required scopes for your token: `USER_INFO`
+Token scope required: `USER_INFO`
 
 ## Example Usage
 
@@ -26,14 +26,14 @@ resource "buddy_profile" "me" {
 
 ### Required
 
-- **name** (String) Name of your user
+- **name** (String) The user's name
 
 ### Read-Only
 
-- **avatar_url** (String) Avatar url of your user
-- **html_url** (String) Url of your user
-- **id** (String) Compound id of the user
-- **member_id** (Number) Id of your user
+- **avatar_url** (String) The user's avatar URL
+- **html_url** (String) The user's URL
+- **id** (String) The Terraform resource identifier for this item
+- **member_id** (Number) The user's ID
 
 ## Import
 

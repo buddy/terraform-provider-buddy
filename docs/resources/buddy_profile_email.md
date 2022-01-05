@@ -3,15 +3,15 @@
 page_title: "buddy_profile_email Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_profile_email allows you to manage your Buddy account email.
-  Required scopes for your token: MANAGE_EMAILS, USER_EMAIL
+  Create and manage a user profile email
+  Token scopes required: MANAGE_EMAILS, USER_EMAIL
 ---
 
 # buddy_profile_email (Resource)
 
-`buddy_profile_email` allows you to manage your Buddy account email.
+Create and manage a user profile email
 
-Required scopes for your token: `MANAGE_EMAILS`, `USER_EMAIL`
+Token scopes required: `MANAGE_EMAILS`, `USER_EMAIL`
 
 ## Example Usage
 
@@ -26,12 +26,12 @@ resource "buddy_profile_email" "my_second_email" {
 
 ### Required
 
-- **email** (String) Email to add to your account
+- **email** (String) The email to add to the user's profile
 
 ### Read-Only
 
-- **confirmed** (Boolean) Is email confirmed
-- **id** (String) Compound id of the email
+- **confirmed** (Boolean) Is the email confirmed
+- **id** (String) The Terraform resource identifier for this item
 
 ## Import
 

@@ -3,15 +3,15 @@
 page_title: "buddy_members Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_members data source allows you to get list of members in workspace and filter them by name
-  Required scopes for your token: WORKSPACE
+  List members and optionally filter them by name
+  Token scope required: WORKSPACE
 ---
 
 # buddy_members (Data Source)
 
-`buddy_members` data source allows you to get list of members in workspace and filter them by name
+List members and optionally filter them by name
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -26,15 +26,15 @@ data "buddy_members" "m" {
 
 ### Required
 
-- **domain** (String) Domain of the workspace
+- **domain** (String) The workspace's URL handle
 
 ### Optional
 
-- **name_regex** (String) Regular expression to match name of the member
+- **name_regex** (String) The member's name regular expression to match
 
 ### Read-Only
 
-- **id** (String) Compound id of the resource
+- **id** (String) The Terraform resource identifier for this item
 - **members** (List of Object) List of members (see [below for nested schema](#nestedatt--members))
 
 <a id="nestedatt--members"></a>

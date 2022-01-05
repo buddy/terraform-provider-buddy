@@ -12,9 +12,9 @@ import (
 
 func GroupMember() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_group_member` allows you to manage Buddy group membership.\n\n" +
-			"You will need admin access in workspace for this resource to work.\n\n" +
-			"Required scope for your token: `WORKSPACE`",
+		Description: "Create and manage a workspace group member\n\n" +
+			"Workspace administrator rights are required\n\n" +
+			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextGroupMember,
 		ReadContext:   readContextGroupMember,
 		DeleteContext: deleteContextGroupMember,
@@ -23,56 +23,56 @@ func GroupMember() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the group member",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain": {
-				Description:  "Workspace domain in which the group membership will be managed",
+				Description:  "The workspace's URL handle",
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: util.ValidateDomain,
 			},
 			"group_id": {
-				Description: "Id of the group",
+				Description: "The group's ID",
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"member_id": {
-				Description: "Id of the member",
+				Description: "The member's ID",
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
 			},
 			"html_url": {
-				Description: "Url of the member",
+				Description: "The member's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"name": {
-				Description: "Name of the member",
+				Description: "The member's name",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"email": {
-				Description: "Email of the member",
+				Description: "The member's email",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"avatar_url": {
-				Description: "Avatar url of the member",
+				Description: "The member's avatar URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"admin": {
-				Description: "Is member a workspace administrator",
+				Description: "Is the member a workspace administrator",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 			"workspace_owner": {
-				Description: "Is member a workspace owner",
+				Description: "Is the member the workspace owner",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},

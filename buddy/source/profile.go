@@ -10,32 +10,32 @@ import (
 
 func Profile() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_profile` data source allows you to fetch details of your account\n\n" +
-			"Required scopes for your token: `USER_INFO`",
+		Description: "Get details of a Buddy's user profile\n\n" +
+			"Token scope required: `USER_INFO`",
 		ReadContext: readContextProfile,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of this resource",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"name": {
-				Description: "Your name",
+				Description: "The user's name",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"member_id": {
-				Description: "Your user id",
+				Description: "The user's ID",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"avatar_url": {
-				Description: "Your avatar url",
+				Description: "The user's avatar URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"html_url": {
-				Description: "Url to Buddy myid",
+				Description: "The user's profile URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

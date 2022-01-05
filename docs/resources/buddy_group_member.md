@@ -3,18 +3,18 @@
 page_title: "buddy_group_member Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_group_member allows you to manage Buddy group membership.
-  You will need admin access in workspace for this resource to work.
-  Required scope for your token: WORKSPACE
+  Create and manage a workspace group member
+  Workspace admistrator rights are required
+  Token scope required: WORKSPACE
 ---
 
 # buddy_group_member (Resource)
 
-`buddy_group_member` allows you to manage Buddy group membership.
+Create and manage a workspace group member
 
-You will need admin access in workspace for this resource to work.
+Workspace admistrator rights are required
 
-Required scope for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -31,19 +31,19 @@ resource "buddy_group_member" "john_in_devs" {
 
 ### Required
 
-- **domain** (String) Workspace domain in which the group membership will be managed
-- **group_id** (Number) Id of the group
-- **member_id** (Number) Id of the member
+- **domain** (String) The workspace's URL handle
+- **group_id** (Number) The group's ID
+- **member_id** (Number) The member's ID
 
 ### Read-Only
 
-- **admin** (Boolean) Is member a workspace administrator
-- **avatar_url** (String) Avatar url of the member
-- **email** (String) Email of the member
-- **html_url** (String) Url of the member
-- **id** (String) Compound id of the group member
-- **name** (String) Name of the member
-- **workspace_owner** (Boolean) Is member a workspace owner
+- **admin** (Boolean) Is the member a workspace administrator
+- **avatar_url** (String) The member's avatar URL
+- **email** (String) The member's email
+- **html_url** (String) The member's URL
+- **id** (String) The Terraform resource identifier for this item
+- **name** (String) The member's name
+- **workspace_owner** (Boolean) Is the member the workspace owner
 
 ## Import
 

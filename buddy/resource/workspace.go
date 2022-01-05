@@ -11,9 +11,9 @@ import (
 
 func Workspace() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_workspace` allows you to create Buddy workspace.\n\n" +
-			"You will need special token to manage this resource. Contact support@buddy.works for more info.\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+		Description: "Create and manage a workspace\n\n" +
+			"Invite-only token is required. Contact support@buddy.works for more details\n\n" +
+			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextWorkspace,
 		ReadContext:   readContextWorkspace,
 		UpdateContext: updateContextWorkspace,
@@ -23,50 +23,50 @@ func Workspace() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the workspace",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain": {
-				Description:  "Domain of the workspace to manage",
+				Description:  "The workspace's URL handle",
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: util.ValidateDomain,
 			},
 			"name": {
-				Description: "Name of the workspace",
+				Description: "The workspace's name",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
 			},
 			"encryption_salt": {
-				Description: "Salt to encrypt secrets in YAML & API",
+				Description: "The workspace's salt to encrypt secrets in YAML & API",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"workspace_id": {
-				Description: "Id of the workspace",
+				Description: "The workspace's ID",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"html_url": {
-				Description: "Url of the workspace",
+				Description: "The workspace's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"owner_id": {
-				Description: "Workspace owner id",
+				Description: "The workspace's owner ID",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"frozen": {
-				Description: "Is workspace frozen",
+				Description: "Is the workspace frozen",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 			"create_date": {
-				Description: "Workspace create date",
+				Description: "The workspace's create date",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

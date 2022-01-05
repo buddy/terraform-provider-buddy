@@ -3,15 +3,15 @@
 page_title: "buddy_group Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_group data source allows you to find group by name or group_id
-  Required scopes for your token: WORKSPACE
+  Get group by name or group_id
+  Token scope required: WORKSPACE
 ---
 
 # buddy_group (Data Source)
 
-`buddy_group` data source allows you to find group by name or group_id
+Get group by name or group_id
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -32,17 +32,17 @@ data "buddy_group" "admins" {
 
 ### Required
 
-- **domain** (String) Domain of the workspace
+- **domain** (String) The workspace's URL handle
 
 ### Optional
 
-- **group_id** (Number) Id of the group
-- **name** (String) Name of the group
+- **group_id** (Number) The group's ID
+- **name** (String) The group's name
 
 ### Read-Only
 
-- **description** (String) Description of the group
-- **html_url** (String) Url of the group
-- **id** (String) Compound id of the group
+- **description** (String) The group's description
+- **html_url** (String) The group's URL
+- **id** (String) The Terraform resource identifier for this item
 
 

@@ -10,12 +10,17 @@ import (
 
 func Workspace() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_workspace` data source allows you to find workspace by domain or name\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+		Description: "Get workspace by URL handle or name\n\n" +
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextWorkspace,
 		Schema: map[string]*schema.Schema{
+			"id": {
+				Description: "The Terraform resource identifier for this item",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"domain": {
-				Description: "Domain of the workspace",
+				Description: "The workspace's URL handle",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
@@ -26,17 +31,17 @@ func Workspace() *schema.Resource {
 				ValidateFunc: util.ValidateDomain,
 			},
 			"workspace_id": {
-				Description: "Id of the workspace",
+				Description: "The workspace's ID",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"html_url": {
-				Description: "Url of the workspace",
+				Description: "The workspace's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"name": {
-				Description: "Name of the workspace",
+				Description: "The workspace's name",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,

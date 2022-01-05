@@ -12,23 +12,23 @@ import (
 
 func Workspaces() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_workspaces` data source allows you to get list of workspaces and filter them by name or domain\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+		Description: "List workspaces and optionally filter them by name or URL handle\n\n" +
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextWorkspaces,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the resource",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain_regex": {
-				Description:  "Regular expression to match domain of the workspace",
+				Description:  "The workspace URL handle regular expression to match",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsValidRegExp,
 			},
 			"name_regex": {
-				Description:  "Regular expression to match name of the workspace",
+				Description:  "The workspace name regular expression to match",
 				Type:         schema.TypeString,
 				Optional:     true,
 				ValidateFunc: validation.StringIsValidRegExp,
@@ -40,22 +40,22 @@ func Workspaces() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"html_url": {
-							Description: "Url of the workspace",
+							Description: "The workspace's URL",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"workspace_id": {
-							Description: "Id of the workspace",
+							Description: "The workspace's ID",
 							Type:        schema.TypeInt,
 							Computed:    true,
 						},
 						"name": {
-							Description: "Name of the workspace",
+							Description: "The workspace's name",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"domain": {
-							Description: "Domain of the workspace",
+							Description: "The workspace's URL handle",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},

@@ -12,9 +12,9 @@ import (
 
 func Group() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_group` allows you to create and manage Buddy groups.\n\n" +
-			"You will need admin access in workspace for this resource to work.\n\n" +
-			"Required scope for your token: `WORKSPACE`",
+		Description: "Create and manage a workspace group\n\n" +
+			"Workspace administrator rights are required\n\n" +
+			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextGroup,
 		ReadContext:   readContextGroup,
 		UpdateContext: updateContextGroup,
@@ -24,34 +24,34 @@ func Group() *schema.Resource {
 		},
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the group",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain": {
-				Description:  "Workspace domain in which the group will be created",
+				Description:  "The workspace's URL handle",
 				Type:         schema.TypeString,
 				Required:     true,
 				ForceNew:     true,
 				ValidateFunc: util.ValidateDomain,
 			},
 			"name": {
-				Description: "Name of the group",
+				Description: "The group's name",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"group_id": {
-				Description: "Id of the group",
+				Description: "The group's ID",
 				Type:        schema.TypeInt,
 				Computed:    true,
 			},
 			"html_url": {
-				Description: "Url of the group",
+				Description: "The group's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"description": {
-				Description: "Description of the group",
+				Description: "The group's description",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,

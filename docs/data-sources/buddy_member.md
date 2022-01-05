@@ -3,15 +3,15 @@
 page_title: "buddy_member Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_member data source allows you to find member by name, email or member_id
-  Required scopes for your token: WORKSPACE
+  Get member by name, email or member_id
+  Token scope required: WORKSPACE
 ---
 
 # buddy_member (Data Source)
 
-`buddy_member` data source allows you to find member by name, email or member_id
+Get member by name, email or member_id
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
@@ -37,20 +37,20 @@ data "buddy_member" "by_id" {
 
 ### Required
 
-- **domain** (String) Domain of the workspace
+- **domain** (String) The workspace's URL handle
 
 ### Optional
 
-- **email** (String) Email of the member
-- **member_id** (Number) Id of the member
-- **name** (String) Name of the member
+- **email** (String) The member's email
+- **member_id** (Number) The member's ID
+- **name** (String) The member's name
 
 ### Read-Only
 
-- **admin** (Boolean) Is member a workspace administrator
-- **avatar_url** (String) Avatar url of the member
-- **html_url** (String) Url of the member
-- **id** (String) Compound id of the member
-- **workspace_owner** (Boolean) Is member a workspace owner
+- **admin** (Boolean) Is the member a workspace administrator
+- **avatar_url** (String) The member's avatar URL
+- **html_url** (String) The member's URL
+- **id** (String) The Terraform resource identifier for this item
+- **workspace_owner** (Boolean) Is the member the workspace owner
 
 

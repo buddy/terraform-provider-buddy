@@ -3,15 +3,15 @@
 page_title: "buddy_profile Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  buddy_profile data source allows you to fetch details of your account
-  Required scopes for your token: USER_INFO
+  Get details of a Buddy's user profile
+  Token scope required: USER_INFO
 ---
 
 # buddy_profile (Data Source)
 
-`buddy_profile` data source allows you to fetch details of your account
+Get details of a Buddy's user profile
 
-Required scopes for your token: `USER_INFO`
+Token scope required: `USER_INFO`
 
 ## Example Usage
 
@@ -25,10 +25,10 @@ data "buddy_profile" "me" {
 
 ### Read-Only
 
-- **avatar_url** (String) Your avatar url
-- **html_url** (String) Url to Buddy myid
-- **id** (String) Compound id of this resource
-- **member_id** (Number) Your user id
-- **name** (String) Your name
+- **avatar_url** (String) The user's avatar URL
+- **html_url** (String) The user's profile URL
+- **id** (String) The Terraform resource identifier for this item
+- **member_id** (Number) The user's ID
+- **name** (String) The user's name
 
 

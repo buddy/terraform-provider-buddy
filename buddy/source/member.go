@@ -10,23 +10,23 @@ import (
 
 func Member() *schema.Resource {
 	return &schema.Resource{
-		Description: "`buddy_member` data source allows you to find member by name, email or member_id\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+		Description: "Get member by name, email or member_id\n\n" +
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextMember,
 		Schema: map[string]*schema.Schema{
 			"id": {
-				Description: "Compound id of the member",
+				Description: "The Terraform resource identifier for this item",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"domain": {
-				Description:  "Domain of the workspace",
+				Description:  "The workspace's URL handle",
 				Type:         schema.TypeString,
 				Required:     true,
 				ValidateFunc: util.ValidateDomain,
 			},
 			"email": {
-				Description: "Email of the member",
+				Description: "The member's email",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
@@ -37,12 +37,12 @@ func Member() *schema.Resource {
 				},
 			},
 			"admin": {
-				Description: "Is member a workspace administrator",
+				Description: "Is the member a workspace administrator",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 			"name": {
-				Description: "Name of the member",
+				Description: "The member's name",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Optional:    true,
@@ -53,7 +53,7 @@ func Member() *schema.Resource {
 				},
 			},
 			"member_id": {
-				Description: "Id of the member",
+				Description: "The member's ID",
 				Type:        schema.TypeInt,
 				Optional:    true,
 				ExactlyOneOf: []string{
@@ -63,17 +63,17 @@ func Member() *schema.Resource {
 				},
 			},
 			"html_url": {
-				Description: "Url of the member",
+				Description: "The member's URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"avatar_url": {
-				Description: "Avatar url of the member",
+				Description: "The member's avatar URL",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"workspace_owner": {
-				Description: "Is member a workspace owner",
+				Description: "Is the member the workspace owner",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
