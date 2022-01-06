@@ -42,7 +42,7 @@ signs:
       - "${artifact}"
 release:
   github:
-    owner: buddy-works
+    owner: buddy
     name: terraform-provider-buddy
   extra_files:
     - glob: 'terraform-registry-manifest.json'
