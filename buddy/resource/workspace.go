@@ -75,6 +75,7 @@ func Workspace() *schema.Resource {
 }
 
 func deleteContextWorkspace(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
+	// can't remove
 	var diags diag.Diagnostics
 	return diags
 }
