@@ -3,13 +3,13 @@
 page_title: "buddy_profile_email Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Create and manage a user profile email
+  Create and manage a user's email
   Token scopes required: MANAGE_EMAILS, USER_EMAIL
 ---
 
 # buddy_profile_email (Resource)
 
-Create and manage a user profile email
+Create and manage a user's email
 
 Token scopes required: `MANAGE_EMAILS`, `USER_EMAIL`
 

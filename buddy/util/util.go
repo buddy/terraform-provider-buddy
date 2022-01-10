@@ -4,7 +4,9 @@ import (
 	"buddy-terraform/buddy/api"
 	"errors"
 	"fmt"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"math/rand"
 	"regexp"
 	"strconv"
@@ -174,6 +176,13 @@ func ValidateDomain(v interface{}, _ string) (we []string, err []error) {
 	return
 }
 
+func TestSleep(ms int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		time.Sleep(time.Duration(ms) * time.Millisecond)
+		return nil
+	}
+}
+
 func ValidateEmail(v interface{}, _ string) (we []string, err []error) {
 	value := v.(string)
 	match, _ := regexp.MatchString("(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,}$", value)
@@ -219,6 +228,200 @@ func ApiShortWorkspaceToMap(w *api.Workspace) map[string]interface{} {
 	workspace["name"] = w.Name
 	workspace["domain"] = w.Domain
 	return workspace
+}
+
+func ApiShortProjectToMap(p *api.Project) map[string]interface{} {
+	if p == nil {
+		return nil
+	}
+	project := map[string]interface{}{}
+	project["html_url"] = p.HtmlUrl
+	project["name"] = p.Name
+	project["display_name"] = p.DisplayName
+	project["status"] = p.Status
+	return project
+}
+
+func ApiShortPermissionToMap(permission *api.Permission) map[string]interface{} {
+	if permission == nil {
+		return nil
+	}
+	permissionMap := map[string]interface{}{}
+	permissionMap["name"] = permission.Name
+	permissionMap["pipeline_access_level"] = permission.PipelineAccessLevel
+	permissionMap["repository_access_level"] = permission.RepositoryAccessLevel
+	permissionMap["sandbox_access_level"] = permission.SandboxAccessLevel
+	permissionMap["permission_id"] = permission.Id
+	permissionMap["html_url"] = permission.HtmlUrl
+	permissionMap["type"] = permission.Type
+	return permissionMap
+}
+
+func ApiProjectGroupToResourceData(domain string, projectName string, group *api.ProjectGroup, d *schema.ResourceData, setParentPermissionId bool) error {
+	d.SetId(ComposeTripleId(domain, projectName, strconv.Itoa(group.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("project_name", projectName)
+	if err != nil {
+		return err
+	}
+	err = d.Set("group_id", group.Id)
+	if err != nil {
+		return err
+	}
+	if setParentPermissionId {
+		err = d.Set("permission_id", group.PermissionSet.Id)
+		if err != nil {
+			return err
+		}
+	}
+	err = d.Set("html_url", group.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", group.Name)
+	if err != nil {
+		return err
+	}
+	return d.Set("permission", []interface{}{ApiShortPermissionToMap(group.PermissionSet)})
+}
+
+func ApiProjectMemberToResourceData(domain string, projectName string, member *api.ProjectMember, d *schema.ResourceData, setParentPermissionId bool) error {
+	d.SetId(ComposeTripleId(domain, projectName, strconv.Itoa(member.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("project_name", projectName)
+	if err != nil {
+		return err
+	}
+	err = d.Set("member_id", member.Id)
+	if err != nil {
+		return err
+	}
+	if setParentPermissionId {
+		err = d.Set("permission_id", member.PermissionSet.Id)
+		if err != nil {
+			return err
+		}
+	}
+	err = d.Set("html_url", member.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", member.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("email", member.Email)
+	if err != nil {
+		return err
+	}
+	err = d.Set("avatar_url", member.AvatarUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("admin", member.Admin)
+	if err != nil {
+		return err
+	}
+	err = d.Set("workspace_owner", member.WorkspaceOwner)
+	if err != nil {
+		return err
+	}
+	return d.Set("permission", []interface{}{ApiShortPermissionToMap(member.PermissionSet)})
+}
+
+func ApiProjectToResourceData(domain string, project *api.Project, d *schema.ResourceData, short bool) error {
+	d.SetId(ComposeDoubleId(domain, project.Name))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("html_url", project.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", project.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("display_name", project.DisplayName)
+	if err != nil {
+		return err
+	}
+	err = d.Set("status", project.Status)
+	if err != nil {
+		return err
+	}
+	if !short {
+		err = d.Set("create_date", project.CreateDate)
+		if err != nil {
+			return err
+		}
+		err = d.Set("created_by", []interface{}{ApiShortMemberToMap(project.CreatedBy)})
+		if err != nil {
+			return err
+		}
+		err = d.Set("http_repository", project.HttpRepository)
+		if err != nil {
+			return err
+		}
+		err = d.Set("ssh_repository", project.SshRepository)
+		if err != nil {
+			return err
+		}
+		err = d.Set("ssh_public_key", project.SshPublicKey)
+		if err != nil {
+			return err
+		}
+		err = d.Set("key_fingerprint", project.KeyFingerprint)
+		if err != nil {
+			return err
+		}
+		return d.Set("default_branch", project.DefaultBranch)
+	}
+	return nil
+}
+
+func ApiPermissionToResourceData(domain string, p *api.Permission, d *schema.ResourceData) error {
+	d.SetId(ComposeDoubleId(domain, strconv.Itoa(p.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", p.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("permission_id", p.Id)
+	if err != nil {
+		return err
+	}
+	err = d.Set("pipeline_access_level", p.PipelineAccessLevel)
+	if err != nil {
+		return err
+	}
+	err = d.Set("repository_access_level", p.RepositoryAccessLevel)
+	if err != nil {
+		return err
+	}
+	err = d.Set("sandbox_access_level", p.SandboxAccessLevel)
+	if err != nil {
+		return err
+	}
+	err = d.Set("description", p.Description)
+	if err != nil {
+		return err
+	}
+	err = d.Set("html_url", p.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	return d.Set("type", p.Type)
 }
 
 func ApiWorkspaceToResourceData(workspace *api.Workspace, d *schema.ResourceData, short bool) error {

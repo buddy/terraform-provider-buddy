@@ -4,7 +4,7 @@ page_title: "buddy_group Resource - buddy-terraform"
 subcategory: ""
 description: |-
   Create and manage a workspace group
-  Workspace admistrator rights are required
+  Workspace administrator rights are required
   Token scope required: WORKSPACE
 ---
 
@@ -12,7 +12,7 @@ description: |-
 
 Create and manage a workspace group
 
-Workspace admistrator rights are required
+Workspace administrator rights are required
 
 Token scope required: `WORKSPACE`
 

@@ -3,13 +3,13 @@
 page_title: "buddy_profile_public_key Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Create and manage a user profile public key
+  Create and manage a user's public key
   Token scope required: USER_KEY
 ---
 
 # buddy_profile_public_key (Resource)
 
-Create and manage a user profile public key
+Create and manage a user's public key
 
 Token scope required: `USER_KEY`
 
