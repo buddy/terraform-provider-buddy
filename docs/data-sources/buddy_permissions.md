@@ -3,13 +3,13 @@
 page_title: "buddy_permissions Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  List permissions and optionally filter them by name or type
+  List permissions (roles) and optionally filter them by name or type
   Token scope required: WORKSPACE
 ---
 
 # buddy_permissions (Data Source)
 
-List permissions and optionally filter them by name or type
+List permissions (roles) and optionally filter them by name or type
 
 Token scope required: `WORKSPACE`
 
@@ -41,7 +41,7 @@ data "buddy_permissions" "filter" {
 ### Read-Only
 
 - **id** (String) The Terraform resource identifier for this item
-- **permissions** (List of Object) List of permissions (see [below for nested schema](#nestedatt--permissions))
+- **permissions** (List of Object) List of permissions (roles) (see [below for nested schema](#nestedatt--permissions))
 
 <a id="nestedatt--permissions"></a>
 ### Nested Schema for `permissions`

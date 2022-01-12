@@ -13,7 +13,7 @@ import (
 
 func ProjectMember() *schema.Resource {
 	return &schema.Resource{
-		Description: "Manage a workspace project member permission\n\n" +
+		Description: "Manage a member's permission (role) in a project\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextProjectMember,

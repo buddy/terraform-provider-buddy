@@ -12,7 +12,7 @@ import (
 
 func Permissions() *schema.Resource {
 	return &schema.Resource{
-		Description: "List permissions and optionally filter them by name or type\n\n" +
+		Description: "List permissions (roles) and optionally filter them by name or type\n\n" +
 			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextPermissions,
 		Schema: map[string]*schema.Schema{
@@ -44,7 +44,7 @@ func Permissions() *schema.Resource {
 				}, false),
 			},
 			"permissions": {
-				Description: "List of permissions",
+				Description: "List of permissions (roles)",
 				Type:        schema.TypeList,
 				Computed:    true,
 				Elem: &schema.Resource{

@@ -3,14 +3,14 @@
 page_title: "buddy_permission Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Create and manage a workspace permission
+  Create and manage a workspace permission (role)
   Workspace administrator rights are required
   Token scope required: WORKSPACE
 ---
 
 # buddy_permission (Resource)
 
-Create and manage a workspace permission
+Create and manage a workspace permission (role)
 
 Workspace administrator rights are required
 

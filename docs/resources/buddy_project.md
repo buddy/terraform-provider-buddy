@@ -35,25 +35,25 @@ resource "buddy_project" "test" {
 
 ### Optional
 
-- **custom_repo_pass** (String) The project's custom repository password. Provide to clone source from your custom repository
-- **custom_repo_url** (String) The project's custom repository URL. Provide to clone source from your custom repository
-- **custom_repo_user** (String) The project's custom repository user. Provide to clone source from your custom repository
-- **external_project_id** (String) The project's external project ID. Provide to clone source from GitHub, GitLab or BitBucket
-- **git_lab_project_id** (String) The project's GitLab project ID. Provide to clone source from GitLab
-- **integration_id** (String) The project's integration ID. Provide to clone source from GitHub, GitLab or BitBucket
+- **custom_repo_pass** (String) The project's custom repository password. Needed when cloning from a custom repository
+- **custom_repo_url** (String) The project's custom repository URL. Needed when cloning from a custom repository
+- **custom_repo_user** (String) The project's custom repository user. Needed when cloning from a custom repository
+- **external_project_id** (String) The project's external project ID. Needed when cloning from GitHub, GitLab or BitBucket
+- **git_lab_project_id** (String) The project's GitLab project ID. Needed when cloning from a GitLab
+- **integration_id** (String) The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket
 
 ### Read-Only
 
-- **create_date** (String) The project's create date
+- **create_date** (String) The project's date of creation
 - **created_by** (List of Object) The project's creator (see [below for nested schema](#nestedatt--created_by))
-- **default_branch** (String) The project's GIT default branch
+- **default_branch** (String) The project's Git default branch
 - **html_url** (String) The project's URL
-- **http_repository** (String) The project's GIT HTTP endpoint
+- **http_repository** (String) The project's Git HTTP endpoint
 - **id** (String) The Terraform resource identifier for this item
 - **key_fingerprint** (String) The project's key fingerprint
 - **name** (String) The project's unique name ID
 - **ssh_public_key** (String) The project's public key
-- **ssh_repository** (String) The project's GIT SSH endpoint
+- **ssh_repository** (String) The project's Git SSH endpoint
 - **status** (String) The project's status. Possible values: `CLOSED`, `ACTIVE`
 
 <a id="nestedatt--created_by"></a>

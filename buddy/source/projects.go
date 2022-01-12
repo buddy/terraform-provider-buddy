@@ -40,7 +40,7 @@ func Projects() *schema.Resource {
 				ValidateFunc: validation.StringIsValidRegExp,
 			},
 			"membership": {
-				Description: "In case a user is a workspace administrators, if true lists projects the user belongs to",
+				Description: "For workspace administrators all workspace projects are returned, set true to lists projects the user actually belongs to",
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},

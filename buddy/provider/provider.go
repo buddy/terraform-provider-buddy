@@ -78,9 +78,9 @@ var descriptions map[string]string
 
 func init() {
 	descriptions = map[string]string{
-		"token":    "The OAuth2 token or personal access token. Can be specified with the `BUDDY_TOKEN` environment variable.",
-		"base_url": "The Buddy api base url. You may need to set this to your Buddy Enterprise api endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
-		"insecure": "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy Enterprise without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
+		"token":    "The OAuth2 token or Personal Access Token. Can be specified with the `BUDDY_TOKEN` environment variable.",
+		"base_url": "The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
+		"insecure": "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
 	}
 }
 

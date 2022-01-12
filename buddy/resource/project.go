@@ -40,7 +40,7 @@ func Project() *schema.Resource {
 				Required:    true,
 			},
 			"integration_id": {
-				Description: "The project's integration ID. Provide to clone source from GitHub, GitLab or BitBucket",
+				Description: "The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ConflictsWith: []string{
@@ -53,7 +53,7 @@ func Project() *schema.Resource {
 				},
 			},
 			"external_project_id": {
-				Description: "The project's external project ID. Provide to clone source from GitHub, GitLab or BitBucket",
+				Description: "The project's external project ID. Needed when cloning from GitHub, GitLab or BitBucket",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ConflictsWith: []string{
@@ -66,7 +66,7 @@ func Project() *schema.Resource {
 				},
 			},
 			"git_lab_project_id": {
-				Description: "The project's GitLab project ID. Provide to clone source from GitLab",
+				Description: "The project's GitLab project ID. Needed when cloning from a GitLab",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ConflictsWith: []string{
@@ -80,7 +80,7 @@ func Project() *schema.Resource {
 				},
 			},
 			"custom_repo_url": {
-				Description: "The project's custom repository URL. Provide to clone source from your custom repository",
+				Description: "The project's custom repository URL. Needed when cloning from a custom repository",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ConflictsWith: []string{
@@ -90,7 +90,7 @@ func Project() *schema.Resource {
 				},
 			},
 			"custom_repo_user": {
-				Description: "The project's custom repository user. Provide to clone source from your custom repository",
+				Description: "The project's custom repository user. Needed when cloning from a custom repository",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ConflictsWith: []string{
@@ -104,7 +104,7 @@ func Project() *schema.Resource {
 				},
 			},
 			"custom_repo_pass": {
-				Description: "The project's custom repository password. Provide to clone source from your custom repository",
+				Description: "The project's custom repository password. Needed when cloning from a custom repository",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ConflictsWith: []string{
@@ -133,7 +133,7 @@ func Project() *schema.Resource {
 				Computed:    true,
 			},
 			"create_date": {
-				Description: "The project's create date",
+				Description: "The project's date of creation",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -182,17 +182,17 @@ func Project() *schema.Resource {
 				},
 			},
 			"http_repository": {
-				Description: "The project's GIT HTTP endpoint",
+				Description: "The project's Git HTTP endpoint",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"ssh_repository": {
-				Description: "The project's GIT SSH endpoint",
+				Description: "The project's Git SSH endpoint",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"default_branch": {
-				Description: "The project's GIT default branch",
+				Description: "The project's Git default branch",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

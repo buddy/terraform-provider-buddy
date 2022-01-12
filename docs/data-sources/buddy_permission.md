@@ -3,13 +3,13 @@
 page_title: "buddy_permission Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  Get permission by name or permission_id
+  Get permission (role) by name or permission_id
   Token scope required: WORKSPACE
 ---
 
 # buddy_permission (Data Source)
 
-Get permission by name or permission_id
+Get permission (role) by name or permission_id
 
 Token scope required: `WORKSPACE`
 

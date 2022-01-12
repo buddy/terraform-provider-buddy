@@ -3,14 +3,14 @@
 page_title: "buddy_project_member Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Manage a workspace project member permission
+  Manage a member's permission (role) in a project
   Workspace administrator rights are required
   Token scope required: WORKSPACE
 ---
 
 # buddy_project_member (Resource)
 
-Manage a workspace project member permission
+Manage a member's permission (role) in a project
 
 Workspace administrator rights are required
 

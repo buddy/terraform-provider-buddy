@@ -51,7 +51,7 @@ data "buddy_projects" "with_display_name_ended" {
 ### Optional
 
 - **display_name_regex** (String) The project's display name regular expression to match
-- **membership** (Boolean) In case a user is a workspace administrators, if true lists projects the user belongs to
+- **membership** (Boolean) For workspace administrators all workspace projects are returned, set true to lists projects the user actually belongs to
 - **name_regex** (String) The project's name regular expression to match
 - **status** (String) Filter projects by status (`ACTIVE`, `CLOSED`)
 

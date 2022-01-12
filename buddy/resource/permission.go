@@ -13,7 +13,7 @@ import (
 
 func Permission() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create and manage a workspace permission\n\n" +
+		Description: "Create and manage a workspace permission (role)\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextPermission,
