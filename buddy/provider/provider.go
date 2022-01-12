@@ -47,16 +47,28 @@ func Provider() *schema.Provider {
 			"buddy_group":              resource.Group(),
 			"buddy_group_member":       resource.GroupMember(),
 			"buddy_member":             resource.Member(),
+			"buddy_permission":         resource.Permission(),
+			"buddy_project":            resource.Project(),
+			"buddy_project_member":     resource.ProjectMember(),
+			"buddy_project_group":      resource.ProjectGroup(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
-			"buddy_workspaces":    source.Workspaces(),
-			"buddy_profile":       source.Profile(),
-			"buddy_group":         source.Group(),
-			"buddy_groups":        source.Groups(),
-			"buddy_group_members": source.GroupMembers(),
-			"buddy_members":       source.Members(),
-			"buddy_member":        source.Member(),
-			"buddy_workspace":     source.Workspace(),
+			"buddy_workspaces":      source.Workspaces(),
+			"buddy_profile":         source.Profile(),
+			"buddy_group":           source.Group(),
+			"buddy_groups":          source.Groups(),
+			"buddy_group_members":   source.GroupMembers(),
+			"buddy_members":         source.Members(),
+			"buddy_member":          source.Member(),
+			"buddy_workspace":       source.Workspace(),
+			"buddy_permission":      source.Permission(),
+			"buddy_permissions":     source.Permissions(),
+			"buddy_project":         source.Project(),
+			"buddy_projects":        source.Projects(),
+			"buddy_project_member":  source.ProjectMember(),
+			"buddy_project_members": source.ProjectMembers(),
+			"buddy_project_group":   source.ProjectGroup(),
+			"buddy_project_groups":  source.ProjectGroups(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
@@ -66,9 +78,9 @@ var descriptions map[string]string
 
 func init() {
 	descriptions = map[string]string{
-		"token":    "The OAuth2 token or personal access token. Can be specified with the `BUDDY_TOKEN` environment variable.",
-		"base_url": "The Buddy api base url. You may need to set this to your Buddy Enterprise api endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
-		"insecure": "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy Enterprise without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
+		"token":    "The OAuth2 token or Personal Access Token. Can be specified with the `BUDDY_TOKEN` environment variable.",
+		"base_url": "The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
+		"insecure": "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
 	}
 }
 

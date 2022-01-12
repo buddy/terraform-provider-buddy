@@ -2,13 +2,13 @@
 layout: ""
 page_title: "Provider: Buddy"
 description: |-
-  The Buddy provider provides resources to interact with a buddy.works API.
+  The Buddy provider is used to interact with a Buddy's resources.
 ---
 
 # Buddy Provider
 
-The Buddy provider provides resources to interact with a buddy.works API.
-You must configure the provider with the proper credentials before you can use it.
+The Buddy provider is used to interact with a Buddy's resources.
+The provider needs to be configured with the proper credentials before it can be used.
 
 ## Example Usage
 
@@ -23,9 +23,9 @@ provider "buddy" {
 
 ### Required
 
-- **token** (String) The OAuth2 token or personal access token. Can be specified with the `BUDDY_TOKEN` environment variable.
+- **token** (String) The OAuth2 token or Personal Access Token. Can be specified with the `BUDDY_TOKEN` environment variable.
 
 ### Optional
 
-- **base_url** (String) The Buddy api base url. You may need to set this to your Buddy Enterprise api endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`
-- **insecure** (Boolean) Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy Enterprise without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable
+- **base_url** (String) The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`
+- **insecure** (Boolean) Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable

@@ -45,12 +45,16 @@ type Client struct {
 
 	token string
 
-	ProfileService      *ProfileService
-	ProfileEmailService *ProfileEmailService
-	GroupService        *GroupService
-	MemberService       *MemberService
-	WorkspaceService    *WorkspaceService
-	PublicKeyService    *PublicKeyService
+	ProfileService       *ProfileService
+	ProfileEmailService  *ProfileEmailService
+	GroupService         *GroupService
+	MemberService        *MemberService
+	PermissionService    *PermissionService
+	WorkspaceService     *WorkspaceService
+	PublicKeyService     *PublicKeyService
+	ProjectService       *ProjectService
+	ProjectMemberService *ProjectMemberService
+	ProjectGroupService  *ProjectGroupService
 }
 
 type QueryPage struct {
@@ -187,8 +191,12 @@ func NewClient(token string, baseUrl string, insecure bool) (*Client, error) {
 	c.ProfileEmailService = &ProfileEmailService{client: c}
 	c.GroupService = &GroupService{client: c}
 	c.MemberService = &MemberService{client: c}
+	c.PermissionService = &PermissionService{client: c}
 	c.WorkspaceService = &WorkspaceService{client: c}
 	c.PublicKeyService = &PublicKeyService{client: c}
+	c.ProjectService = &ProjectService{client: c}
+	c.ProjectMemberService = &ProjectMemberService{client: c}
+	c.ProjectGroupService = &ProjectGroupService{client: c}
 	return c, nil
 }
 
