@@ -12,7 +12,7 @@ import (
 
 func Group() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create and manage a workspace group\n\n" +
+		Description: "Create and manage a user's group\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextGroup,
