@@ -13,7 +13,7 @@ import (
 func ProjectMembers() *schema.Resource {
 	return &schema.Resource{
 		Description: "List project members and optionally filter them by name\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextProjectMembers,
 		Schema: map[string]*schema.Schema{
 			"id": {

@@ -55,6 +55,8 @@ type Client struct {
 	ProjectService       *ProjectService
 	ProjectMemberService *ProjectMemberService
 	ProjectGroupService  *ProjectGroupService
+	WebhookService       *WebhookService
+	VariableService      *VariableService
 }
 
 type QueryPage struct {
@@ -197,6 +199,8 @@ func NewClient(token string, baseUrl string, insecure bool) (*Client, error) {
 	c.ProjectService = &ProjectService{client: c}
 	c.ProjectMemberService = &ProjectMemberService{client: c}
 	c.ProjectGroupService = &ProjectGroupService{client: c}
+	c.WebhookService = &WebhookService{client: c}
+	c.VariableService = &VariableService{client: c}
 	return c, nil
 }
 

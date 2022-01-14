@@ -4,14 +4,14 @@ page_title: "buddy_projects Data Source - buddy-terraform"
 subcategory: ""
 description: |-
   List projects and optionally filter them by membership, status, name or display_name
-  Required scopes for your token: WORKSPACE
+  Token scope required: WORKSPACE
 ---
 
 # buddy_projects (Data Source)
 
 List projects and optionally filter them by membership, status, name or display_name
 
-Required scopes for your token: `WORKSPACE`
+Token scope required: `WORKSPACE`
 
 ## Example Usage
 
