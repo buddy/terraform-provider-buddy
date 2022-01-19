@@ -3,13 +3,13 @@
 page_title: "buddy_member Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  Get member by name, email or member_id
+  Get member by name, email or member ID
   Token scope required: WORKSPACE
 ---
 
 # buddy_member (Data Source)
 
-Get member by name, email or member_id
+Get member by name, email or member ID
 
 Token scope required: `WORKSPACE`
 

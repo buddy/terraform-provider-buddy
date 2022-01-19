@@ -3,13 +3,13 @@
 page_title: "buddy_group Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  Get group by name or group_id
+  Get group by name or group ID
   Token scope required: WORKSPACE
 ---
 
 # buddy_group (Data Source)
 
-Get group by name or group_id
+Get group by name or group ID
 
 Token scope required: `WORKSPACE`
 

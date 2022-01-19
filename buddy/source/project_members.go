@@ -13,7 +13,7 @@ import (
 func ProjectMembers() *schema.Resource {
 	return &schema.Resource{
 		Description: "List project members and optionally filter them by name\n\n" +
-			"Required scopes for your token: `WORKSPACE`",
+			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextProjectMembers,
 		Schema: map[string]*schema.Schema{
 			"id": {
@@ -45,39 +45,32 @@ func ProjectMembers() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"html_url": {
-							Description: "The member's URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"member_id": {
-							Description: "The member's ID",
-							Type:        schema.TypeInt,
-							Computed:    true,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"name": {
-							Description: "The member's name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"email": {
-							Description: "The member's email",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"avatar_url": {
-							Description: "The member's avatar URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"admin": {
-							Description: "Is the member a workspace administrator",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"workspace_owner": {
-							Description: "Is the member the workspace owner",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 					},
 				},

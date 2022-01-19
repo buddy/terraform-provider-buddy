@@ -16,6 +16,71 @@ import (
 
 const (
 	CharSetAlpha = "abcdefghijklmnopqrstuvwxyz"
+	SshKey       = `-----BEGIN OPENSSH PRIVATE KEY-----
+b3BlbnNzaC1rZXktdjEAAAAABG5vbmUAAAAEbm9uZQAAAAAAAAABAAABFwAAAAdzc2gtcn
+NhAAAAAwEAAQAAAQEA573Yk5eUJh2mVKYByEQqFt6mSQsES6HhlT9H4iDjQWtK2g78vDm1
+Ni9MmUfMyJ1IYcNhOZW5CfPlueqXsUobZyo1eAMI1/0Ju5bSwZwRkdR2htydCJOX0mG0KZ
+zT6NKNf7lg0R3bHoQcCcbHnvzE1F8wIXWsDJyeo0iXb8kilNr0kFAkMmjZGKjeXbRKR374
+48TcrSaeGvSlOpsAa6YvBGoRnfhSkFysE+FxTFRhF7iknrvhjLqwbK7BR5Pf3j8hifiy3i
+tMJM230COXwCAg2BoHyzH6xefP4TE6Po2qVfAcNmUzp+ktVbqf2HH44aFiZJgZYXJCTct/
+RopyD0Uq3QAAA9D3L7tx9y+7cQAAAAdzc2gtcnNhAAABAQDnvdiTl5QmHaZUpgHIRCoW3q
+ZJCwRLoeGVP0fiIONBa0raDvy8ObU2L0yZR8zInUhhw2E5lbkJ8+W56pexShtnKjV4AwjX
+/Qm7ltLBnBGR1HaG3J0Ik5fSYbQpnNPo0o1/uWDRHdsehBwJxsee/MTUXzAhdawMnJ6jSJ
+dvySKU2vSQUCQyaNkYqN5dtEpHfvjjxNytJp4a9KU6mwBrpi8EahGd+FKQXKwT4XFMVGEX
+uKSeu+GMurBsrsFHk9/ePyGJ+LLeK0wkzbfQI5fAICDYGgfLMfrF58/hMTo+japV8Bw2ZT
+On6S1Vup/YcfjhoWJkmBlhckJNy39GinIPRSrdAAAAAwEAAQAAAQAG860BkHSDSDRrKae4
+CENy+C7o1gnE8xA/V+yiHfZzSfKu4/A0/U4wV+7mUj8UbZN0S1YpUhKA9+4WS7FNQjncOG
+nuNbkYMaEPHZEo+bOVOlhr50ZWsYbGauPqs6evvlE8WaVL4KdoHPJyYKIwZMjKzig1eMA2
+iKRBpbXVRqVg7bn0+opBUdv5FpsDkSa+ijJKLA7szSpM7yq03sZfx9u1/WTvh1Qa375mFC
+O/8NUJoGii5Tacp+QeIHi2IEl+38eBLx1mal0AM68mkeJvU6Pfa+f/aUG4Z9RfQByD2/ql
+JmrLVzaEv1Jy3n4lFnTsDT11dLmdQ7WjCNa/NKvVOrVJAAAAgCX4+x7xjcKAxEdprXpKkN
+m4L+4Ciy1I03x/fk0GNDi316IiEUylTzTCy7HFAg0RUaxyN3iyFbwe1kN6DPV4r877WiOV
+lt7v7hIjS1eeOwSGpsxijPxbWEIzOnu35t23YUROCOWaYXP9EAk1YEqEB34UKVq9jeB2t+
+7zh/0ORkbwAAAAgQD8c9R/g6+Jx5c09MY0nX8IiTp1YBws6WVXDkaPPY//t1nKSfYEZy4p
+ojOgWAS8vDMd7g24gr0Fm0lEKBXhgPVJTuClIH1P6IKRacLNtpp9uzVjBn/hi3f60GXo8y
+A8ZbizwLkSpECLjFUer+ZlbrlcZ2Oq6o8DufiIjFAiqH2RMwAAAIEA6v+Cxku/IZ5XLrnm
+wItoQx8eLu/Ly88wCSe1rgwzazgV4zQz1Y6B8ONqY03SgnE1im0/zaVmhMsRyE8FNGHPZP
+8dclO3b8qod57BiY3PLpBKi9swhNQlxQn1zDhaF5cDEcTXYNL6xXC6iD6aa0bffjdBkuzz
+A10SiVeaAxv3c68AAAAYTWljaGFsQE1pY2hhcy1pTWFjLmxvY2FsAQID
+-----END OPENSSH PRIVATE KEY-----`
+	SshKey2 = `-----BEGIN OPENSSH PRIVATE KEY-----
+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
+-----END OPENSSH PRIVATE KEY-----`
 )
 
 func init() {
@@ -97,8 +162,23 @@ func StringToPointer(p string) *string {
 	return s
 }
 
+func StringSetToStringSlice(stringSet *schema.Set) []string {
+	var ret []string
+	if stringSet == nil {
+		return ret
+	}
+	for _, envVal := range stringSet.List() {
+		ret = append(ret, envVal.(string))
+	}
+	return ret
+}
+
 func InterfaceStringToPointer(i interface{}) *string {
 	return StringToPointer(i.(string))
+}
+
+func InterfaceStringSetToStringSlice(i interface{}) []string {
+	return StringSetToStringSlice(i.(*schema.Set))
 }
 
 func InterfaceIntToPointer(i interface{}) *int {
@@ -203,6 +283,52 @@ func ApiShortGroupToMap(g *api.Group) map[string]interface{} {
 	return group
 }
 
+func ApiShortVariableToMap(v *api.Variable) map[string]interface{} {
+	if v == nil {
+		return nil
+	}
+	variable := map[string]interface{}{}
+	variable["key"] = v.Key
+	variable["encrypted"] = v.Encrypted
+	variable["settable"] = v.Settable
+	variable["description"] = v.Description
+	variable["value"] = v.Value
+	variable["variable_id"] = v.Id
+	return variable
+}
+
+func ApiShortWebhookToMap(w *api.Webhook) map[string]interface{} {
+	if w == nil {
+		return nil
+	}
+	webhook := map[string]interface{}{}
+	webhook["target_url"] = w.TargetUrl
+	webhook["webhook_id"] = w.Id
+	webhook["html_url"] = w.HtmlUrl
+	return webhook
+}
+
+func ApiShortVariableSshKeyToMap(v *api.Variable) map[string]interface{} {
+	if v == nil {
+		return nil
+	}
+	variable := map[string]interface{}{}
+	variable["key"] = v.Key
+	variable["encrypted"] = v.Encrypted
+	variable["settable"] = v.Settable
+	variable["description"] = v.Description
+	variable["value"] = v.Value
+	variable["variable_id"] = v.Id
+	variable["public_value"] = v.PublicValue
+	variable["key_fingerprint"] = v.KeyFingerprint
+	variable["checksum"] = v.Checksum
+	variable["file_chmod"] = v.FileChmod
+	variable["file_path"] = v.FilePath
+	variable["file_place"] = v.FilePlace
+	variable["display_name"] = v.FileName
+	return variable
+}
+
 func ApiShortMemberToMap(m *api.Member) map[string]interface{} {
 	if m == nil {
 		return nil
@@ -255,6 +381,131 @@ func ApiShortPermissionToMap(permission *api.Permission) map[string]interface{} 
 	permissionMap["html_url"] = permission.HtmlUrl
 	permissionMap["type"] = permission.Type
 	return permissionMap
+}
+
+func ApiVariableSshKeyToResourceData(domain string, variable *api.Variable, d *schema.ResourceData, useValueProcessed bool) error {
+	d.SetId(ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("key", variable.Key)
+	if err != nil {
+		return err
+	}
+	if useValueProcessed {
+		err = d.Set("value_processed", variable.Value)
+	} else {
+		err = d.Set("value", variable.Value)
+	}
+	if err != nil {
+		return err
+	}
+	err = d.Set("encrypted", variable.Encrypted)
+	if err != nil {
+		return err
+	}
+	err = d.Set("settable", variable.Settable)
+	if err != nil {
+		return err
+	}
+	err = d.Set("description", variable.Description)
+	if err != nil {
+		return err
+	}
+	err = d.Set("file_place", variable.FilePlace)
+	if err != nil {
+		return err
+	}
+	err = d.Set("display_name", variable.FileName)
+	if err != nil {
+		return err
+	}
+	err = d.Set("file_path", variable.FilePath)
+	if err != nil {
+		return err
+	}
+	err = d.Set("file_chmod", variable.FileChmod)
+	if err != nil {
+		return err
+	}
+	err = d.Set("variable_id", variable.Id)
+	if err != nil {
+		return err
+	}
+	err = d.Set("checksum", variable.Checksum)
+	if err != nil {
+		return err
+	}
+	err = d.Set("key_fingerprint", variable.KeyFingerprint)
+	if err != nil {
+		return err
+	}
+	return d.Set("public_value", variable.PublicValue)
+}
+
+func ApiVariableToResourceData(domain string, variable *api.Variable, d *schema.ResourceData, useValueProcessed bool) error {
+	d.SetId(ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("key", variable.Key)
+	if err != nil {
+		return err
+	}
+	if useValueProcessed {
+		err = d.Set("value_processed", variable.Value)
+	} else {
+		err = d.Set("value", variable.Value)
+	}
+	if err != nil {
+		return err
+	}
+	err = d.Set("encrypted", variable.Encrypted)
+	if err != nil {
+		return err
+	}
+	err = d.Set("settable", variable.Settable)
+	if err != nil {
+		return err
+	}
+	err = d.Set("description", variable.Description)
+	if err != nil {
+		return err
+	}
+	return d.Set("variable_id", variable.Id)
+}
+
+func ApiWebhookToResourceData(domain string, webhook *api.Webhook, d *schema.ResourceData, short bool) error {
+	d.SetId(ComposeDoubleId(domain, strconv.Itoa(webhook.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("target_url", webhook.TargetUrl)
+	if err != nil {
+		return err
+	}
+	if !short {
+		err = d.Set("secret_key", webhook.SecretKey)
+		if err != nil {
+			return err
+		}
+		err = d.Set("projects", webhook.Projects)
+		if err != nil {
+			return err
+		}
+		err = d.Set("events", webhook.Events)
+		if err != nil {
+			return err
+		}
+	}
+	err = d.Set("webhook_id", webhook.Id)
+	if err != nil {
+		return err
+	}
+	return d.Set("html_url", webhook.HtmlUrl)
 }
 
 func ApiProjectGroupToResourceData(domain string, projectName string, group *api.ProjectGroup, d *schema.ResourceData, setParentPermissionId bool) error {

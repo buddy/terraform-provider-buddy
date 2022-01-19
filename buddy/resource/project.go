@@ -144,39 +144,32 @@ func Project() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"html_url": {
-							Description: "The creator's URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"member_id": {
-							Description: "The creator's ID",
-							Type:        schema.TypeInt,
-							Computed:    true,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"name": {
-							Description: "The creator's name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"email": {
-							Description: "The creator's email",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"admin": {
-							Description: "Is the creator a workspace administrator",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"workspace_owner": {
-							Description: "Is the creator the workspace owner",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"avatar_url": {
-							Description: "The creator's avatar URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},
