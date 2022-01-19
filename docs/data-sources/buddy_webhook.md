@@ -3,13 +3,13 @@
 page_title: "buddy_webhook Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  Get webhook by targeturl or webhookid
+  Get webhook by target URL or webhook ID
   Token scope required: WORKSPACE, WEBHOOK_INFO
 ---
 
 # buddy_webhook (Data Source)
 
-Get webhook by target_url or webhook_id
+Get webhook by target URL or webhook ID
 
 Token scope required: `WORKSPACE`, `WEBHOOK_INFO`
 

@@ -37,7 +37,7 @@ func Webhook() *schema.Resource {
 				ValidateFunc: util.ValidateDomain,
 			},
 			"events": {
-				Description: "The webhook's events list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`",
+				Description: "The webhook's event's list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`",
 				Type:        schema.TypeSet,
 				Required:    true,
 				MinItems:    1,
@@ -53,7 +53,7 @@ func Webhook() *schema.Resource {
 				},
 			},
 			"projects": {
-				Description: "The webhook's projects list. If left empty all projects will be used",
+				Description: "To which projects the webhook should be assigned. If left empty all projects will be used",
 				Type:        schema.TypeSet,
 				Required:    true,
 				MinItems:    0,

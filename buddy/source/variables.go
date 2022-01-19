@@ -12,7 +12,7 @@ import (
 
 func Variables() *schema.Resource {
 	return &schema.Resource{
-		Description: "List variables and optionally filter them by key, project_name, pipeline_id or action_id\n\n" +
+		Description: "List variables and optionally filter them by key, project, pipeline or action\n\n" +
 			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
 		ReadContext: readContextVariables,
 		Schema: map[string]*schema.Schema{
@@ -34,17 +34,17 @@ func Variables() *schema.Resource {
 				ValidateFunc: validation.StringIsValidRegExp,
 			},
 			"project_name": {
-				Description: "The variable's project name",
+				Description: "Get only from provided project",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"pipeline_id": {
-				Description: "The variable's pipeline ID",
+				Description: "Get only from provided pipeline",
 				Type:        schema.TypeInt,
 				Optional:    true,
 			},
 			"action_id": {
-				Description: "The variable's action ID",
+				Description: "Get only from provided action",
 				Type:        schema.TypeInt,
 				Optional:    true,
 			},
@@ -55,35 +55,29 @@ func Variables() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
-							Description: "The variable's name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"encrypted": {
-							Description: "Is the variable value encrypted",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"settable": {
-							Description: "Is the variable value changeable",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"description": {
-							Description: "The variable's description",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"value": {
-							Description: "The variable's processed value. It will be encrypted if turned on",
-							Type:        schema.TypeString,
-							Computed:    true,
-							Sensitive:   true,
+							Type:      schema.TypeString,
+							Computed:  true,
+							Sensitive: true,
 						},
 						"variable_id": {
-							Description: "The variable's ID",
-							Type:        schema.TypeInt,
-							Computed:    true,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 					},
 				},

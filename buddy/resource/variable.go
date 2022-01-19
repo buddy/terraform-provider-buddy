@@ -12,7 +12,7 @@ import (
 
 func Variable() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create and manage a workspace variable\n\n" +
+		Description: "Create and manage a variable\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scopes required: `WORKSPACE`, `VARIABLE_ADD`, `VARIABLE_MANAGE`, `VARIABLE_INFO`",
 		CreateContext: createContextVariable,
@@ -48,7 +48,7 @@ func Variable() *schema.Resource {
 				Sensitive:   true,
 			},
 			"encrypted": {
-				Description: "Is the variable value encrypted",
+				Description: "Is the variable's value encrypted",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
@@ -72,7 +72,7 @@ func Variable() *schema.Resource {
 				ForceNew:    true,
 			},
 			"settable": {
-				Description: "Is the variable value changeable",
+				Description: "Is the variable's value changeable",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
@@ -84,7 +84,7 @@ func Variable() *schema.Resource {
 				Computed:    true,
 			},
 			"value_processed": {
-				Description: "The variable's processed value. It will be encrypted if turned on",
+				Description: "The variable's processed value. Encrypted if **encrypted** == true",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,

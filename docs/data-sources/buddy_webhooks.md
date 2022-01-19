@@ -3,13 +3,13 @@
 page_title: "buddy_webhooks Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  List webhooks and optionally filter them by target_url
+  List webhooks and optionally filter them by target URL
   Token scope required: WORKSPACE, WEBHOOK_INFO
 ---
 
 # buddy_webhooks (Data Source)
 
-List webhooks and optionally filter them by target_url
+List webhooks and optionally filter them by target URL
 
 Token scope required: `WORKSPACE`, `WEBHOOK_INFO`
 

@@ -12,7 +12,7 @@ import (
 
 func Webhooks() *schema.Resource {
 	return &schema.Resource{
-		Description: "List webhooks and optionally filter them by target_url\n\n" +
+		Description: "List webhooks and optionally filter them by target URL\n\n" +
 			"Token scope required: `WORKSPACE`, `WEBHOOK_INFO`",
 		ReadContext: readContextWebhooks,
 		Schema: map[string]*schema.Schema{
@@ -40,19 +40,16 @@ func Webhooks() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"target_url": {
-							Description: "The webhook's target URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"webhook_id": {
-							Description: "The webhook's ID",
-							Type:        schema.TypeInt,
-							Computed:    true,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"html_url": {
-							Description: "The webhook's URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},

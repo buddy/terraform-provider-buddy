@@ -50,39 +50,32 @@ func Permissions() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"name": {
-							Description: "The permission's name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"pipeline_access_level": {
-							Description: "The permission's access level to pipelines",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"repository_access_level": {
-							Description: "The permission's access level to repository",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"sandbox_access_level": {
-							Description: "The permission's access level to sandboxes.",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"permission_id": {
-							Description: "The permission's ID",
-							Type:        schema.TypeInt,
-							Computed:    true,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"html_url": {
-							Description: "The permission's URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"type": {
-							Description: "The permission's type",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},

@@ -12,7 +12,7 @@ import (
 
 func VariablesSshKeys() *schema.Resource {
 	return &schema.Resource{
-		Description: "List variables ssh keys and optionally filter them by key, project_name, pipeline_id or action_id\n\n" +
+		Description: "List variables of SSH key type and optionally filter them by key, project name, pipeline or action\n\n" +
 			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
 		ReadContext: readContextVariablesSshKeys,
 		Schema: map[string]*schema.Schema{
@@ -34,17 +34,17 @@ func VariablesSshKeys() *schema.Resource {
 				ValidateFunc: validation.StringIsValidRegExp,
 			},
 			"project_name": {
-				Description: "The variable's project name",
+				Description: "Get only from provided project",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"pipeline_id": {
-				Description: "The variable's pipeline ID",
+				Description: "Get only from provided pipeline",
 				Type:        schema.TypeInt,
 				Optional:    true,
 			},
 			"action_id": {
-				Description: "The variable's action ID",
+				Description: "Get only from provided action",
 				Type:        schema.TypeInt,
 				Optional:    true,
 			},
@@ -55,70 +55,59 @@ func VariablesSshKeys() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
-							Description: "The variable's name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"encrypted": {
-							Description: "The variable ssh key is always encrypted",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"settable": {
-							Description: "The variable ssh key is not changeable",
-							Type:        schema.TypeBool,
-							Computed:    true,
+							Type:     schema.TypeBool,
+							Computed: true,
 						},
 						"description": {
-							Description: "The variable's description",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"value": {
-							Description: "The variable's encrypted value",
-							Type:        schema.TypeString,
-							Computed:    true,
-							Sensitive:   true,
+							Type:      schema.TypeString,
+							Computed:  true,
+							Sensitive: true,
 						},
 						"variable_id": {
 							Description: "The variable's ID",
 							Type:        schema.TypeInt,
 							Computed:    true,
 						},
-						"file_name": {
-							Description: "The variable's file name",
+						"display_name": {
+							Description: "The variable's display name",
 							Type:        schema.TypeString,
 							Computed:    true,
 						},
 						"file_place": {
-							Description: "Available values: `CONTAINER`, `NONE`",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"file_path": {
-							Description: "The variable's file place",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"file_chmod": {
-							Description: "The variable's file permission in the container",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"checksum": {
-							Description: "The variable's checksum",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"key_fingerprint": {
-							Description: "The variable's fingherprint",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"public_value": {
-							Description: "The variable's public key",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},

@@ -10,7 +10,7 @@ import (
 
 func Group() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get group by name or group_id\n\n" +
+		Description: "Get group by name or group ID\n\n" +
 			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextGroup,
 		Schema: map[string]*schema.Schema{

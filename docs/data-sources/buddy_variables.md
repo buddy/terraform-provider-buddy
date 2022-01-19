@@ -3,13 +3,13 @@
 page_title: "buddy_variables Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  List variables and optionally filter them by key, projectname, pipelineid or action_id
+  List variables and optionally filter them by key, project, pipeline or action
   Token scope required: WORKSPACE, VARIABLE_INFO
 ---
 
 # buddy_variables (Data Source)
 
-List variables and optionally filter them by key, project_name, pipeline_id or action_id
+List variables and optionally filter them by key, project, pipeline or action
 
 Token scope required: `WORKSPACE`, `VARIABLE_INFO`
 
@@ -45,10 +45,10 @@ data "buddy_variables" "pipeline" {
 
 ### Optional
 
-- **action_id** (Number) The variable's action ID
+- **action_id** (Number) Get only from provided action
 - **key_regex** (String) The variable's key regular expression to match
-- **pipeline_id** (Number) The variable's pipeline ID
-- **project_name** (String) The variable's project name
+- **pipeline_id** (Number) Get only from provided pipeline
+- **project_name** (String) Get only from provided project
 
 ### Read-Only
 

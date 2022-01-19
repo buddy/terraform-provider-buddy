@@ -10,7 +10,7 @@ import (
 
 func Variable() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get variable by key or variable_id\n\n" +
+		Description: "Get variable by key or variable ID\n\n" +
 			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
 		ReadContext: readContextVariable,
 		Schema: map[string]*schema.Schema{
@@ -60,12 +60,12 @@ func Variable() *schema.Resource {
 				},
 			},
 			"encrypted": {
-				Description: "Is the variable value encrypted",
+				Description: "Is the variable's value encrypted",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
 			"settable": {
-				Description: "Is the variable value changeable",
+				Description: "Is the variable's value changeable",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
@@ -75,7 +75,7 @@ func Variable() *schema.Resource {
 				Computed:    true,
 			},
 			"value": {
-				Description: "The variable's processed value. It will be encrypted if turned on",
+				Description: "The variable's value. Encrypted if **encrypted** == true",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,

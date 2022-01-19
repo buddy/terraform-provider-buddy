@@ -13,7 +13,7 @@ import (
 
 func VariableSshKey() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create and manage a workspace variable ssh key\n\n" +
+		Description: "Create and manage a variable of SSH key type\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scope required: `WORKSPACE`, `VARIABLE_ADD`, `VARIABLE_MANAGE`, `VARIABLE_INFO`",
 		CreateContext: createContextVariableSshKey,
@@ -48,8 +48,8 @@ func VariableSshKey() *schema.Resource {
 				Required:    true,
 				Sensitive:   true,
 			},
-			"file_name": {
-				Description: "The variable's file name",
+			"display_name": {
+				Description: "The variable's display name",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -63,12 +63,12 @@ func VariableSshKey() *schema.Resource {
 				}, false),
 			},
 			"file_path": {
-				Description: "The variable's file path in the container",
+				Description: "Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
 			"file_chmod": {
-				Description: "The variable's file permission in the container",
+				Description: "The variable's file permission in an action's container",
 				Type:        schema.TypeString,
 				Required:    true,
 			},
@@ -91,7 +91,7 @@ func VariableSshKey() *schema.Resource {
 				ForceNew:    true,
 			},
 			"settable": {
-				Description: "The variable ssh key is not changeable",
+				Description: "Is the variable's value changeable, always false for buddy_variable_ssh_key",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
@@ -107,13 +107,13 @@ func VariableSshKey() *schema.Resource {
 				Computed:    true,
 			},
 			"value_processed": {
-				Description: "The variable's encrypted value",
+				Description: "The variable's value, always encrypted for buddy_variable_ssh_key",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,
 			},
 			"encrypted": {
-				Description: "The variable ssh key is always encrypted",
+				Description: "Is the variable's value encrypted, always true for buddy_variable_ssh_key",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
@@ -123,7 +123,7 @@ func VariableSshKey() *schema.Resource {
 				Computed:    true,
 			},
 			"key_fingerprint": {
-				Description: "The variable's fingherprint",
+				Description: "The variable's fingerprint",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
@@ -168,7 +168,7 @@ func updateContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 		Type:      util.InterfaceStringToPointer(api.VariableTypeSshKey),
 		Value:     util.InterfaceStringToPointer(d.Get("value")),
 		FilePlace: util.InterfaceStringToPointer(d.Get("file_place")),
-		FileName:  util.InterfaceStringToPointer(d.Get("file_name")),
+		FileName:  util.InterfaceStringToPointer(d.Get("display_name")),
 		FilePath:  util.InterfaceStringToPointer(d.Get("file_path")),
 		FileChmod: util.InterfaceStringToPointer(d.Get("file_chmod")),
 		Encrypted: util.InterfaceBoolToPointer(true),
@@ -223,7 +223,7 @@ func createContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 		Encrypted: util.InterfaceBoolToPointer(true),
 		Settable:  util.InterfaceBoolToPointer(false),
 		FilePlace: util.InterfaceStringToPointer(d.Get("file_place")),
-		FileName:  util.InterfaceStringToPointer(d.Get("file_name")),
+		FileName:  util.InterfaceStringToPointer(d.Get("display_name")),
 		FilePath:  util.InterfaceStringToPointer(d.Get("file_path")),
 		FileChmod: util.InterfaceStringToPointer(d.Get("file_chmod")),
 	}

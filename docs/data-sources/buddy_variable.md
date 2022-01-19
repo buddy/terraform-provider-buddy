@@ -3,13 +3,13 @@
 page_title: "buddy_variable Data Source - buddy-terraform"
 subcategory: ""
 description: |-
-  Get variable by key or variable_id
+  Get variable by key or variable ID
   Token scope required: WORKSPACE, VARIABLE_INFO
 ---
 
 # buddy_variable (Data Source)
 
-Get variable by key or variable_id
+Get variable by key or variable ID
 
 Token scope required: `WORKSPACE`, `VARIABLE_INFO`
 
@@ -48,9 +48,9 @@ data "buddy_variable_ssh_key" "by_key_in_project" {
 ### Read-Only
 
 - **description** (String) The variable's description
-- **encrypted** (Boolean) Is the variable value encrypted
+- **encrypted** (Boolean) Is the variable's value encrypted
 - **id** (String) The Terraform resource identifier for this item
-- **settable** (Boolean) Is the variable value changeable
-- **value** (String, Sensitive) The variable's processed value. It will be encrypted if turned on
+- **settable** (Boolean) Is the variable's value changeable
+- **value** (String, Sensitive) The variable's value. Encrypted if **encrypted** == true
 
 

@@ -325,7 +325,7 @@ func ApiShortVariableSshKeyToMap(v *api.Variable) map[string]interface{} {
 	variable["file_chmod"] = v.FileChmod
 	variable["file_path"] = v.FilePath
 	variable["file_place"] = v.FilePlace
-	variable["file_name"] = v.FileName
+	variable["display_name"] = v.FileName
 	return variable
 }
 
@@ -417,7 +417,7 @@ func ApiVariableSshKeyToResourceData(domain string, variable *api.Variable, d *s
 	if err != nil {
 		return err
 	}
-	err = d.Set("file_name", variable.FileName)
+	err = d.Set("display_name", variable.FileName)
 	if err != nil {
 		return err
 	}

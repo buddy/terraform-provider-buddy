@@ -10,7 +10,7 @@ import (
 
 func Member() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get member by name, email or member_id\n\n" +
+		Description: "Get member by name, email or member ID\n\n" +
 			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextMember,
 		Schema: map[string]*schema.Schema{

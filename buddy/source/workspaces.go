@@ -40,24 +40,20 @@ func Workspaces() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"html_url": {
-							Description: "The workspace's URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"workspace_id": {
-							Description: "The workspace's ID",
-							Type:        schema.TypeInt,
-							Computed:    true,
+							Type:     schema.TypeInt,
+							Computed: true,
 						},
 						"name": {
-							Description: "The workspace's name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"domain": {
-							Description: "The workspace's URL handle",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},

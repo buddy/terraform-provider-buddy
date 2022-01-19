@@ -3,14 +3,14 @@
 page_title: "buddy_variable_ssh_key Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Create and manage a workspace variable ssh key
+  Create and manage a variable of SSH key type
   Workspace administrator rights are required
   Token scope required: WORKSPACE, VARIABLE_ADD, VARIABLE_MANAGE, VARIABLE_INFO
 ---
 
 # buddy_variable_ssh_key (Resource)
 
-Create and manage a workspace variable ssh key
+Create and manage a variable of SSH key type
 
 Workspace administrator rights are required
 
@@ -27,7 +27,7 @@ resource "buddy_variable_ssh_key" "mykey" {
 ...
 -----END PRIVATE KEY-----
 EOT
-  file_name  = "id_mykey"
+  display_name  = "id_mykey"
   file_place = "CONTAINER"
   file_path  = "~/.ssh/id_mykey"
   file_chmod = "600"
@@ -39,10 +39,10 @@ EOT
 
 ### Required
 
+- **display_name** (String) The variable's display name
 - **domain** (String) The workspace's URL handle
-- **file_chmod** (String) The variable's file permission in the container
-- **file_name** (String) The variable's file name
-- **file_path** (String) The variable's file path in the container
+- **file_chmod** (String) The variable's file permission in an action's container
+- **file_path** (String) Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)
 - **file_place** (String) The variable's file place. Available: `CONTAINER`, `NONE`
 - **key** (String) The variable's name
 - **value** (String, Sensitive) The variable's value
@@ -57,12 +57,12 @@ EOT
 ### Read-Only
 
 - **checksum** (String) The variable's checksum
-- **encrypted** (Boolean) The variable ssh key is always encrypted
+- **encrypted** (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key
 - **id** (String) The Terraform resource identifier for this item
-- **key_fingerprint** (String) The variable's fingherprint
+- **key_fingerprint** (String) The variable's fingerprint
 - **public_value** (String) The variable's public key
-- **settable** (Boolean) The variable ssh key is not changeable
-- **value_processed** (String, Sensitive) The variable's encrypted value
+- **settable** (Boolean) Is the variable's value changeable, always false for buddy_variable_ssh_key
+- **value_processed** (String, Sensitive) The variable's value, always encrypted for buddy_variable_ssh_key
 - **variable_id** (Number) The variable's ID
 
 ## Import

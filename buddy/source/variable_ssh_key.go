@@ -10,7 +10,7 @@ import (
 
 func VariableSshKey() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get variable ssh by key or variable_id\n\n" +
+		Description: "Get variables of SSH key type by key or variable ID\n\n" +
 			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
 		ReadContext: readContextVariableSshKey,
 		Schema: map[string]*schema.Schema{
@@ -36,7 +36,7 @@ func VariableSshKey() *schema.Resource {
 				},
 			},
 			"project_name": {
-				Description: "The variable's project name",
+				Description: "Get only from provided project",
 				Type:        schema.TypeString,
 				Optional:    true,
 				RequiredWith: []string{
@@ -44,7 +44,7 @@ func VariableSshKey() *schema.Resource {
 				},
 			},
 			"pipeline_id": {
-				Description: "The variable's pipeline ID",
+				Description: "Get only from provided pipeline",
 				Type:        schema.TypeInt,
 				Optional:    true,
 				RequiredWith: []string{
@@ -52,7 +52,7 @@ func VariableSshKey() *schema.Resource {
 				},
 			},
 			"action_id": {
-				Description: "The variable's action ID",
+				Description: "Get only from provided action",
 				Type:        schema.TypeInt,
 				Optional:    true,
 				RequiredWith: []string{
@@ -60,33 +60,33 @@ func VariableSshKey() *schema.Resource {
 				},
 			},
 			"value": {
-				Description: "The variable's encrypted value",
+				Description: "The variable's value, always encrypted for buddy_variable_ssh_key",
 				Type:        schema.TypeString,
 				Computed:    true,
 				Sensitive:   true,
 			},
-			"file_name": {
-				Description: "The variable's file name",
+			"display_name": {
+				Description: "The variable's display name",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"file_place": {
-				Description: "The variable's file place",
+				Description: "Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"file_path": {
-				Description: "The variable's file path in the container",
+				Description: "The variable's path in the action's container",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"file_chmod": {
-				Description: "The variable's file permission in the container",
+				Description: "The variable's file permission in an action's container",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"settable": {
-				Description: "The variable ssh key is not changeable",
+				Description: "Is the variable's value changeable, always false for buddy_variable_ssh_key",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
@@ -106,7 +106,7 @@ func VariableSshKey() *schema.Resource {
 				},
 			},
 			"encrypted": {
-				Description: "The variable's value is always encrypted",
+				Description: "Is the variable's value encrypted, always true for buddy_variable_ssh_key",
 				Type:        schema.TypeBool,
 				Computed:    true,
 			},
@@ -116,7 +116,7 @@ func VariableSshKey() *schema.Resource {
 				Computed:    true,
 			},
 			"key_fingerprint": {
-				Description: "The variable's fingherprint",
+				Description: "The variable's fingerprint",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

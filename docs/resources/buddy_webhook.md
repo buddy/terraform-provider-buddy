@@ -33,8 +33,8 @@ resource "buddy_webhook" "ws" {
 ### Required
 
 - **domain** (String) The workspace's URL handle
-- **events** (Set of String) The webhook's events list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`
-- **projects** (Set of String) The webhook's projects list. If left empty all projects will be used
+- **events** (Set of String) The webhook's event's list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`
+- **projects** (Set of String) To which projects the webhook should be assigned. If left empty all projects will be used
 - **target_url** (String) The webhook's target URL
 
 ### Optional

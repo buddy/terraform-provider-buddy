@@ -10,7 +10,7 @@ import (
 
 func Webhook() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get webhook by target_url or webhook_id\n\n" +
+		Description: "Get webhook by target URL or webhook ID\n\n" +
 			"Token scope required: `WORKSPACE`, `WEBHOOK_INFO`",
 		ReadContext: readContextWebhook,
 		Schema: map[string]*schema.Schema{

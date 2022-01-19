@@ -12,7 +12,7 @@ import (
 
 func Projects() *schema.Resource {
 	return &schema.Resource{
-		Description: "List projects and optionally filter them by membership, status, name or display_name\n\n" +
+		Description: "List projects and optionally filter them by membership, status, name or display name\n\n" +
 			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextProjects,
 		Schema: map[string]*schema.Schema{
@@ -60,24 +60,20 @@ func Projects() *schema.Resource {
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"html_url": {
-							Description: "The project's URL",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"name": {
-							Description: "The project's unique name ID",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"display_name": {
-							Description: "The project's display name",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 						"status": {
-							Description: "The project's status",
-							Type:        schema.TypeString,
-							Computed:    true,
+							Type:     schema.TypeString,
+							Computed: true,
 						},
 					},
 				},

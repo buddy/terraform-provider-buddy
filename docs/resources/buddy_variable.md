@@ -3,14 +3,14 @@
 page_title: "buddy_variable Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Create and manage a workspace variable
+  Create and manage a variable
   Workspace administrator rights are required
   Token scopes required: WORKSPACE, VARIABLE_ADD, VARIABLE_MANAGE, VARIABLE_INFO
 ---
 
 # buddy_variable (Resource)
 
-Create and manage a workspace variable
+Create and manage a variable
 
 Workspace administrator rights are required
 
@@ -39,15 +39,15 @@ resource "buddy_variable" "mysecret" {
 
 - **action_id** (Number) The variable's action ID
 - **description** (String) The variable's description
-- **encrypted** (Boolean) Is the variable value encrypted
+- **encrypted** (Boolean) Is the variable's value encrypted
 - **pipeline_id** (Number) The variable's pipeline ID
 - **project_name** (String) The variable's project name
-- **settable** (Boolean) Is the variable value changeable
+- **settable** (Boolean) Is the variable's value changeable
 
 ### Read-Only
 
 - **id** (String) The Terraform resource identifier for this item
-- **value_processed** (String, Sensitive) The variable's processed value. It will be encrypted if turned on
+- **value_processed** (String, Sensitive) The variable's processed value. Encrypted if **encrypted** == true
 - **variable_id** (Number) The variable's ID
 
 ## Import

@@ -10,7 +10,7 @@ import (
 
 func Permission() *schema.Resource {
 	return &schema.Resource{
-		Description: "Get permission (role) by name or permission_id\n\n" +
+		Description: "Get permission (role) by name or permission ID\n\n" +
 			"Token scope required: `WORKSPACE`",
 		ReadContext: readContextPermission,
 		Schema: map[string]*schema.Schema{
