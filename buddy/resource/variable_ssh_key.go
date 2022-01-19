@@ -54,7 +54,7 @@ func VariableSshKey() *schema.Resource {
 				Required:    true,
 			},
 			"file_place": {
-				Description: "The variable's file place. Available: `CONTAINER`, `NONE`",
+				Description: "Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)",
 				Type:        schema.TypeString,
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
@@ -63,7 +63,7 @@ func VariableSshKey() *schema.Resource {
 				}, false),
 			},
 			"file_path": {
-				Description: "Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)",
+				Description: "The variable's path in the action's container",
 				Type:        schema.TypeString,
 				Required:    true,
 			},

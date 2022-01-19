@@ -42,8 +42,8 @@ EOT
 - **display_name** (String) The variable's display name
 - **domain** (String) The workspace's URL handle
 - **file_chmod** (String) The variable's file permission in an action's container
-- **file_path** (String) Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)
-- **file_place** (String) The variable's file place. Available: `CONTAINER`, `NONE`
+- **file_path** (String) The variable's path in the action's container
+- **file_place** (String) Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)
 - **key** (String) The variable's name
 - **value** (String, Sensitive) The variable's value
 
