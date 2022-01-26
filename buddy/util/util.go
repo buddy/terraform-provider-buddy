@@ -201,6 +201,17 @@ func IntToPointer(p int) *int {
 	return i
 }
 
+func IntSetToIntSlice(intSet *schema.Set) []int {
+	var ret []int
+	if intSet == nil {
+		return ret
+	}
+	for _, envVal := range intSet.List() {
+		ret = append(ret, envVal.(int))
+	}
+	return ret
+}
+
 func DecomposeDoubleId(id string) (string, string, error) {
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 {
@@ -270,6 +281,288 @@ func ValidateEmail(v interface{}, _ string) (we []string, err []error) {
 		err = append(err, errors.New("email is not valid"))
 	}
 	return
+}
+
+func MapTriggerConditionsToApi(l interface{}) []*api.PipelineTriggerCondition {
+	var expanded []*api.PipelineTriggerCondition
+	for _, v := range l.([]interface{}) {
+		m := v.(map[string]interface{})
+		c := api.PipelineTriggerCondition{
+			TriggerCondition: m["condition"].(string),
+		}
+		if m["paths"] != nil {
+			c.TriggerConditionPaths = InterfaceStringSetToStringSlice(m["paths"])
+		}
+		if m["variable_key"] != nil {
+			c.TriggerVariableKey = m["variable_key"].(string)
+		}
+		if m["variable_value"] != nil {
+			c.TriggerVariableValue = m["variable_value"].(string)
+		}
+		if m["hours"] != nil {
+			c.TriggerHours = IntSetToIntSlice(m["hours"].(*schema.Set))
+		}
+		if m["days"] != nil {
+			c.TriggerDays = IntSetToIntSlice(m["days"].(*schema.Set))
+		}
+		if m["zone_id"] != nil {
+			c.ZoneId = m["zone_id"].(string)
+		}
+		if m["project_name"] != nil {
+			c.TriggerProjectName = m["project_name"].(string)
+		}
+		if m["pipeline_name"] != nil {
+			c.TriggerPipelineName = m["pipeline_name"].(string)
+		}
+		expanded = append(expanded, &c)
+	}
+	return expanded
+}
+
+func MapPipelineEventsToApi(l interface{}) []*api.PipelineEvent {
+	var expanded []*api.PipelineEvent
+	for _, v := range l.([]interface{}) {
+		m := v.(map[string]interface{})
+		e := api.PipelineEvent{
+			Type: m["type"].(string),
+			Refs: InterfaceStringSetToStringSlice(m["refs"]),
+		}
+		expanded = append(expanded, &e)
+	}
+	return expanded
+}
+
+func ApiShortIntegrationToMap(i *api.Integration) map[string]interface{} {
+	if i == nil {
+		return nil
+	}
+	integration := map[string]interface{}{}
+	integration["html_url"] = i.HtmlUrl
+	integration["integration_id"] = i.HashId
+	integration["name"] = i.Name
+	integration["type"] = i.Type
+	return integration
+}
+
+func ApiTriggerConditionToMap(c *api.PipelineTriggerCondition) map[string]interface{} {
+	if c == nil {
+		return nil
+	}
+	condition := map[string]interface{}{}
+	condition["condition"] = c.TriggerCondition
+	condition["paths"] = c.TriggerConditionPaths
+	condition["variable_key"] = c.TriggerVariableKey
+	condition["variable_value"] = c.TriggerVariableValue
+	condition["hours"] = c.TriggerHours
+	condition["days"] = c.TriggerDays
+	condition["zone_id"] = c.ZoneId
+	condition["project_name"] = c.TriggerProjectName
+	condition["pipeline_name"] = c.TriggerPipelineName
+	return condition
+}
+
+func ApiPipelineTriggerConditionsToMap(l []*api.PipelineTriggerCondition) []interface{} {
+	if l == nil {
+		return nil
+	}
+	var list []interface{}
+	for _, c := range l {
+		list = append(list, ApiTriggerConditionToMap(c))
+	}
+	return list
+}
+
+func ApiPipelineEventToMap(e *api.PipelineEvent) map[string]interface{} {
+	if e == nil {
+		return nil
+	}
+	event := map[string]interface{}{}
+	event["type"] = e.Type
+	event["refs"] = e.Refs
+	return event
+}
+
+func ApiPipelineEventsToMap(l []*api.PipelineEvent) []interface{} {
+	if l == nil {
+		return nil
+	}
+	var list []interface{}
+	for _, e := range l {
+		list = append(list, ApiPipelineEventToMap(e))
+	}
+	return list
+}
+
+func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.Pipeline, d *schema.ResourceData, short bool) error {
+	d.SetId(ComposeTripleId(domain, projectName, strconv.Itoa(pipeline.Id)))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("project_name", projectName)
+	if err != nil {
+		return err
+	}
+	if !short {
+		err = d.Set("always_from_scratch", pipeline.AlwaysFromScratch)
+		if err != nil {
+			return err
+		}
+		err = d.Set("fail_on_prepare_env_warning", pipeline.FailOnPrepareEnvWarning)
+		if err != nil {
+			return err
+		}
+		err = d.Set("fetch_all_refs", pipeline.FetchAllRefs)
+		if err != nil {
+			return err
+		}
+		err = d.Set("auto_clear_cache", pipeline.AutoClearCache)
+		if err != nil {
+			return err
+		}
+		err = d.Set("no_skip_to_most_recent", pipeline.NoSkipToMostRecent)
+		if err != nil {
+			return err
+		}
+		err = d.Set("do_not_create_commit_status", pipeline.DoNotCreateCommitStatus)
+		if err != nil {
+			return err
+		}
+		err = d.Set("start_date", pipeline.StartDate)
+		if err != nil {
+			return err
+		}
+		err = d.Set("delay", pipeline.Delay)
+		if err != nil {
+			return err
+		}
+		err = d.Set("cron", pipeline.Cron)
+		if err != nil {
+			return err
+		}
+		err = d.Set("paused", pipeline.Paused)
+		if err != nil {
+			return err
+		}
+		err = d.Set("ignore_fail_on_project_status", pipeline.IgnoreFailOnProjectStatus)
+		if err != nil {
+			return err
+		}
+		err = d.Set("execution_message_template", pipeline.ExecutionMessageTemplate)
+		if err != nil {
+			return err
+		}
+		err = d.Set("worker", pipeline.Worker)
+		if err != nil {
+			return err
+		}
+		err = d.Set("target_site_url", pipeline.TargetSiteUrl)
+		if err != nil {
+			return err
+		}
+		err = d.Set("create_date", pipeline.CreateDate)
+		if err != nil {
+			return err
+		}
+		err = d.Set("creator", []interface{}{ApiShortMemberToMap(pipeline.Creator)})
+		if err != nil {
+			return err
+		}
+		err = d.Set("project", []interface{}{ApiShortProjectToMap(pipeline.Project)})
+		if err != nil {
+			return err
+		}
+		err = d.Set("trigger_condition", ApiPipelineTriggerConditionsToMap(pipeline.TriggerConditions))
+		if err != nil {
+			return err
+		}
+	}
+	err = d.Set("priority", pipeline.Priority)
+	if err != nil {
+		return err
+	}
+	err = d.Set("html_url", pipeline.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("pipeline_id", pipeline.Id)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", pipeline.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("on", pipeline.On)
+	if err != nil {
+		return err
+	}
+	err = d.Set("last_execution_status", pipeline.LastExecutionStatus)
+	if err != nil {
+		return err
+	}
+	err = d.Set("last_execution_revision", pipeline.LastExecutionRevision)
+	if err != nil {
+		return err
+	}
+	err = d.Set("refs", pipeline.Refs)
+	if err != nil {
+		return err
+	}
+	return d.Set("event", ApiPipelineEventsToMap(pipeline.Events))
+}
+
+func ApiIntegrationToResourceData(domain string, i *api.Integration, d *schema.ResourceData, short bool) error {
+	d.SetId(ComposeDoubleId(domain, i.HashId))
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("name", i.Name)
+	if err != nil {
+		return err
+	}
+	err = d.Set("type", i.Type)
+	if err != nil {
+		return err
+	}
+	if !short {
+		err = d.Set("scope", i.Scope)
+		if err != nil {
+			return err
+		}
+		err = d.Set("project_name", i.ProjectName)
+		if err != nil {
+			return err
+		}
+		err = d.Set("group_id", i.GroupId)
+		if err != nil {
+			return err
+		}
+	}
+	err = d.Set("integration_id", i.HashId)
+	if err != nil {
+		return err
+	}
+	return d.Set("html_url", i.HtmlUrl)
+}
+
+func MapRoleAssumptionsToApi(l interface{}) []*api.RoleAssumption {
+	var expanded []*api.RoleAssumption
+	for _, v := range l.([]interface{}) {
+		m := v.(map[string]interface{})
+		r := api.RoleAssumption{
+			Arn: m["arn"].(string),
+		}
+		if m["external_id"] != nil {
+			r.ExternalId = m["external_id"].(string)
+		}
+		if m["duration"] != nil {
+			r.Duration = m["duration"].(int)
+		}
+		expanded = append(expanded, &r)
+	}
+	return expanded
 }
 
 func ApiShortGroupToMap(g *api.Group) map[string]interface{} {
@@ -381,6 +674,23 @@ func ApiShortPermissionToMap(permission *api.Permission) map[string]interface{} 
 	permissionMap["html_url"] = permission.HtmlUrl
 	permissionMap["type"] = permission.Type
 	return permissionMap
+}
+
+func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
+	if p == nil {
+		return nil
+	}
+	pipeline := map[string]interface{}{}
+	pipeline["name"] = p.Name
+	pipeline["pipeline_id"] = p.Id
+	pipeline["html_url"] = p.HtmlUrl
+	pipeline["on"] = p.On
+	pipeline["priority"] = p.Priority
+	pipeline["last_execution_status"] = p.LastExecutionStatus
+	pipeline["last_execution_revision"] = p.LastExecutionRevision
+	pipeline["refs"] = p.Refs
+	pipeline["event"] = ApiPipelineEventsToMap(p.Events)
+	return pipeline
 }
 
 func ApiVariableSshKeyToResourceData(domain string, variable *api.Variable, d *schema.ResourceData, useValueProcessed bool) error {

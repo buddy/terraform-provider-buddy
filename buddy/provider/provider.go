@@ -54,6 +54,8 @@ func Provider() *schema.Provider {
 			"buddy_webhook":            resource.Webhook(),
 			"buddy_variable":           resource.Variable(),
 			"buddy_variable_ssh_key":   resource.VariableSshKey(),
+			"buddy_integration":        resource.Integration(),
+			"buddy_pipeline":           resource.Pipeline(),
 		},
 		DataSourcesMap: map[string]*schema.Resource{
 			"buddy_workspaces":         source.Workspaces(),
@@ -78,6 +80,10 @@ func Provider() *schema.Provider {
 			"buddy_variables_ssh_keys": source.VariablesSshKeys(),
 			"buddy_webhook":            source.Webhook(),
 			"buddy_webhooks":           source.Webhooks(),
+			"buddy_integration":        source.Integration(),
+			"buddy_integrations":       source.Integrations(),
+			"buddy_pipeline":           source.Pipeline(),
+			"buddy_pipelines":          source.Pipelines(),
 		},
 		ConfigureContextFunc: providerConfigure,
 	}
