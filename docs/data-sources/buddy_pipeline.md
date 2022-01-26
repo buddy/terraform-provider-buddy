@@ -47,8 +47,8 @@ data "buddy_pipeline" "by_id" {
 - **event** (List of Object) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
 - **html_url** (String) The pipeline's URL
 - **id** (String) The Terraform resource identifier for this item
-- **last_execution_revision** (String) The pipeline's last execution revision
-- **last_execution_status** (String) The pipeline's last execution status
+- **last_execution_revision** (String) The pipeline's last run revision
+- **last_execution_status** (String) The pipeline's last run status
 - **on** (String) The pipeline's trigger mode
 - **priority** (String) The pipeline's priority
 - **refs** (Set of String) The pipeline's list of refs
@@ -60,5 +60,3 @@ Read-Only:
 
 - **refs** (Set of String)
 - **type** (String)
-
-

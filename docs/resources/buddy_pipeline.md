@@ -3,13 +3,13 @@
 page_title: "buddy_pipeline Resource - buddy-terraform"
 subcategory: ""
 description: |-
-  Create and manage pipeline
+  Create and manage a pipeline
   Token scopes required: WORKSPACE, EXECUTION_MANAGE, EXECUTION_INFO
 ---
 
 # buddy_pipeline (Resource)
 
-Create and manage pipeline
+Create and manage a pipeline
 
 Token scopes required: `WORKSPACE`, `EXECUTION_MANAGE`, `EXECUTION_INFO`
 
@@ -37,18 +37,18 @@ resource "buddy_pipeline" "test" {
 
 ### Optional
 
-- **always_from_scratch** (Boolean) Defines whether or not to upload everything from scratch on every execution
+- **always_from_scratch** (Boolean) Defines whether or not to upload everything from scratch on every run
 - **auto_clear_cache** (Boolean) Defines whether or not to automatically clear cache before running the pipeline
 - **cron** (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
-- **delay** (Number) The pipeline's executions interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
+- **delay** (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
 - **do_not_create_commit_status** (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
 - **event** (Block List) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
-- **execution_message_template** (String) The pipeline's execution title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
-- **fail_on_prepare_env_warning** (Boolean) Defines wheter or not execution should fail if any warning occurs in prepare environment. Default: `true`
-- **fetch_all_refs** (Boolean) Defines wheter or not fetch all refs from repository. Default: `true`
-- **ignore_fail_on_project_status** (Boolean) If set to true the status of a given pipeline will not impact the project status on the dashboard
-- **no_skip_to_most_recent** (Boolean) Defines whether or not to skip execution to the most recent execution
-- **paused** (Boolean) Is the pipeline's execution paused. Restricted to `on: SCHEDULE`
+- **execution_message_template** (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
+- **fail_on_prepare_env_warning** (Boolean) Defines either or not run should fail if any warning occurs in prepare environment. Default: `true`
+- **fetch_all_refs** (Boolean) Defines either or not fetch all refs from repository. Default: `true`
+- **ignore_fail_on_project_status** (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
+- **no_skip_to_most_recent** (Boolean) Defines whether or not to skip run to the most recent run
+- **paused** (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
 - **priority** (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
 - **refs** (Set of String) The pipeline's list of refs. Set it if `on: CLICK`
 - **start_date** (String) The pipeline's start date. Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified. Format: `2016-11-18T12:38:16.000Z`
@@ -62,8 +62,8 @@ resource "buddy_pipeline" "test" {
 - **creator** (List of Object) The pipeline's creator (see [below for nested schema](#nestedatt--creator))
 - **html_url** (String) The pipeline's URL
 - **id** (String) The Terraform resource identifier for this item
-- **last_execution_revision** (String) The pipeline's last execution revision
-- **last_execution_status** (String) The pipeline's last execution status
+- **last_execution_revision** (String) The pipeline's last run revision
+- **last_execution_status** (String) The pipeline's last run status
 - **pipeline_id** (Number) The pipeline's ID
 - **project** (List of Object) The pipeline's project (see [below for nested schema](#nestedatt--project))
 

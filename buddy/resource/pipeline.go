@@ -13,7 +13,7 @@ import (
 
 func Pipeline() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create and manage pipeline\n\n" +
+		Description: "Create and manage a pipeline\n\n" +
 			"Token scopes required: `WORKSPACE`, `EXECUTION_MANAGE`, `EXECUTION_INFO`",
 		CreateContext: createContextPipeline,
 		ReadContext:   readContextPipeline,
@@ -78,19 +78,19 @@ func Pipeline() *schema.Resource {
 				}, false),
 			},
 			"fetch_all_refs": {
-				Description: "Defines wheter or not fetch all refs from repository. Default: `true`",
+				Description: "Defines either or not fetch all refs from repository. Default: `true`",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
 			},
 			"always_from_scratch": {
-				Description: "Defines whether or not to upload everything from scratch on every execution",
+				Description: "Defines whether or not to upload everything from scratch on every run",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
 			},
 			"fail_on_prepare_env_warning": {
-				Description: "Defines wheter or not execution should fail if any warning occurs in prepare environment. Default: `true`",
+				Description: "Defines either or not run should fail if any warning occurs in prepare environment. Default: `true`",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Default:     true,
@@ -102,7 +102,7 @@ func Pipeline() *schema.Resource {
 				Computed:    true,
 			},
 			"no_skip_to_most_recent": {
-				Description: "Defines whether or not to skip execution to the most recent execution",
+				Description: "Defines whether or not to skip run to the most recent run",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
@@ -126,7 +126,7 @@ func Pipeline() *schema.Resource {
 				},
 			},
 			"delay": {
-				Description: "The pipeline's executions interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified",
+				Description: "The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified",
 				Type:        schema.TypeInt,
 				Optional:    true,
 				Computed:    true,
@@ -148,19 +148,19 @@ func Pipeline() *schema.Resource {
 				},
 			},
 			"paused": {
-				Description: "Is the pipeline's execution paused. Restricted to `on: SCHEDULE`",
+				Description: "Is the pipeline's run paused. Restricted to `on: SCHEDULE`",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
 			},
 			"ignore_fail_on_project_status": {
-				Description: "If set to true the status of a given pipeline will not impact the project status on the dashboard",
+				Description: "If set to true the status of a given pipeline will be ignored on the projects' dashboard",
 				Type:        schema.TypeBool,
 				Optional:    true,
 				Computed:    true,
 			},
 			"execution_message_template": {
-				Description: "The pipeline's execution title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`",
+				Description: "The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Computed:    true,
@@ -178,12 +178,12 @@ func Pipeline() *schema.Resource {
 				Computed:    true,
 			},
 			"last_execution_status": {
-				Description: "The pipeline's last execution status",
+				Description: "The pipeline's last run status",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"last_execution_revision": {
-				Description: "The pipeline's last execution revision",
+				Description: "The pipeline's last run revision",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

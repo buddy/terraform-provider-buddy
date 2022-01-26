@@ -66,12 +66,12 @@ func Pipeline() *schema.Resource {
 				Computed:    true,
 			},
 			"last_execution_status": {
-				Description: "The pipeline's last execution status",
+				Description: "The pipeline's last run status",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
 			"last_execution_revision": {
-				Description: "The pipeline's last execution revision",
+				Description: "The pipeline's last run revision",
 				Type:        schema.TypeString,
 				Computed:    true,
 			},

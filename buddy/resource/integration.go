@@ -12,7 +12,7 @@ import (
 
 func Integration() *schema.Resource {
 	return &schema.Resource{
-		Description: "Create and manage a workspace integration\n\n" +
+		Description: "Create and manage an integration\n\n" +
 			"Token scopes required: `INTEGRATION_ADD`, `INTEGRATION_MANAGE`, `INTEGRATION_INFO`",
 		CreateContext: createContextIntegration,
 		ReadContext:   readContextIntegration,
@@ -105,17 +105,17 @@ func Integration() *schema.Resource {
 				Computed:    true,
 			},
 			"username": {
-				Description: "The integration's username. Provide for integrations: `UPCLOUD`, `RACKSPACE`, `DOCKER_HUB`",
+				Description: "The integration's username. Provide for: `UPCLOUD`, `RACKSPACE`, `DOCKER_HUB`",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"shop": {
-				Description: "The integration's shop. Provide for integration: `SHOPIFY`",
+				Description: "The integration's shop. Provide for: `SHOPIFY`",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"token": {
-				Description: "The integration's token. Provide for integration: `DIGITAL_OCEAN`, `SHOPIFY`, `RACKSPACE`, `CLOUDFLARE`, " +
+				Description: "The integration's token. Provide for: `DIGITAL_OCEAN`, `SHOPIFY`, `RACKSPACE`, `CLOUDFLARE`, " +
 					"`NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `HONEYBADGER`, `VULTR`, `SENTRY_ENTERPRISE`, " +
 					"`LOGGLY`, `FIREBASE`, `GHOST_INSPECTOR`, `PUSHOVER`",
 				Type:      schema.TypeString,
@@ -123,46 +123,46 @@ func Integration() *schema.Resource {
 				Sensitive: true,
 			},
 			"access_key": {
-				Description: "The integration's access key. Provide for integration: `DO_SPACES`, `AMAZON`, `PUSHOVER`",
+				Description: "The integration's access key. Provide for: `DO_SPACES`, `AMAZON`, `PUSHOVER`",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 			},
 			"secret_key": {
-				Description: "The integration's secret key. Provide for integration: `DO_SPACES`, `AMAZON`",
+				Description: "The integration's secret key. Provide for: `DO_SPACES`, `AMAZON`",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 			},
 			"app_id": {
-				Description: "The integration's application's ID. Provide for integration: `AZURE_CLOUD`",
+				Description: "The integration's application's ID. Provide for: `AZURE_CLOUD`",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"tenant_id": {
-				Description: "The integration's tenant's ID. Provide for integration: `AZURE_CLOUD`",
+				Description: "The integration's tenant's ID. Provide for: `AZURE_CLOUD`",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"password": {
-				Description: "The integration's password. Provide for integration: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`",
+				Description: "The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 			},
 			"api_key": {
-				Description: "The integration's API key. Provide for integration: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`",
+				Description: "The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`",
 				Type:        schema.TypeString,
 				Optional:    true,
 				Sensitive:   true,
 			},
 			"email": {
-				Description: "The integration's email. Provide for integration: `CLOUDFLARE`",
+				Description: "The integration's email. Provide for: `CLOUDFLARE`",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},
 			"role_assumption": {
-				Description: "The integration's AWS role to assume. Provide for integration: `AMAZON`",
+				Description: "The integration's AWS role to assume. Provide for: `AMAZON`",
 				Type:        schema.TypeList,
 				Optional:    true,
 				Elem: &schema.Resource{
