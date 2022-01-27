@@ -74,9 +74,13 @@ func Workspace() *schema.Resource {
 	}
 }
 
-func deleteContextWorkspace(_ context.Context, _ *schema.ResourceData, _ interface{}) diag.Diagnostics {
-	// can't remove
+func deleteContextWorkspace(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c := meta.(*api.Client)
 	var diags diag.Diagnostics
+	_, err := c.WorkspaceService.Delete(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
 	return diags
 }
 

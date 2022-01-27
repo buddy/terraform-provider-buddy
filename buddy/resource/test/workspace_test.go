@@ -21,7 +21,7 @@ func TestAccWorkspace(t *testing.T) {
 			acc.PreCheck(t)
 		},
 		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      acc.DummyCheckDestroy,
+		CheckDestroy:      testAccWorkspaceCheckDestroy,
 		Steps: []resource.TestStep{
 			// create
 			{
@@ -47,6 +47,22 @@ func TestAccWorkspace(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccWorkspaceCheckDestroy(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "buddy_workspace" {
+			continue
+		}
+		workspace, resp, err := acc.ApiClient.WorkspaceService.Get(rs.Primary.ID)
+		if err == nil && workspace != nil {
+			return util.ErrorResourceExists()
+		}
+		if resp.StatusCode != 404 {
+			return err
+		}
+	}
+	return nil
 }
 
 func testAccWorkspaceAttributes(n string, workspace *api.Workspace, domain string, name string) resource.TestCheckFunc {

@@ -36,6 +36,10 @@ func (s *WorkspaceService) Create(opt *WorkspaceOperationOptions) (*Workspace, *
 	return w, resp, err
 }
 
+func (s *WorkspaceService) Delete(domain string) (*http.Response, error) {
+	return s.client.Delete(s.client.NewUrlPath("workspaces/%s", domain))
+}
+
 func (s *WorkspaceService) Update(domain string, opt *WorkspaceOperationOptions) (*Workspace, *http.Response, error) {
 	var w *Workspace
 	resp, err := s.client.Update(s.client.NewUrlPath("/workspaces/%s", domain), &opt, &w)
