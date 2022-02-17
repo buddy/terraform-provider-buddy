@@ -39,10 +39,10 @@ type WebhookRequest struct {
 }
 
 type WebhookOperationOptions struct {
-	Events    []string `json:"events,omitempty"`
-	Projects  []string `json:"projects,omitempty"`
-	TargetUrl *string  `json:"target_url,omitempty"`
-	SecretKey *string  `json:"secret_key,omitempty"`
+	Events    *[]string `json:"events,omitempty"`
+	Projects  *[]string `json:"projects,omitempty"`
+	TargetUrl *string   `json:"target_url,omitempty"`
+	SecretKey *string   `json:"secret_key,omitempty"`
 }
 
 func (s *WebhookService) Create(domain string, opt *WebhookOperationOptions) (*Webhook, *http.Response, error) {

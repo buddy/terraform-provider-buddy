@@ -50,14 +50,15 @@ type Pipeline struct {
 	Paused                    bool                        `json:"paused"`
 	Worker                    string                      `json:"worker"`
 	TargetSiteUrl             string                      `json:"target_site_url"`
+	Tags                      []string                    `json:"tags"`
 	Project                   *Project                    `json:"project"`
 	Creator                   *Member                     `json:"creator"`
 }
 
 type Pipelines struct {
-	Url       string `json:"url"`
-	HtmlUrl   string `json:"html_url"`
-	Pipelines []*Pipeline
+	Url       string      `json:"url"`
+	HtmlUrl   string      `json:"html_url"`
+	Pipelines []*Pipeline `json:"pipelines"`
 }
 
 type PipelineEvent struct {
@@ -82,26 +83,27 @@ type PipelineService struct {
 }
 
 type PipelineOperationOptions struct {
-	Name                      *string                     `json:"name,omitempty"`
-	On                        *string                     `json:"on,omitempty"`
-	Refs                      []string                    `json:"refs,omitempty"`
-	Events                    []*PipelineEvent            `json:"events,omitempty"`
-	TriggerConditions         []*PipelineTriggerCondition `json:"trigger_conditions,omitempty"`
-	AlwaysFromScratch         *bool                       `json:"always_from_scratch,omitempty"`
-	Priority                  *string                     `json:"priority,omitempty"`
-	FailOnPrepareEnvWarning   *bool                       `json:"fail_on_prepare_env_warning,omitempty"`
-	FetchAllRefs              *bool                       `json:"fetch_all_refs,omitempty"`
-	AutoClearCache            *bool                       `json:"auto_clear_cache,omitempty"`
-	NoSkipToMostRecent        *bool                       `json:"no_skip_to_most_recent,omitempty"`
-	DoNotCreateCommitStatus   *bool                       `json:"do_not_create_commit_status,omitempty"`
-	StartDate                 *string                     `json:"start_date,omitempty"`
-	Delay                     *int                        `json:"delay,omitempty"`
-	Cron                      *string                     `json:"cron,omitempty"`
-	Paused                    *bool                       `json:"paused,omitempty"`
-	IgnoreFailOnProjectStatus *bool                       `json:"ignore_fail_on_project_status,omitempty"`
-	ExecutionMessageTemplate  *string                     `json:"execution_message_template,omitempty"`
-	Worker                    *string                     `json:"worker,omitempty"`
-	TargetSiteUrl             *string                     `json:"target_site_url,omitempty"`
+	Name                      *string                      `json:"name,omitempty"`
+	On                        *string                      `json:"on,omitempty"`
+	Refs                      *[]string                    `json:"refs,omitempty"`
+	Tags                      *[]string                    `json:"tags,omitempty"`
+	Events                    *[]*PipelineEvent            `json:"events,omitempty"`
+	TriggerConditions         *[]*PipelineTriggerCondition `json:"trigger_conditions,omitempty"`
+	AlwaysFromScratch         *bool                        `json:"always_from_scratch,omitempty"`
+	Priority                  *string                      `json:"priority,omitempty"`
+	FailOnPrepareEnvWarning   *bool                        `json:"fail_on_prepare_env_warning,omitempty"`
+	FetchAllRefs              *bool                        `json:"fetch_all_refs,omitempty"`
+	AutoClearCache            *bool                        `json:"auto_clear_cache,omitempty"`
+	NoSkipToMostRecent        *bool                        `json:"no_skip_to_most_recent,omitempty"`
+	DoNotCreateCommitStatus   *bool                        `json:"do_not_create_commit_status,omitempty"`
+	StartDate                 *string                      `json:"start_date,omitempty"`
+	Delay                     *int                         `json:"delay,omitempty"`
+	Cron                      *string                      `json:"cron,omitempty"`
+	Paused                    *bool                        `json:"paused,omitempty"`
+	IgnoreFailOnProjectStatus *bool                        `json:"ignore_fail_on_project_status,omitempty"`
+	ExecutionMessageTemplate  *string                      `json:"execution_message_template,omitempty"`
+	Worker                    *string                      `json:"worker,omitempty"`
+	TargetSiteUrl             *string                      `json:"target_site_url,omitempty"`
 }
 
 func (s *PipelineService) Create(domain string, projectName string, opt *PipelineOperationOptions) (*Pipeline, *http.Response, error) {

@@ -79,6 +79,13 @@ func Pipelines() *schema.Resource {
 								Type: schema.TypeString,
 							},
 						},
+						"tags": {
+							Type:     schema.TypeSet,
+							Computed: true,
+							Elem: &schema.Schema{
+								Type: schema.TypeString,
+							},
+						},
 						"event": {
 							Type:     schema.TypeList,
 							Computed: true,

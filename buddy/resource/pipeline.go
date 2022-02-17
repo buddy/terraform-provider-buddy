@@ -266,6 +266,15 @@ func Pipeline() *schema.Resource {
 					"event",
 				},
 			},
+			"tags": {
+				Description: "The pipeline's list of tags. Only for `Buddy Enterprise`",
+				Type:        schema.TypeSet,
+				Optional:    true,
+				Computed:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"event": {
 				Description: "The pipeline's list of events. Set it if `on: EVENT`",
 				Type:        schema.TypeList,
@@ -450,7 +459,10 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 		opt.TargetSiteUrl = util.InterfaceStringToPointer(d.Get("target_site_url"))
 	}
 	if d.HasChange("refs") {
-		opt.Refs = util.InterfaceStringSetToStringSlice(d.Get("refs"))
+		opt.Refs = util.InterfaceStringSetToPointer(d.Get("refs"))
+	}
+	if d.HasChange("tags") {
+		opt.Tags = util.InterfaceStringSetToPointer(d.Get("tags"))
 	}
 	if d.HasChange("event") {
 		opt.Events = util.MapPipelineEventsToApi(d.Get("event"))
@@ -541,7 +553,10 @@ func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 		opt.TargetSiteUrl = util.InterfaceStringToPointer(targetSiteUrl)
 	}
 	if refs, ok := d.GetOk("refs"); ok {
-		opt.Refs = util.InterfaceStringSetToStringSlice(refs)
+		opt.Refs = util.InterfaceStringSetToPointer(refs)
+	}
+	if tags, ok := d.GetOk("tags"); ok {
+		opt.Tags = util.InterfaceStringSetToPointer(tags)
 	}
 	if events, ok := d.GetOk("event"); ok {
 		opt.Events = util.MapPipelineEventsToApi(events)

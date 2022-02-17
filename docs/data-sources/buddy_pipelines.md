@@ -65,6 +65,7 @@ Read-Only:
 - **pipeline_id** (Number)
 - **priority** (String)
 - **refs** (Set of String)
+- **tags** (Set of String)
 
 <a id="nestedobjatt--pipelines--event"></a>
 ### Nested Schema for `pipelines.event`
