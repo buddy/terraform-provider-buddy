@@ -52,6 +52,7 @@ data "buddy_pipeline" "by_id" {
 - **on** (String) The pipeline's trigger mode
 - **priority** (String) The pipeline's priority
 - **refs** (Set of String) The pipeline's list of refs
+- **tags** (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 
 <a id="nestedatt--event"></a>
 ### Nested Schema for `event`

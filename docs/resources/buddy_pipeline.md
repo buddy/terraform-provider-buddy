@@ -52,6 +52,7 @@ resource "buddy_pipeline" "test" {
 - **priority** (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
 - **refs** (Set of String) The pipeline's list of refs. Set it if `on: CLICK`
 - **start_date** (String) The pipeline's start date. Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified. Format: `2016-11-18T12:38:16.000Z`
+- **tags** (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 - **target_site_url** (String) The pipeline's website target URL
 - **trigger_condition** (Block List) The pipeline's list of trigger conditions (see [below for nested schema](#nestedblock--trigger_condition))
 - **worker** (String) The pipeline's worker name. Only for `Buddy Enterprise`

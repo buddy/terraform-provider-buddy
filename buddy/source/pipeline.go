@@ -83,6 +83,14 @@ func Pipeline() *schema.Resource {
 					Type: schema.TypeString,
 				},
 			},
+			"tags": {
+				Description: "The pipeline's list of tags. Only for `Buddy Enterprise`",
+				Type:        schema.TypeSet,
+				Computed:    true,
+				Elem: &schema.Schema{
+					Type: schema.TypeString,
+				},
+			},
 			"event": {
 				Description: "The pipeline's list of events",
 				Type:        schema.TypeList,

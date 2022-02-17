@@ -101,7 +101,7 @@ func updateContextWebhook(ctx context.Context, d *schema.ResourceData, meta inte
 		opt.TargetUrl = util.InterfaceStringToPointer(d.Get("target_url"))
 	}
 	if d.HasChange("events") {
-		opt.Events = util.InterfaceStringSetToStringSlice(d.Get("events"))
+		opt.Events = util.InterfaceStringSetToPointer(d.Get("events"))
 	}
 	if d.HasChange("secret_key") {
 		opt.SecretKey = util.InterfaceStringToPointer(d.Get("secret_key"))
@@ -165,13 +165,13 @@ func createContextWebhook(ctx context.Context, d *schema.ResourceData, meta inte
 	domain := d.Get("domain").(string)
 	opt := api.WebhookOperationOptions{
 		TargetUrl: util.InterfaceStringToPointer(d.Get("target_url")),
-		Events:    util.InterfaceStringSetToStringSlice(d.Get("events")),
+		Events:    util.InterfaceStringSetToPointer(d.Get("events")),
 	}
 	if secretKey, ok := d.GetOk("secret_key"); ok {
 		opt.SecretKey = util.InterfaceStringToPointer(secretKey)
 	}
 	if projects, ok := d.GetOk("projects"); ok {
-		opt.Projects = util.InterfaceStringSetToStringSlice(projects)
+		opt.Projects = util.InterfaceStringSetToPointer(projects)
 	}
 	webhook, _, err := c.WebhookService.Create(domain, &opt)
 	if err != nil {

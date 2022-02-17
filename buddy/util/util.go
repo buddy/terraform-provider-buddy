@@ -163,7 +163,7 @@ func StringToPointer(p string) *string {
 }
 
 func StringSetToStringSlice(stringSet *schema.Set) []string {
-	var ret []string
+	ret := make([]string, 0)
 	if stringSet == nil {
 		return ret
 	}
@@ -179,6 +179,11 @@ func InterfaceStringToPointer(i interface{}) *string {
 
 func InterfaceStringSetToStringSlice(i interface{}) []string {
 	return StringSetToStringSlice(i.(*schema.Set))
+}
+
+func InterfaceStringSetToPointer(i interface{}) *[]string {
+	a := StringSetToStringSlice(i.(*schema.Set))
+	return &a
 }
 
 func InterfaceIntToPointer(i interface{}) *int {
@@ -283,7 +288,7 @@ func ValidateEmail(v interface{}, _ string) (we []string, err []error) {
 	return
 }
 
-func MapTriggerConditionsToApi(l interface{}) []*api.PipelineTriggerCondition {
+func MapTriggerConditionsToApi(l interface{}) *[]*api.PipelineTriggerCondition {
 	var expanded []*api.PipelineTriggerCondition
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
@@ -316,10 +321,10 @@ func MapTriggerConditionsToApi(l interface{}) []*api.PipelineTriggerCondition {
 		}
 		expanded = append(expanded, &c)
 	}
-	return expanded
+	return &expanded
 }
 
-func MapPipelineEventsToApi(l interface{}) []*api.PipelineEvent {
+func MapPipelineEventsToApi(l interface{}) *[]*api.PipelineEvent {
 	var expanded []*api.PipelineEvent
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
@@ -329,7 +334,7 @@ func MapPipelineEventsToApi(l interface{}) []*api.PipelineEvent {
 		}
 		expanded = append(expanded, &e)
 	}
-	return expanded
+	return &expanded
 }
 
 func ApiShortIntegrationToMap(i *api.Integration) map[string]interface{} {
@@ -509,6 +514,10 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.
 	if err != nil {
 		return err
 	}
+	err = d.Set("tags", pipeline.Tags)
+	if err != nil {
+		return err
+	}
 	return d.Set("event", ApiPipelineEventsToMap(pipeline.Events))
 }
 
@@ -547,7 +556,7 @@ func ApiIntegrationToResourceData(domain string, i *api.Integration, d *schema.R
 	return d.Set("html_url", i.HtmlUrl)
 }
 
-func MapRoleAssumptionsToApi(l interface{}) []*api.RoleAssumption {
+func MapRoleAssumptionsToApi(l interface{}) *[]*api.RoleAssumption {
 	var expanded []*api.RoleAssumption
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
@@ -562,7 +571,7 @@ func MapRoleAssumptionsToApi(l interface{}) []*api.RoleAssumption {
 		}
 		expanded = append(expanded, &r)
 	}
-	return expanded
+	return &expanded
 }
 
 func ApiShortGroupToMap(g *api.Group) map[string]interface{} {
@@ -689,6 +698,7 @@ func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
 	pipeline["last_execution_status"] = p.LastExecutionStatus
 	pipeline["last_execution_revision"] = p.LastExecutionRevision
 	pipeline["refs"] = p.Refs
+	pipeline["tags"] = p.Tags
 	pipeline["event"] = ApiPipelineEventsToMap(p.Events)
 	return pipeline
 }
