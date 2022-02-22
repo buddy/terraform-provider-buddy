@@ -25,17 +25,41 @@ resource "buddy_pipeline" "click" {
   always_from_scratch = true
 }
 
-resource "buddy_pipeline" "event" {
+resource "buddy_pipeline" "event_push" {
   domain         = "mydomain"
   project_name   = "myproject"
-  name           = "event"
+  name           = "event_push"
   on             = "EVENT"
   priority       = "HIGH"
   fetch_all_refs = true
 
   event {
     type = "PUSH"
-    refs = ["master"]
+    refs = ["refs/heads/master"]
+  }
+}
+
+resource "buddy_pipeline" "event_create_ref" {
+  domain         = "mydomain"
+  project_name   = "myproject"
+  name           = "event_create_ref"
+  on             = "EVENT"
+
+  event {
+    type = "CREATE_REF"
+    refs = ["refs/heads/*"]
+  }
+}
+
+resource "buddy_pipeline" "event_delete_ref" {
+  domain         = "mydomain"
+  project_name   = "myproject"
+  name           = "event_delete_ref"
+  on             = "EVENT"
+
+  event {
+    type = "DELETE_REF"
+    refs = ["refs/heads/*"]
   }
 }
 

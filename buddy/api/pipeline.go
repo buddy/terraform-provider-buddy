@@ -7,7 +7,9 @@ const (
 	PipelineOnEvent    = "EVENT"
 	PipelineOnSchedule = "SCHEDULE"
 
-	PipelineEventTypePush = "PUSH"
+	PipelineEventTypePush      = "PUSH"
+	PipelineEventTypeCreateRef = "CREATE_REF"
+	PipelineEventTypeDeleteRef = "DELETE_REF"
 
 	PipelineTriggerConditionOnChange        = "ON_CHANGE"
 	PipelineTriggerConditionOnChangeAtPath  = "ON_CHANGE_AT_PATH"

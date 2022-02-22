@@ -246,6 +246,8 @@ func TestAccPipeline_event(t *testing.T) {
 	newTcDays := 3
 	tcZoneId := "America/Monterrey"
 	newTcZoneId := "Europe/Amsterdam"
+	eventType := api.PipelineEventTypePush
+	newEventType := api.PipelineEventTypeCreateRef
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -255,7 +257,7 @@ func TestAccPipeline_event(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigEvent(domain, projectName, name, ref, tcChangePath, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId),
+				Config: testAccPipelineConfigEvent(domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -269,7 +271,7 @@ func TestAccPipeline_event(t *testing.T) {
 						FetchAllRefs:            true,
 						Priority:                api.PipelinePriorityNormal,
 						Event: &api.PipelineEvent{
-							Type: api.PipelineEventTypePush,
+							Type: eventType,
 							Refs: []string{ref},
 						},
 						TriggerConditions: []*api.PipelineTriggerCondition{
@@ -312,7 +314,7 @@ func TestAccPipeline_event(t *testing.T) {
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigEvent(domain, projectName, newName, newRef, newTcChangePath, newTcVarKey, newTcVarValue, newTcHours, newTcDays, newTcZoneId),
+				Config: testAccPipelineConfigEvent(domain, projectName, newName, newEventType, newRef, newTcChangePath, newTcVarKey, newTcVarValue, newTcHours, newTcDays, newTcZoneId),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -326,7 +328,7 @@ func TestAccPipeline_event(t *testing.T) {
 						FetchAllRefs:            true,
 						Priority:                api.PipelinePriorityNormal,
 						Event: &api.PipelineEvent{
-							Type: api.PipelineEventTypePush,
+							Type: newEventType,
 							Refs: []string{newRef},
 						},
 						TriggerConditions: []*api.PipelineTriggerCondition{
@@ -775,7 +777,7 @@ func testAccPipelineGet(n string, pipeline *api.Pipeline) resource.TestCheckFunc
 	}
 }
 
-func testAccPipelineConfigEvent(domain string, projectName string, name string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string) string {
+func testAccPipelineConfigEvent(domain string, projectName string, name string, eventType string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -790,7 +792,7 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "EVENT" 
+    on = "%s" 
     event {
         type = "PUSH"
         refs = ["%s"]
@@ -829,7 +831,7 @@ resource "buddy_pipeline" "bar" {
         zone_id = "%s"
     }
 }
-`, domain, projectName, name, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
+`, domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
 }
 
 func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string) string {
