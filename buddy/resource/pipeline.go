@@ -309,6 +309,8 @@ func Pipeline() *schema.Resource {
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
 								api.PipelineEventTypePush,
+								api.PipelineEventTypeCreateRef,
+								api.PipelineEventTypeDeleteRef,
 							}, false),
 						},
 						"refs": {
