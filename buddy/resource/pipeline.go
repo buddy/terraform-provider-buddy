@@ -9,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"net/http"
 	"strconv"
+	"strings"
 )
 
 func Pipeline() *schema.Resource {
@@ -271,6 +272,27 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeSet,
 				Optional:    true,
 				Computed:    true,
+				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
+					oldVal, newVal := d.GetChange("tags")
+					oldTags := *util.InterfaceStringSetToPointer(oldVal)
+					newTags := *util.InterfaceStringSetToPointer(newVal)
+					if len(oldTags) != len(newTags) {
+						return false
+					}
+					for _, oldTag := range oldTags {
+						found := false
+						for _, newTag := range newTags {
+							if strings.EqualFold(oldTag, newTag) {
+								found = true
+								break
+							}
+						}
+						if !found {
+							return false
+						}
+					}
+					return true
+				},
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
