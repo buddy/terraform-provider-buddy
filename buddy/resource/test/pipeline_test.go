@@ -792,9 +792,9 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "%s" 
+    on = "EVENT" 
     event {
-        type = "PUSH"
+        type = "%s"
         refs = ["%s"]
     }
     trigger_condition {
