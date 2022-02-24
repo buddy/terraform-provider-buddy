@@ -41,7 +41,8 @@ type Client struct {
 
 	baseUrl *url.URL
 
-	limiters sync.Map
+	mu      sync.Mutex
+	limiter *rate.Limiter
 
 	token string
 
@@ -75,17 +76,23 @@ func (c *Client) setBaseUrl(urlStr string) error {
 	return nil
 }
 
-func (c *Client) GetLimiter(u *UrlPath) *rate.Limiter {
-	v, ok := c.limiters.Load(u.Path)
-	if !ok || v == nil {
-		r := rate.NewLimiter(rate.Every(time.Second), 1000)
-		c.limiters.Store(u.Path, r)
-		return r
+func (c *Client) getLimiter() *rate.Limiter {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	if c.limiter == nil {
+		c.limiter = rate.NewLimiter(rate.Every(time.Second), 1000)
 	}
-	return v.(*rate.Limiter)
+	return c.limiter
 }
 
-func (c *Client) syncLimiter(u *UrlPath, r *http.Response) {
+func (c *Client) setLimiter(r rate.Limit, b int) {
+	c.mu.Lock()
+	defer c.mu.Unlock()
+	c.limiter.SetLimit(r)
+	c.limiter.SetBurst(b)
+}
+
+func (c *Client) syncLimiter(r *http.Response) {
 	headerReset := r.Header.Get(headerRateReset)
 	headerRemaining := r.Header.Get(headerRateRemainig)
 	if headerReset != "" && headerRemaining != "" {
@@ -103,9 +110,7 @@ func (c *Client) syncLimiter(u *UrlPath, r *http.Response) {
 				b = remaining - 100
 				r = rate.Limit(1)
 			}
-			limiter := c.GetLimiter(u)
-			limiter.SetBurst(b)
-			limiter.SetLimit(r)
+			c.setLimiter(r, b)
 		}
 	}
 }
@@ -213,7 +218,7 @@ func (c *Client) Create(url *UrlPath, postBody interface{}, respBody interface{}
 	if err != nil {
 		return nil, err
 	}
-	return c.Do(url, req, &respBody)
+	return c.Do(req, &respBody)
 }
 
 func (c *Client) Get(url *UrlPath, respBody interface{}, query interface{}) (*http.Response, error) {
@@ -221,7 +226,7 @@ func (c *Client) Get(url *UrlPath, respBody interface{}, query interface{}) (*ht
 	if err != nil {
 		return nil, err
 	}
-	return c.Do(url, req, &respBody)
+	return c.Do(req, &respBody)
 }
 
 func (c *Client) Update(url *UrlPath, postBody interface{}, respBody interface{}) (*http.Response, error) {
@@ -229,7 +234,7 @@ func (c *Client) Update(url *UrlPath, postBody interface{}, respBody interface{}
 	if err != nil {
 		return nil, err
 	}
-	return c.Do(url, req, &respBody)
+	return c.Do(req, &respBody)
 }
 
 func (c *Client) Delete(url *UrlPath) (*http.Response, error) {
@@ -237,7 +242,7 @@ func (c *Client) Delete(url *UrlPath) (*http.Response, error) {
 	if err != nil {
 		return nil, err
 	}
-	resp, err := c.Do(url, req, nil)
+	resp, err := c.Do(req, nil)
 	if err != nil {
 		return resp, err
 	}
@@ -298,8 +303,8 @@ func (c *Client) NewRequest(method, path string, opt interface{}) (*retryablehtt
 	return req, nil
 }
 
-func (c *Client) Do(url *UrlPath, req *retryablehttp.Request, v interface{}) (*http.Response, error) {
-	err := c.GetLimiter(url).Wait(req.Context())
+func (c *Client) Do(req *retryablehttp.Request, v interface{}) (*http.Response, error) {
+	err := c.getLimiter().Wait(req.Context())
 	if err != nil {
 		return nil, err
 	}
@@ -310,7 +315,7 @@ func (c *Client) Do(url *UrlPath, req *retryablehttp.Request, v interface{}) (*h
 	defer func(Body io.ReadCloser) {
 		_ = Body.Close()
 	}(res.Body)
-	c.syncLimiter(url, res)
+	c.syncLimiter(res)
 	err = CheckResponse(req, res)
 	if err != nil {
 		return res, err
