@@ -197,6 +197,8 @@ resource "buddy_pipeline" "bar" {
     on = "SCHEDULE"
 	cron = "%s"
 	paused = %t
+	fail_on_prepare_env_warning = true
+	fetch_all_refs = true
 }
 `, domain, projectName, name, cron, paused)
 }
