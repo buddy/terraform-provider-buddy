@@ -272,8 +272,8 @@ func TestAccPipeline_event(t *testing.T) {
 						On:                      api.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
-						FailOnPrepareEnvWarning: true,
-						FetchAllRefs:            true,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
 						Priority:                api.PipelinePriorityNormal,
 						Event: &api.PipelineEvent{
 							Type: eventType,
@@ -329,8 +329,8 @@ func TestAccPipeline_event(t *testing.T) {
 						On:                      api.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
-						FailOnPrepareEnvWarning: true,
-						FetchAllRefs:            true,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
 						Priority:                api.PipelinePriorityNormal,
 						Event: &api.PipelineEvent{
 							Type: newEventType,
