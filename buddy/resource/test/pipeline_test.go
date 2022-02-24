@@ -221,6 +221,8 @@ resource "buddy_pipeline" "bar" {
 	delay = %d
 	paused = %t
 	priority = "%s"
+	fail_on_prepare_env_warning = true
+	fetch_all_refs = true
 }
 `, domain, projectName, name, startDate, delay, paused, priority)
 }
