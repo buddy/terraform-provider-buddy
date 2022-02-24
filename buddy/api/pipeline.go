@@ -23,6 +23,9 @@ const (
 	PipelinePriorityHigh   = "HIGH"
 	PipelinePriorityNormal = "NORMAL"
 	PipelinePriorityLow    = "LOW"
+
+	PipelineDefinitionSourceLocal  = "LOCAL"
+	PipelineDefinitionSourceRemote = "REMOTE"
 )
 
 type Pipeline struct {
@@ -56,12 +59,22 @@ type Pipeline struct {
 	Tags                      []string                    `json:"tags"`
 	Project                   *Project                    `json:"project"`
 	Creator                   *Member                     `json:"creator"`
+	DefinitionSource          string                      `json:"definition_source"`
+	RemotePath                string                      `json:"remote_path"`
+	RemoteBranch              string                      `json:"remote_branch"`
+	RemoteProjectName         string                      `json:"remote_project_name"`
+	RemoteParameters          []*PipelineRemoteParameter  `json:"remote_parameters"`
 }
 
 type Pipelines struct {
 	Url       string      `json:"url"`
 	HtmlUrl   string      `json:"html_url"`
 	Pipelines []*Pipeline `json:"pipelines"`
+}
+
+type PipelineRemoteParameter struct {
+	Key   string `json:"key"`
+	Value string `json:"value"`
 }
 
 type PipelineEvent struct {
@@ -108,6 +121,11 @@ type PipelineOperationOptions struct {
 	ExecutionMessageTemplate  *string                      `json:"execution_message_template,omitempty"`
 	Worker                    *string                      `json:"worker,omitempty"`
 	TargetSiteUrl             *string                      `json:"target_site_url,omitempty"`
+	DefinitionSource          *string                      `json:"definition_source,omitempty"`
+	RemotePath                *string                      `json:"remote_path,omitempty"`
+	RemoteBranch              *string                      `json:"remote_branch,omitempty"`
+	RemoteProjectName         *string                      `json:"remote_project_name,omitempty"`
+	RemoteParameters          *[]*PipelineRemoteParameter  `json:"remote_parameters,omitempty"`
 }
 
 func (s *PipelineService) Create(domain string, projectName string, opt *PipelineOperationOptions) (*Pipeline, *http.Response, error) {

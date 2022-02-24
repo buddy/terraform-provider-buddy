@@ -337,6 +337,19 @@ func MapPipelineEventsToApi(l interface{}) *[]*api.PipelineEvent {
 	return &expanded
 }
 
+func MapPipelineRemoteParametersToApi(l interface{}) *[]*api.PipelineRemoteParameter {
+	var expanded []*api.PipelineRemoteParameter
+	for _, v := range l.([]interface{}) {
+		m := v.(map[string]interface{})
+		e := api.PipelineRemoteParameter{
+			Key:   m["key"].(string),
+			Value: m["value"].(string),
+		}
+		expanded = append(expanded, &e)
+	}
+	return &expanded
+}
+
 func ApiShortIntegrationToMap(i *api.Integration) map[string]interface{} {
 	if i == nil {
 		return nil
@@ -377,6 +390,16 @@ func ApiPipelineTriggerConditionsToMap(l []*api.PipelineTriggerCondition) []inte
 	return list
 }
 
+func ApiPipelineRemoteParameterToMap(e *api.PipelineRemoteParameter) map[string]interface{} {
+	if e == nil {
+		return nil
+	}
+	param := map[string]interface{}{}
+	param["key"] = e.Key
+	param["value"] = e.Value
+	return param
+}
+
 func ApiPipelineEventToMap(e *api.PipelineEvent) map[string]interface{} {
 	if e == nil {
 		return nil
@@ -394,6 +417,17 @@ func ApiPipelineEventsToMap(l []*api.PipelineEvent) []interface{} {
 	var list []interface{}
 	for _, e := range l {
 		list = append(list, ApiPipelineEventToMap(e))
+	}
+	return list
+}
+
+func ApiPipelineRemoteParametersToMap(l []*api.PipelineRemoteParameter) []interface{} {
+	if l == nil {
+		return nil
+	}
+	var list []interface{}
+	for _, e := range l {
+		list = append(list, ApiPipelineRemoteParameterToMap(e))
 	}
 	return list
 }
@@ -519,6 +553,30 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.
 		return err
 	}
 	err = d.Set("tags", pipeline.Tags)
+	if err != nil {
+		return err
+	}
+	definitionSource := pipeline.DefinitionSource
+	if definitionSource == "" {
+		definitionSource = api.PipelineDefinitionSourceLocal
+	}
+	err = d.Set("definition_source", definitionSource)
+	if err != nil {
+		return err
+	}
+	err = d.Set("remote_path", pipeline.RemotePath)
+	if err != nil {
+		return err
+	}
+	err = d.Set("remote_branch", pipeline.RemoteBranch)
+	if err != nil {
+		return err
+	}
+	err = d.Set("remote_project_name", pipeline.RemoteProjectName)
+	if err != nil {
+		return err
+	}
+	err = d.Set("remote_parameter", ApiPipelineRemoteParametersToMap(pipeline.RemoteParameters))
 	if err != nil {
 		return err
 	}

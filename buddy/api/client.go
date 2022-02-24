@@ -60,6 +60,7 @@ type Client struct {
 	VariableService      *VariableService
 	IntegrationService   *IntegrationService
 	PipelineService      *PipelineService
+	SourceService        *SourceService
 }
 
 type QueryPage struct {
@@ -210,6 +211,7 @@ func NewClient(token string, baseUrl string, insecure bool) (*Client, error) {
 	c.VariableService = &VariableService{client: c}
 	c.IntegrationService = &IntegrationService{client: c}
 	c.PipelineService = &PipelineService{client: c}
+	c.SourceService = &SourceService{client: c}
 	return c, nil
 }
 

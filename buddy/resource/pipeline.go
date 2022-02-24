@@ -57,10 +57,57 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
-			"on": {
-				Description: "The pipeline's trigger mode. Allowed: `CLICK`, `EVENT`, `SCHEDULE`",
+			"definition_source": {
+				Description: "The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`",
 				Type:        schema.TypeString,
-				Required:    true,
+				Optional:    true,
+				Computed:    true,
+				ValidateFunc: validation.StringInSlice([]string{
+					api.PipelineDefinitionSourceLocal,
+					api.PipelineDefinitionSourceRemote,
+				}, false),
+			},
+			"remote_project_name": {
+				Description: "The pipeline's remote definition project name. Set it if `definition_source: REMOTE`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+			"remote_branch": {
+				Description: "The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+			"remote_path": {
+				Description: "The pipeline's remote definition path. Set it if `definition_source: REMOTE`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+			"remote_parameter": {
+				Description: "The pipeline's remote definition parameters. Set it if `definition_source: REMOTE`",
+				Type:        schema.TypeList,
+				Optional:    true,
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Required: true,
+						},
+					},
+				},
+			},
+			"on": {
+				Description: "The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
 				ValidateFunc: validation.StringInSlice([]string{
 					api.PipelineOnClick,
 					api.PipelineOnEvent,
@@ -441,7 +488,9 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	opt := api.PipelineOperationOptions{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
-		On:   util.InterfaceStringToPointer(d.Get("on")),
+	}
+	if d.HasChange("on") {
+		opt.On = util.InterfaceStringToPointer(d.Get("on"))
 	}
 	if d.HasChange("always_from_scratch") {
 		opt.AlwaysFromScratch = util.InterfaceBoolToPointer(d.Get("always_from_scratch"))
@@ -503,6 +552,21 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	if d.HasChange("trigger_condition") {
 		opt.TriggerConditions = util.MapTriggerConditionsToApi(d.Get("trigger_condition"))
 	}
+	if d.HasChange("definition_source") {
+		opt.DefinitionSource = util.InterfaceStringToPointer(d.Get("definition_source"))
+	}
+	if d.HasChange("remote_path") {
+		opt.RemotePath = util.InterfaceStringToPointer(d.Get("remote_path"))
+	}
+	if d.HasChange("remote_branch") {
+		opt.RemoteBranch = util.InterfaceStringToPointer(d.Get("remote_branch"))
+	}
+	if d.HasChange("remote_project_name") {
+		opt.RemoteProjectName = util.InterfaceStringToPointer(d.Get("remote_project_name"))
+	}
+	if d.HasChange("remote_parameter") {
+		opt.RemoteParameters = util.MapPipelineRemoteParametersToApi(d.Get("remote_parameter"))
+	}
 	_, _, err = c.PipelineService.Update(domain, projectName, pipelineId, &opt)
 	if err != nil {
 		return diag.FromErr(err)
@@ -542,9 +606,11 @@ func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	projectName := d.Get("project_name").(string)
 	opt := api.PipelineOperationOptions{
 		Name:                    util.InterfaceStringToPointer(d.Get("name")),
-		On:                      util.InterfaceStringToPointer(d.Get("on")),
 		FailOnPrepareEnvWarning: util.InterfaceBoolToPointer(d.Get("fail_on_prepare_env_warning")),
 		FetchAllRefs:            util.InterfaceBoolToPointer(d.Get("fetch_all_refs")),
+	}
+	if on, ok := d.GetOk("on"); ok {
+		opt.On = util.InterfaceStringToPointer(on)
 	}
 	if alwaysFromScratch, ok := d.GetOk("always_from_scratch"); ok {
 		opt.AlwaysFromScratch = util.InterfaceBoolToPointer(alwaysFromScratch)
@@ -596,6 +662,21 @@ func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	if events, ok := d.GetOk("event"); ok {
 		opt.Events = util.MapPipelineEventsToApi(events)
+	}
+	if definitionSource, ok := d.GetOk("definition_source"); ok {
+		opt.DefinitionSource = util.InterfaceStringToPointer(definitionSource)
+	}
+	if remotePath, ok := d.GetOk("remote_path"); ok {
+		opt.RemotePath = util.InterfaceStringToPointer(remotePath)
+	}
+	if remoteBranch, ok := d.GetOk("remote_branch"); ok {
+		opt.RemoteBranch = util.InterfaceStringToPointer(remoteBranch)
+	}
+	if remoteProjectName, ok := d.GetOk("remote_project_name"); ok {
+		opt.RemoteProjectName = util.InterfaceStringToPointer(remoteProjectName)
+	}
+	if remoteParameter, ok := d.GetOk("remote_parameter"); ok {
+		opt.RemoteParameters = util.MapPipelineRemoteParametersToApi(remoteParameter)
 	}
 	if triggerCondition, ok := d.GetOk("trigger_condition"); ok {
 		opt.TriggerConditions = util.MapTriggerConditionsToApi(triggerCondition)
