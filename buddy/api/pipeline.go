@@ -48,6 +48,7 @@ type Pipeline struct {
 	IgnoreFailOnProjectStatus bool                        `json:"ignore_fail_on_project_status"`
 	StartDate                 string                      `json:"start_date"`
 	Delay                     int                         `json:"delay"`
+	CloneDepth                int                         `json:"clone_depth"`
 	Cron                      string                      `json:"cron"`
 	Paused                    bool                        `json:"paused"`
 	Worker                    string                      `json:"worker"`
@@ -100,6 +101,7 @@ type PipelineOperationOptions struct {
 	DoNotCreateCommitStatus   *bool                        `json:"do_not_create_commit_status,omitempty"`
 	StartDate                 *string                      `json:"start_date,omitempty"`
 	Delay                     *int                         `json:"delay,omitempty"`
+	CloneDepth                *int                         `json:"clone_depth,omitempty"`
 	Cron                      *string                      `json:"cron,omitempty"`
 	Paused                    *bool                        `json:"paused,omitempty"`
 	IgnoreFailOnProjectStatus *bool                        `json:"ignore_fail_on_project_status,omitempty"`

@@ -140,13 +140,14 @@ resource "buddy_pipeline" "conditions" {
 
 - **always_from_scratch** (Boolean) Defines whether or not to upload everything from scratch on every run
 - **auto_clear_cache** (Boolean) Defines whether or not to automatically clear cache before running the pipeline
+- **clone_depth** (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits
 - **cron** (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
 - **delay** (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
 - **do_not_create_commit_status** (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
 - **event** (Block List) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
 - **execution_message_template** (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
-- **fail_on_prepare_env_warning** (Boolean) Defines either or not run should fail if any warning occurs in prepare environment. Default: `true`
-- **fetch_all_refs** (Boolean) Defines either or not fetch all refs from repository. Default: `true`
+- **fail_on_prepare_env_warning** (Boolean) Defines either or not run should fail if any warning occurs in prepare environment
+- **fetch_all_refs** (Boolean) Defines either or not fetch all refs from repository
 - **ignore_fail_on_project_status** (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - **no_skip_to_most_recent** (Boolean) Defines whether or not to skip run to the most recent run
 - **paused** (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
