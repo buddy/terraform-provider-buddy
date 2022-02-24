@@ -441,6 +441,10 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.
 		if err != nil {
 			return err
 		}
+		err = d.Set("clone_depth", pipeline.CloneDepth)
+		if err != nil {
+			return err
+		}
 		err = d.Set("cron", pipeline.Cron)
 		if err != nil {
 			return err

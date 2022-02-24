@@ -79,10 +79,10 @@ func Pipeline() *schema.Resource {
 				}, false),
 			},
 			"fetch_all_refs": {
-				Description: "Defines either or not fetch all refs from repository. Default: `true`",
+				Description: "Defines either or not fetch all refs from repository",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
+				Computed:    true,
 			},
 			"always_from_scratch": {
 				Description: "Defines whether or not to upload everything from scratch on every run",
@@ -91,10 +91,10 @@ func Pipeline() *schema.Resource {
 				Computed:    true,
 			},
 			"fail_on_prepare_env_warning": {
-				Description: "Defines either or not run should fail if any warning occurs in prepare environment. Default: `true`",
+				Description: "Defines either or not run should fail if any warning occurs in prepare environment",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Default:     true,
+				Computed:    true,
 			},
 			"auto_clear_cache": {
 				Description: "Defines whether or not to automatically clear cache before running the pipeline",
@@ -137,6 +137,12 @@ func Pipeline() *schema.Resource {
 				RequiredWith: []string{
 					"start_date",
 				},
+			},
+			"clone_depth": {
+				Description: "The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
 			},
 			"cron": {
 				Description: "The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified",
@@ -464,6 +470,9 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	if d.HasChange("delay") {
 		opt.Delay = util.InterfaceIntToPointer(d.Get("delay"))
 	}
+	if d.HasChange("clone_depth") {
+		opt.CloneDepth = util.InterfaceIntToPointer(d.Get("clone_depth"))
+	}
 	if d.HasChange("cron") {
 		opt.Cron = util.InterfaceStringToPointer(d.Get("cron"))
 	}
@@ -557,6 +566,9 @@ func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	if delay, ok := d.GetOk("delay"); ok {
 		opt.Delay = util.InterfaceIntToPointer(delay)
+	}
+	if cloneDepth, ok := d.GetOk("clone_depth"); ok {
+		opt.CloneDepth = util.InterfaceIntToPointer(cloneDepth)
 	}
 	if cron, ok := d.GetOk("cron"); ok {
 		opt.Cron = util.InterfaceStringToPointer(cron)
