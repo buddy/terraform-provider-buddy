@@ -61,7 +61,8 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
+				ForceNew:    true,
+				Default:     api.PipelineDefinitionSourceLocal,
 				ValidateFunc: validation.StringInSlice([]string{
 					api.PipelineDefinitionSourceLocal,
 					api.PipelineDefinitionSourceRemote,
@@ -144,7 +145,6 @@ func Pipeline() *schema.Resource {
 				Description: "Defines whether or not to skip run to the most recent run",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"do_not_create_commit_status": {
 				Description: "Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution",
