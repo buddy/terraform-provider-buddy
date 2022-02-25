@@ -40,10 +40,10 @@ resource "buddy_pipeline" "event_push" {
 }
 
 resource "buddy_pipeline" "event_create_ref" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "event_create_ref"
-  on             = "EVENT"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "event_create_ref"
+  on           = "EVENT"
 
   event {
     type = "CREATE_REF"
@@ -52,10 +52,10 @@ resource "buddy_pipeline" "event_create_ref" {
 }
 
 resource "buddy_pipeline" "event_delete_ref" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "event_delete_ref"
-  on             = "EVENT"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "event_delete_ref"
+  on           = "EVENT"
 
   event {
     type = "DELETE_REF"
@@ -81,6 +81,21 @@ resource "buddy_pipeline" "schedule_cron" {
   name         = "schedule_cron"
   on           = "SCHEDULE"
   cron         = "15 14 1 * *"
+}
+
+resource "buddy_pipeline" "remote" {
+  domain              = "mydomain"
+  project_name        = "myproject"
+  name                = "remote_pipeline"
+  definition_source   = "REMOTE"
+  remote_project_name = "remote_project"
+  remote_branch       = "remote_branch"
+  remote_path         = "remote.yml"
+
+  remote_parameter {
+    key   = "myparam"
+    value = "val"
+  }
 }
 
 resource "buddy_pipeline" "conditions" {
@@ -133,7 +148,6 @@ resource "buddy_pipeline" "conditions" {
 
 - **domain** (String) The workspace's URL handle
 - **name** (String) The pipeline's name
-- **on** (String) The pipeline's trigger mode. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
 - **project_name** (String) The project's name
 
 ### Optional
@@ -142,6 +156,7 @@ resource "buddy_pipeline" "conditions" {
 - **auto_clear_cache** (Boolean) Defines whether or not to automatically clear cache before running the pipeline
 - **clone_depth** (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits
 - **cron** (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
+- **definition_source** (String) The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`
 - **delay** (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
 - **do_not_create_commit_status** (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
 - **event** (Block List) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
@@ -150,9 +165,14 @@ resource "buddy_pipeline" "conditions" {
 - **fetch_all_refs** (Boolean) Defines either or not fetch all refs from repository
 - **ignore_fail_on_project_status** (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - **no_skip_to_most_recent** (Boolean) Defines whether or not to skip run to the most recent run
+- **on** (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
 - **paused** (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
 - **priority** (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
 - **refs** (Set of String) The pipeline's list of refs. Set it if `on: CLICK`
+- **remote_branch** (String) The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`
+- **remote_parameter** (Block List) The pipeline's remote definition parameters. Set it if `definition_source: REMOTE` (see [below for nested schema](#nestedblock--remote_parameter))
+- **remote_path** (String) The pipeline's remote definition path. Set it if `definition_source: REMOTE`
+- **remote_project_name** (String) The pipeline's remote definition project name. Set it if `definition_source: REMOTE`
 - **start_date** (String) The pipeline's start date. Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified. Format: `2016-11-18T12:38:16.000Z`
 - **tags** (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 - **target_site_url** (String) The pipeline's website target URL
@@ -177,6 +197,15 @@ Required:
 
 - **refs** (Set of String)
 - **type** (String)
+
+
+<a id="nestedblock--remote_parameter"></a>
+### Nested Schema for `remote_parameter`
+
+Required:
+
+- **key** (String)
+- **value** (String)
 
 
 <a id="nestedblock--trigger_condition"></a>
