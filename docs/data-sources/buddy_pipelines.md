@@ -56,6 +56,7 @@ data "buddy_pipelines" "with_name_ended" {
 
 Read-Only:
 
+- **definition_source** (String)
 - **event** (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--event))
 - **html_url** (String)
 - **last_execution_revision** (String)
@@ -65,6 +66,10 @@ Read-Only:
 - **pipeline_id** (Number)
 - **priority** (String)
 - **refs** (Set of String)
+- **remote_branch** (String)
+- **remote_parameter** (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--remote_parameter))
+- **remote_path** (String)
+- **remote_project_name** (String)
 - **tags** (Set of String)
 
 <a id="nestedobjatt--pipelines--event"></a>
@@ -74,5 +79,14 @@ Read-Only:
 
 - **refs** (Set of String)
 - **type** (String)
+
+
+<a id="nestedobjatt--pipelines--remote_parameter"></a>
+### Nested Schema for `pipelines.remote_parameter`
+
+Read-Only:
+
+- **key** (String)
+- **value** (String)
 
 

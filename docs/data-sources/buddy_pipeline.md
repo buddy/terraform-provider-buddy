@@ -44,6 +44,7 @@ data "buddy_pipeline" "by_id" {
 
 ### Read-Only
 
+- **definition_source** (String) The pipeline's definition source
 - **event** (List of Object) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
 - **html_url** (String) The pipeline's URL
 - **id** (String) The Terraform resource identifier for this item
@@ -52,6 +53,10 @@ data "buddy_pipeline" "by_id" {
 - **on** (String) The pipeline's trigger mode
 - **priority** (String) The pipeline's priority
 - **refs** (Set of String) The pipeline's list of refs
+- **remote_branch** (String) The pipeline's remote definition branch name
+- **remote_parameter** (List of Object) The pipeline's remote definition parameters (see [below for nested schema](#nestedatt--remote_parameter))
+- **remote_path** (String) The pipeline's remote definition path
+- **remote_project_name** (String) The pipeline's remote definition project name
 - **tags** (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 
 <a id="nestedatt--event"></a>
@@ -61,5 +66,14 @@ Read-Only:
 
 - **refs** (Set of String)
 - **type** (String)
+
+
+<a id="nestedatt--remote_parameter"></a>
+### Nested Schema for `remote_parameter`
+
+Read-Only:
+
+- **key** (String)
+- **value** (String)
 
 

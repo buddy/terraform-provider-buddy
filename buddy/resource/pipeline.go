@@ -61,6 +61,7 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`",
 				Type:        schema.TypeString,
 				Optional:    true,
+				Computed:    true,
 				ValidateFunc: validation.StringInSlice([]string{
 					api.PipelineDefinitionSourceLocal,
 					api.PipelineDefinitionSourceRemote,
