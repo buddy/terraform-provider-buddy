@@ -762,6 +762,15 @@ func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
 	pipeline["refs"] = p.Refs
 	pipeline["tags"] = p.Tags
 	pipeline["event"] = ApiPipelineEventsToMap(p.Events)
+	definitionSource := p.DefinitionSource
+	if definitionSource == "" {
+		definitionSource = api.PipelineDefinitionSourceLocal
+	}
+	pipeline["definition_source"] = definitionSource
+	pipeline["remote_path"] = p.RemotePath
+	pipeline["remote_branch"] = p.RemoteBranch
+	pipeline["remote_project_name"] = p.RemoteProjectName
+	pipeline["remote_parameter"] = ApiPipelineRemoteParametersToMap(p.RemoteParameters)
 	return pipeline
 }
 
