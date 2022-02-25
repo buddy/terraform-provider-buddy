@@ -38,6 +38,14 @@ func TestAccGroup(t *testing.T) {
 					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription),
 				),
 			},
+			// null desc
+			{
+				Config: testAccGroupConfig(domain, newName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupGet("buddy_group.bar", &group),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, ""),
+				),
+			},
 			// import group
 			{
 				ResourceName:      "buddy_group.bar",
@@ -117,12 +125,12 @@ resource "buddy_group" "bar" {
 func testAccGroupConfig(domain string, name string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_group" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
 }
 `, domain, name)
 }

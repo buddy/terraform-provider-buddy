@@ -36,7 +36,6 @@ func ProfilePublicKey() *schema.Resource {
 				Description: "The public key's title",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"html_url": {
 				Description: "The public key's URL",

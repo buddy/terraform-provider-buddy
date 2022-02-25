@@ -70,7 +70,6 @@ func Webhook() *schema.Resource {
 				Description: "The webhook's secret value sent in the payload",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"webhook_id": {
 				Description: "The webhook's ID",

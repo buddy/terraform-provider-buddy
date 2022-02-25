@@ -96,13 +96,11 @@ func Integration() *schema.Resource {
 				Description: "The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"group_id": {
 				Description: "The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`",
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Computed:    true,
 			},
 			"username": {
 				Description: "The integration's username. Provide for: `UPCLOUD`, `RACKSPACE`, `DOCKER_HUB`",

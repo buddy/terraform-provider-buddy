@@ -46,7 +46,6 @@ func Member() *schema.Resource {
 				Description: "Is the member a workspace administrator",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"name": {
 				Description: "The member's name",
