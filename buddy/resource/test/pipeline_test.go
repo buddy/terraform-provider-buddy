@@ -4,9 +4,11 @@ import (
 	"buddy-terraform/buddy/acc"
 	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
+	"encoding/base64"
 	"fmt"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"log"
 	"strconv"
 	"testing"
 	"time"
@@ -35,6 +37,104 @@ type testAccPipelineExpectedAttributes struct {
 	Ref                       string
 	Event                     *api.PipelineEvent
 	TriggerConditions         []*api.PipelineTriggerCondition
+}
+
+type testAccPipelineRemoteExpectedAttributes struct {
+	Name              string
+	DefinitionSource  string
+	RemoteProjectName string
+	RemoteBranch      string
+	RemotePath        string
+	RemoteParam       string
+	Creator           *api.Profile
+	Project           *api.Project
+}
+
+func TestAccPipeline_remote(t *testing.T) {
+	var pipeline api.Pipeline
+	var project api.Project
+	var profile api.Profile
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	remoteProjectName := util.UniqueString()
+	remoteProjectName2 := util.UniqueString()
+	name := util.RandString(10)
+	remoteBranch := "master"
+	remotePath := util.RandString(10)
+	remotePath2 := util.RandString(10)
+	yaml := testAccPipelineGetRemoteYaml(remoteBranch)
+	cmd := "ls"
+	cmd2 := "pwd"
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:      testAccPipelineCheckDestroy,
+		Steps: []resource.TestStep{
+			// create workspace & projects
+			{
+				Config: testAccPipelineConfigRemoteInit(domain, projectName, remoteProjectName, remoteProjectName2),
+			},
+			// create yaml file & pipeline
+			{
+				PreConfig: func() {
+					testAccPipelineCreateRemoteYaml(domain, remoteProjectName, remotePath, yaml)
+					testAccPipelineCreateRemoteYaml(domain, remoteProjectName2, remotePath2, yaml)
+				},
+				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, remoteProjectName, remoteProjectName2, remoteProjectName, remoteBranch, remotePath, cmd),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:              name,
+						RemoteParam:       cmd,
+						RemoteProjectName: remoteProjectName,
+						RemoteBranch:      remoteBranch,
+						RemotePath:        remotePath,
+						DefinitionSource:  api.PipelineDefinitionSourceRemote,
+						Creator:           &profile,
+						Project:           &project,
+					}),
+				),
+			},
+			// update remote project
+			{
+				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, remoteProjectName, remoteProjectName2, remoteProjectName2, remoteBranch, remotePath2, cmd2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:              name,
+						RemoteParam:       cmd2,
+						RemoteProjectName: remoteProjectName2,
+						RemoteBranch:      remoteBranch,
+						RemotePath:        remotePath2,
+						DefinitionSource:  api.PipelineDefinitionSourceRemote,
+						Creator:           &profile,
+						Project:           &project,
+					}),
+				),
+			},
+			// change to local
+			{
+				Config: testAccPipelineConfigRemoteToLocal(domain, projectName, remoteProjectName, remoteProjectName2, name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:             name,
+						DefinitionSource: api.PipelineDefinitionSourceLocal,
+						Creator:          &profile,
+						Project:          &project,
+					}),
+				),
+			},
+		},
+	})
 }
 
 func TestAccPipeline_schedule(t *testing.T) {
@@ -201,6 +301,131 @@ resource "buddy_pipeline" "bar" {
 	fetch_all_refs = true
 }
 `, domain, projectName, name, cron, paused)
+}
+
+func testAccPipelineGetRemoteYaml(branch string) string {
+	return fmt.Sprintf(`
+- pipeline: "test"
+  on: "CLICK"
+  refs:
+  - "refs/heads/%s"
+  actions:
+  - action: "Execute: ls"
+    type: "BUILD"
+    working_directory: "/buddy/test"
+    docker_image_name: "library/ubuntu"
+    docker_image_tag: "18.04"
+    execute_commands:
+    - "!{cmd}"
+    volume_mappings:
+    - "/:/buddy/test"
+    cache_base_image: true
+    shell: "BASH"
+`, branch)
+}
+
+func testAccPipelineCreateRemoteYaml(domain string, projectName string, path string, yaml string) {
+	content := base64.StdEncoding.EncodeToString([]byte(yaml))
+	message := "test"
+	_, err := acc.ApiClient.SourceService.CreateFile(domain, projectName, &api.SourceFileOperationOptions{
+		Content: &content,
+		Path:    &path,
+		Message: &message,
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+}
+
+func testAccPipelineConfigRemoteToLocal(domain string, projectName string, remoteProjectName string, remoteProjectName2 string, name string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj2" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "remote" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	name = "%s"
+	definition_source = "LOCAL"
+}
+`, domain, projectName, remoteProjectName, remoteProjectName2, name)
+}
+
+func testAccPipelineConfigRemoteMain(domain string, projectName string, name string, remoteProjectName string, remoteProjectName2 string, selectedRemoteProjectName string, remoteBranch string, remotePath string, cmd string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj2" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "remote" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	depends_on = [buddy_project.remote_proj, buddy_project.remote_proj2]
+	name = "%s"
+	definition_source = "REMOTE"
+	remote_project_name = "%s"
+	remote_branch = "%s"
+	remote_path = "%s"
+	remote_parameter {
+		key = "cmd"
+		value = "%s"
+	}
+}
+`, domain, projectName, remoteProjectName, remoteProjectName2, name, selectedRemoteProjectName, remoteBranch, remotePath, cmd)
+}
+
+func testAccPipelineConfigRemoteInit(domain string, projectName string, remoteProjectName string, remoteProjectName2 string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj2" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+`, domain, projectName, remoteProjectName, remoteProjectName2)
 }
 
 func testAccPipelineConfigSchedule(domain string, projectName string, name string, startDate string, delay int, paused bool, priority string) string {
@@ -471,6 +696,140 @@ func TestAccPipeline_click(t *testing.T) {
 			},
 		},
 	})
+}
+
+func testAccPipelineRemoteAttributes(n string, pipeline *api.Pipeline, want *testAccPipelineRemoteExpectedAttributes) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		attrs := rs.Primary.Attributes
+		attrsPipelineId, _ := strconv.Atoi(attrs["pipeline_id"])
+		attrsCreatorMemberId, _ := strconv.Atoi(attrs["creator.0.member_id"])
+		if err := util.CheckFieldEqualAndSet("Name", pipeline.Name, want.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("name", attrs["name"], want.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("HtmlUrl", pipeline.HtmlUrl); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("html_url", attrs["html_url"], pipeline.HtmlUrl); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldSet("Id", pipeline.Id); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldEqualAndSet("pipeline_id", attrsPipelineId, pipeline.Id); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("create_date", attrs["create_date"]); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("CreateDate", pipeline.CreateDate); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Creator.Name", pipeline.Creator.Name, want.Creator.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("creator.0.name", attrs["creator.0.name"], want.Creator.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("Creator.HtmlUrl", pipeline.Creator.HtmlUrl); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("creator.0.html_url", attrs["creator.0.html_url"]); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Creator.AvatarUrl", pipeline.Creator.AvatarUrl, want.Creator.AvatarUrl); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("creator.0.avatar_url", attrs["creator.0.avatar_url"], want.Creator.AvatarUrl); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldEqualAndSet("Creator.Id", pipeline.Creator.Id, want.Creator.Id); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldEqualAndSet("creator.0.member_id", attrsCreatorMemberId, want.Creator.Id); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("Creator.Email", pipeline.Creator.Email); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Project.HtmlUrl", pipeline.Project.HtmlUrl, want.Project.HtmlUrl); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("project.0.html_url", attrs["project.0.html_url"], want.Project.HtmlUrl); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Project.Name", pipeline.Project.Name, want.Project.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("project.0.name", attrs["project.0.name"], want.Project.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Project.DisplayName", pipeline.Project.DisplayName, want.Project.DisplayName); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("project.0.display_name", attrs["project.0.display_name"], want.Project.DisplayName); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Project.Status", pipeline.Project.Status, want.Project.Status); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("project.0.status", attrs["project.0.status"], want.Project.Status); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("definition_source", attrs["definition_source"], want.DefinitionSource); err != nil {
+			return err
+		}
+		if want.DefinitionSource == api.PipelineDefinitionSourceRemote {
+			if err := util.CheckFieldEqualAndSet("DefinitionSource", pipeline.DefinitionSource, want.DefinitionSource); err != nil {
+				return err
+			}
+		}
+		if want.RemoteProjectName != "" {
+			if err := util.CheckFieldEqualAndSet("remote_project_name", attrs["remote_project_name"], want.RemoteProjectName); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteProjectName", pipeline.RemoteProjectName, want.RemoteProjectName); err != nil {
+				return err
+			}
+		}
+		if want.RemoteBranch != "" {
+			if err := util.CheckFieldEqualAndSet("remote_branch", attrs["remote_branch"], want.RemoteBranch); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteBranch", pipeline.RemoteBranch, want.RemoteBranch); err != nil {
+				return err
+			}
+		}
+		if want.RemotePath != "" {
+			if err := util.CheckFieldEqualAndSet("remote_path", attrs["remote_path"], want.RemotePath); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemotePath", pipeline.RemotePath, want.RemotePath); err != nil {
+				return err
+			}
+		}
+		if want.RemoteParam != "" {
+			if err := util.CheckFieldEqualAndSet("remote_parameter.0.key", attrs["remote_parameter.0.key"], "cmd"); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("remote_parameter.0.value", attrs["remote_parameter.0.value"], want.RemoteParam); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteParameters[0].Key", pipeline.RemoteParameters[0].Key, "cmd"); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteParameters[0].Value", pipeline.RemoteParameters[0].Value, want.RemoteParam); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPipelineExpectedAttributes) resource.TestCheckFunc {

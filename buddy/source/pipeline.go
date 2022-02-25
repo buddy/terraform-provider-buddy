@@ -111,6 +111,43 @@ func Pipeline() *schema.Resource {
 					},
 				},
 			},
+			"definition_source": {
+				Description: "The pipeline's definition source",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"remote_project_name": {
+				Description: "The pipeline's remote definition project name",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"remote_branch": {
+				Description: "The pipeline's remote definition branch name",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"remote_path": {
+				Description: "The pipeline's remote definition path",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
+			"remote_parameter": {
+				Description: "The pipeline's remote definition parameters",
+				Type:        schema.TypeList,
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"key": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"value": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+					},
+				},
+			},
 		},
 	}
 }

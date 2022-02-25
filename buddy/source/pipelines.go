@@ -105,6 +105,38 @@ func Pipelines() *schema.Resource {
 								},
 							},
 						},
+						"definition_source": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"remote_project_name": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"remote_branch": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"remote_path": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"remote_parameter": {
+							Type:     schema.TypeList,
+							Computed: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"key": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+									"value": {
+										Type:     schema.TypeString,
+										Computed: true,
+									},
+								},
+							},
+						},
 					},
 				},
 			},

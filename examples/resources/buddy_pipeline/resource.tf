@@ -22,10 +22,10 @@ resource "buddy_pipeline" "event_push" {
 }
 
 resource "buddy_pipeline" "event_create_ref" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "event_create_ref"
-  on             = "EVENT"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "event_create_ref"
+  on           = "EVENT"
 
   event {
     type = "CREATE_REF"
@@ -34,10 +34,10 @@ resource "buddy_pipeline" "event_create_ref" {
 }
 
 resource "buddy_pipeline" "event_delete_ref" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "event_delete_ref"
-  on             = "EVENT"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "event_delete_ref"
+  on           = "EVENT"
 
   event {
     type = "DELETE_REF"
@@ -63,6 +63,21 @@ resource "buddy_pipeline" "schedule_cron" {
   name         = "schedule_cron"
   on           = "SCHEDULE"
   cron         = "15 14 1 * *"
+}
+
+resource "buddy_pipeline" "remote" {
+  domain              = "mydomain"
+  project_name        = "myproject"
+  name                = "remote_pipeline"
+  definition_source   = "REMOTE"
+  remote_project_name = "remote_project"
+  remote_branch       = "remote_branch"
+  remote_path         = "remote.yml"
+
+  remote_parameter {
+    key   = "myparam"
+    value = "val"
+  }
 }
 
 resource "buddy_pipeline" "conditions" {
