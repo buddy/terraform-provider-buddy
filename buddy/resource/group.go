@@ -54,7 +54,6 @@ func Group() *schema.Resource {
 				Description: "The group's description",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 		},
 	}

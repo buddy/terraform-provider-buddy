@@ -80,7 +80,6 @@ func Permission() *schema.Resource {
 				Description: "The permission's description",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"html_url": {
 				Description: "The permission's URL",

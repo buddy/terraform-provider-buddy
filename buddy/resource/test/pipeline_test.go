@@ -65,6 +65,7 @@ func TestAccPipeline_remote(t *testing.T) {
 	yaml := testAccPipelineGetRemoteYaml(remoteBranch)
 	cmd := "ls"
 	cmd2 := "pwd"
+	branch := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -120,7 +121,7 @@ func TestAccPipeline_remote(t *testing.T) {
 			},
 			// change to local
 			{
-				Config: testAccPipelineConfigRemoteToLocal(domain, projectName, remoteProjectName, remoteProjectName2, name),
+				Config: testAccPipelineConfigRemoteToLocal(domain, projectName, remoteProjectName, remoteProjectName2, name, branch),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -337,7 +338,7 @@ func testAccPipelineCreateRemoteYaml(domain string, projectName string, path str
 	}
 }
 
-func testAccPipelineConfigRemoteToLocal(domain string, projectName string, remoteProjectName string, remoteProjectName2 string, name string) string {
+func testAccPipelineConfigRemoteToLocal(domain string, projectName string, remoteProjectName string, remoteProjectName2 string, name string, branch string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -363,8 +364,10 @@ resource "buddy_pipeline" "remote" {
 	project_name = "${buddy_project.proj.name}"
 	name = "%s"
 	definition_source = "LOCAL"
+	on = "CLICK"
+  	refs = ["refs/heads/%s"]
 }
-`, domain, projectName, remoteProjectName, remoteProjectName2, name)
+`, domain, projectName, remoteProjectName, remoteProjectName2, name, branch)
 }
 
 func testAccPipelineConfigRemoteMain(domain string, projectName string, name string, remoteProjectName string, remoteProjectName2 string, selectedRemoteProjectName string, remoteBranch string, remotePath string, cmd string) string {

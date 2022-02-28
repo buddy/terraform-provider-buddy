@@ -61,7 +61,8 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
+				ForceNew:    true,
+				Default:     api.PipelineDefinitionSourceLocal,
 				ValidateFunc: validation.StringInSlice([]string{
 					api.PipelineDefinitionSourceLocal,
 					api.PipelineDefinitionSourceRemote,
@@ -71,25 +72,21 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's remote definition project name. Set it if `definition_source: REMOTE`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"remote_branch": {
 				Description: "The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"remote_path": {
 				Description: "The pipeline's remote definition path. Set it if `definition_source: REMOTE`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"remote_parameter": {
 				Description: "The pipeline's remote definition parameters. Set it if `definition_source: REMOTE`",
 				Type:        schema.TypeList,
 				Optional:    true,
-				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"key": {
@@ -107,7 +104,6 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				ValidateFunc: validation.StringInSlice([]string{
 					api.PipelineOnClick,
 					api.PipelineOnEvent,
@@ -129,43 +125,36 @@ func Pipeline() *schema.Resource {
 				Description: "Defines either or not fetch all refs from repository",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"always_from_scratch": {
 				Description: "Defines whether or not to upload everything from scratch on every run",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"fail_on_prepare_env_warning": {
 				Description: "Defines either or not run should fail if any warning occurs in prepare environment",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"auto_clear_cache": {
 				Description: "Defines whether or not to automatically clear cache before running the pipeline",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"no_skip_to_most_recent": {
 				Description: "Defines whether or not to skip run to the most recent run",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"do_not_create_commit_status": {
 				Description: "Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"start_date": {
 				Description: "The pipeline's start date. Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified. Format: `2016-11-18T12:38:16.000Z`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				ConflictsWith: []string{
 					"cron",
 				},
@@ -177,7 +166,6 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified",
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Computed:    true,
 				ConflictsWith: []string{
 					"cron",
 				},
@@ -189,13 +177,11 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits",
 				Type:        schema.TypeInt,
 				Optional:    true,
-				Computed:    true,
 			},
 			"cron": {
 				Description: "The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 				ConflictsWith: []string{
 					"delay",
 					"start_date",
@@ -205,13 +191,11 @@ func Pipeline() *schema.Resource {
 				Description: "Is the pipeline's run paused. Restricted to `on: SCHEDULE`",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"ignore_fail_on_project_status": {
 				Description: "If set to true the status of a given pipeline will be ignored on the projects' dashboard",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"execution_message_template": {
 				Description: "The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`",
@@ -223,13 +207,11 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's worker name. Only for `Buddy Enterprise`",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"target_site_url": {
 				Description: "The pipeline's website target URL",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"last_execution_status": {
 				Description: "The pipeline's last run status",
@@ -312,7 +294,6 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's list of refs. Set it if `on: CLICK`",
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Computed:    true,
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 				},
@@ -324,7 +305,6 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's list of tags. Only for `Buddy Enterprise`",
 				Type:        schema.TypeSet,
 				Optional:    true,
-				Computed:    true,
 				DiffSuppressFunc: func(k, old, new string, d *schema.ResourceData) bool {
 					oldVal, newVal := d.GetChange("tags")
 					oldTags := *util.InterfaceStringSetToPointer(oldVal)
@@ -354,7 +334,6 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's list of events. Set it if `on: EVENT`",
 				Type:        schema.TypeList,
 				Optional:    true,
-				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"type": {
@@ -384,7 +363,6 @@ func Pipeline() *schema.Resource {
 				Description: "The pipeline's list of trigger conditions",
 				Type:        schema.TypeList,
 				Optional:    true,
-				Computed:    true,
 				Elem: &schema.Resource{
 					Schema: map[string]*schema.Schema{
 						"condition": {

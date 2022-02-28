@@ -51,7 +51,6 @@ func Variable() *schema.Resource {
 				Description: "Is the variable's value encrypted",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"project_name": {
 				Description: "The variable's project name",
@@ -75,13 +74,11 @@ func Variable() *schema.Resource {
 				Description: "Is the variable's value changeable",
 				Type:        schema.TypeBool,
 				Optional:    true,
-				Computed:    true,
 			},
 			"description": {
 				Description: "The variable's description",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"value_processed": {
 				Description: "The variable's processed value. Encrypted if **encrypted** == true",

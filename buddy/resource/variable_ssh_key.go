@@ -99,7 +99,6 @@ func VariableSshKey() *schema.Resource {
 				Description: "The variable's description",
 				Type:        schema.TypeString,
 				Optional:    true,
-				Computed:    true,
 			},
 			"variable_id": {
 				Description: "The variable's ID",
