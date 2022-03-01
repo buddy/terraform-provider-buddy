@@ -6,7 +6,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
 	"strconv"
 )
 
@@ -155,7 +154,7 @@ func readContextVariable(_ context.Context, d *schema.ResourceData, meta interfa
 	}
 	variable, resp, err := c.VariableService.Get(domain, variableId)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if util.IsResourceNotFound(resp, err) {
 			d.SetId("")
 			return diags
 		}

@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
 )
 
 func Integration() *schema.Resource {
@@ -274,7 +273,7 @@ func readContextIntegration(_ context.Context, d *schema.ResourceData, meta inte
 	}
 	integration, resp, err := c.IntegrationService.Get(domain, hashId)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if util.IsResourceNotFound(resp, err) {
 			d.SetId("")
 			return diags
 		}

@@ -6,7 +6,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
 	"strconv"
 	"strings"
 )
@@ -172,7 +171,7 @@ func readContextProjectMember(_ context.Context, d *schema.ResourceData, meta in
 	}
 	m, resp, err := c.ProjectMemberService.GetProjectMember(domain, projectName, memberId)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if util.IsResourceNotFound(resp, err) {
 			d.SetId("")
 			return diags
 		}

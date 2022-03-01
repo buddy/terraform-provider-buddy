@@ -52,8 +52,11 @@ func deleteContextProfileEmail(_ context.Context, d *schema.ResourceData, meta i
 func readContextProfileEmail(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*api.Client)
 	var diags diag.Diagnostics
-	p, _, err := c.ProfileEmailService.GetList()
+	p, resp, err := c.ProfileEmailService.GetList()
 	if err != nil {
+		if util.IsResourceNotFound(resp, err) {
+			d.SetId("")
+		}
 		return diag.FromErr(err)
 	}
 	found := false
