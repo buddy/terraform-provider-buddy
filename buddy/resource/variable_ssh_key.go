@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
 	"strconv"
 )
 
@@ -196,7 +195,7 @@ func readContextVariableSshKey(_ context.Context, d *schema.ResourceData, meta i
 	}
 	variable, resp, err := c.VariableService.Get(domain, variableId)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if util.IsResourceNotFound(resp, err) {
 			d.SetId("")
 			return diags
 		}

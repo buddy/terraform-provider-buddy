@@ -7,7 +7,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-	"net/http"
 	"strconv"
 )
 
@@ -152,7 +151,7 @@ func readContextPermission(_ context.Context, d *schema.ResourceData, meta inter
 	}
 	permission, resp, err := c.PermissionService.Get(domain, permissionId)
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if util.IsResourceNotFound(resp, err) {
 			d.SetId("")
 			return diags
 		}

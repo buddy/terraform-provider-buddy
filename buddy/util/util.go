@@ -8,6 +8,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"math/rand"
+	"net/http"
 	"regexp"
 	"strconv"
 	"strings"
@@ -1226,4 +1227,14 @@ func ApiGroupMemberToResourceData(domain string, groupId int, m *api.Member, d *
 		return err
 	}
 	return d.Set("workspace_owner", m.WorkspaceOwner)
+}
+
+func IsResourceNotFound(resp *http.Response, err error) bool {
+	if resp.StatusCode == http.StatusNotFound {
+		return true
+	}
+	if resp.StatusCode == http.StatusForbidden && err.Error() == "Only active workspace have access to API" {
+		return true
+	}
+	return false
 }

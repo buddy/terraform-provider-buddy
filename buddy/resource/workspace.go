@@ -6,7 +6,6 @@ import (
 	"context"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"net/http"
 )
 
 func Workspace() *schema.Resource {
@@ -89,7 +88,7 @@ func readContextWorkspace(_ context.Context, d *schema.ResourceData, meta interf
 	var diags diag.Diagnostics
 	workspace, resp, err := c.WorkspaceService.Get(d.Id())
 	if err != nil {
-		if resp.StatusCode == http.StatusNotFound {
+		if util.IsResourceNotFound(resp, err) {
 			d.SetId("")
 			return diags
 		}
