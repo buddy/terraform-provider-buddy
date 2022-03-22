@@ -32,6 +32,8 @@ type testAccPipelineExpectedAttributes struct {
 	IgnoreFailOnProjectStatus bool
 	ExecutionMessageTemplate  string
 	TargetSiteUrl             string
+	Disabled                  bool
+	DisablingReason           string
 	Creator                   *api.Profile
 	Project                   *api.Project
 	Ref                       string
@@ -222,6 +224,7 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 	newName := util.RandString(10)
 	cron := "15 14 1 * *"
 	newCron := "0 22 * * 1-5"
+	reason := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -269,6 +272,50 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					}),
 				),
 			},
+			// disable
+			{
+				Config: testAccPipelineConfigScheduleCronDisabled(domain, projectName, newName, newCron, false, true, reason),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    newName,
+						On:                      api.PipelineOnSchedule,
+						Project:                 &project,
+						Creator:                 &profile,
+						Cron:                    newCron,
+						Priority:                api.PipelinePriorityNormal,
+						FailOnPrepareEnvWarning: true,
+						FetchAllRefs:            true,
+						Paused:                  false,
+						Disabled:                true,
+						DisablingReason:         reason,
+					}),
+				),
+			},
+			// enable
+			{
+				Config: testAccPipelineConfigScheduleCronDisabled(domain, projectName, newName, newCron, false, false, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    newName,
+						On:                      api.PipelineOnSchedule,
+						Project:                 &project,
+						Creator:                 &profile,
+						Cron:                    newCron,
+						Priority:                api.PipelinePriorityNormal,
+						FailOnPrepareEnvWarning: true,
+						FetchAllRefs:            true,
+						Paused:                  false,
+						Disabled:                false,
+						DisablingReason:         "",
+					}),
+				),
+			},
 			// import
 			{
 				ResourceName:            "buddy_pipeline.bar",
@@ -302,6 +349,32 @@ resource "buddy_pipeline" "bar" {
 	fetch_all_refs = true
 }
 `, domain, projectName, name, cron, paused)
+}
+
+func testAccPipelineConfigScheduleCronDisabled(domain string, projectName string, name string, cron string, paused bool, disabled bool, reason string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "SCHEDULE"
+	cron = "%s"
+	paused = %t
+	fail_on_prepare_env_warning = true
+	fetch_all_refs = true
+    disabled = %t
+	disabling_reason = "%s"	
+}
+`, domain, projectName, name, cron, paused, disabled, reason)
 }
 
 func testAccPipelineGetRemoteYaml(branch string) string {
@@ -854,6 +927,7 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 		attrsCloneDepth, _ := strconv.Atoi(attrs["clone_depth"])
 		attrsPaused, _ := strconv.ParseBool(attrs["paused"])
 		attrsCreatorMemberId, _ := strconv.Atoi(attrs["creator.0.member_id"])
+		attrsDisabled, _ := strconv.ParseBool(attrs["disabled"])
 		if err := util.CheckFieldEqualAndSet("Name", pipeline.Name, want.Name); err != nil {
 			return err
 		}
@@ -979,6 +1053,18 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 			if err := util.CheckFieldEqualAndSet("TargetSiteUrl", pipeline.TargetSiteUrl, want.TargetSiteUrl); err != nil {
 				return err
 			}
+		}
+		if err := util.CheckBoolFieldEqual("disabled", attrsDisabled, want.Disabled); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("Disabled", pipeline.Disabled, want.Disabled); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("disabling_reason", attrs["disabling_reason"], want.DisablingReason); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("DisabledReason", pipeline.DisabledReason, want.DisablingReason); err != nil {
+			return err
 		}
 		if err := util.CheckFieldSet("create_date", attrs["create_date"]); err != nil {
 			return err

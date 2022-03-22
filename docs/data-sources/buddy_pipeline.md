@@ -45,6 +45,8 @@ data "buddy_pipeline" "by_id" {
 ### Read-Only
 
 - **definition_source** (String) The pipeline's definition source
+- **disabled** (Boolean) Defines wheter or not the pipeline can be run
+- **disabling_reason** (String) The pipeline's disabling reason
 - **event** (List of Object) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
 - **html_url** (String) The pipeline's URL
 - **id** (String) The Terraform resource identifier for this item

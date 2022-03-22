@@ -75,6 +75,16 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"disabled": {
+				Description: "Defines wheter or not the pipeline can be run",
+				Type:        schema.TypeBool,
+				Computed:    true,
+			},
+			"disabling_reason": {
+				Description: "The pipeline's disabling reason",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"refs": {
 				Description: "The pipeline's list of refs",
 				Type:        schema.TypeSet,

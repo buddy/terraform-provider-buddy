@@ -16,6 +16,7 @@ func TestAccSourcePipeline(t *testing.T) {
 	projectName := util.UniqueString()
 	name := util.RandString(10)
 	ref := util.RandString(10)
+	reason := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -27,23 +28,31 @@ func TestAccSourcePipeline(t *testing.T) {
 			{
 				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, api.PipelinePriorityHigh),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, false, ""),
+				),
+			},
+			// click disabled
+			{
+				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, api.PipelinePriorityHigh, reason),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, true, reason),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, true, reason),
 				),
 			},
 			// event
 			{
 				Config: testAccSourcePipelineConfigEvent(domain, projectName, name, ref, api.PipelinePriorityLow),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnEvent, "", ref, api.PipelinePriorityLow),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnEvent, "", ref, api.PipelinePriorityLow),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnEvent, "", ref, api.PipelinePriorityLow, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnEvent, "", ref, api.PipelinePriorityLow, false, ""),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourcePipelineAttributes(n string, name string, on string, ref string, eventRef string, priority string) resource.TestCheckFunc {
+func testAccSourcePipelineAttributes(n string, name string, on string, ref string, eventRef string, priority string, disabled bool, disabledReason string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -51,6 +60,7 @@ func testAccSourcePipelineAttributes(n string, name string, on string, ref strin
 		}
 		attrs := rs.Primary.Attributes
 		attrsPipelineId, _ := strconv.Atoi(attrs["pipeline_id"])
+		attrsDisabled, _ := strconv.ParseBool(attrs["disabled"])
 		if err := util.CheckFieldSet("html_url", attrs["html_url"]); err != nil {
 			return err
 		}
@@ -76,6 +86,14 @@ func testAccSourcePipelineAttributes(n string, name string, on string, ref strin
 		}
 		if eventRef != "" {
 			if err := util.CheckFieldEqualAndSet("event.0.refs.0", attrs["event.0.refs.0"], eventRef); err != nil {
+				return err
+			}
+		}
+		if disabled {
+			if err := util.CheckBoolFieldEqual("disabled", attrsDisabled, disabled); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqual("disabling_reason", attrs["disabling_reason"], disabledReason); err != nil {
 				return err
 			}
 		}
@@ -152,4 +170,40 @@ data "buddy_pipeline" "id" {
     pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
 `, domain, projectName, name, ref, priority)
+}
+
+func testAccSourcePipelineConfigClickDisabled(domain string, projectName string, name string, ref string, priority string, reason string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "CLICK"
+    refs = ["%s"]
+	priority = "%s"
+	disabled = true
+	disabling_reason = "%s"
+}
+
+data "buddy_pipeline" "name" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "${buddy_pipeline.bar.name}"
+}
+
+data "buddy_pipeline" "id" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
+}
+`, domain, projectName, name, ref, priority, reason)
 }
