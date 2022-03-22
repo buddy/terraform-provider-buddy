@@ -64,6 +64,14 @@ func Pipelines() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"disabled": {
+							Type:     schema.TypeBool,
+							Computed: true,
+						},
+						"disabling_reason": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"last_execution_status": {
 							Type:     schema.TypeString,
 							Computed: true,

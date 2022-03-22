@@ -158,6 +158,8 @@ resource "buddy_pipeline" "conditions" {
 - **cron** (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
 - **definition_source** (String) The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`
 - **delay** (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
+- **disabled** (Boolean) Defines wheter or not the pipeline can be run
+- **disabling_reason** (String) The pipeline's disabling reason
 - **do_not_create_commit_status** (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
 - **event** (Block List) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
 - **execution_message_template** (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`

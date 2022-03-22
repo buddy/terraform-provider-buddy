@@ -581,6 +581,14 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.
 	if err != nil {
 		return err
 	}
+	err = d.Set("disabled", pipeline.Disabled)
+	if err != nil {
+		return err
+	}
+	err = d.Set("disabling_reason", pipeline.DisabledReason)
+	if err != nil {
+		return err
+	}
 	return d.Set("event", ApiPipelineEventsToMap(pipeline.Events))
 }
 
@@ -760,6 +768,8 @@ func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
 	pipeline["priority"] = p.Priority
 	pipeline["last_execution_status"] = p.LastExecutionStatus
 	pipeline["last_execution_revision"] = p.LastExecutionRevision
+	pipeline["disabled"] = p.Disabled
+	pipeline["disabling_reason"] = p.DisabledReason
 	pipeline["refs"] = p.Refs
 	pipeline["tags"] = p.Tags
 	pipeline["event"] = ApiPipelineEventsToMap(p.Events)

@@ -57,6 +57,8 @@ data "buddy_pipelines" "with_name_ended" {
 Read-Only:
 
 - **definition_source** (String)
+- **disabled** (Boolean)
+- **disabling_reason** (String)
 - **event** (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--event))
 - **html_url** (String)
 - **last_execution_revision** (String)

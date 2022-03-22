@@ -64,6 +64,8 @@ type Pipeline struct {
 	RemoteBranch              string                      `json:"remote_branch"`
 	RemoteProjectName         string                      `json:"remote_project_name"`
 	RemoteParameters          []*PipelineRemoteParameter  `json:"remote_parameters"`
+	Disabled                  bool                        `json:"disabled"`
+	DisabledReason            string                      `json:"disabled_reason"`
 }
 
 type Pipelines struct {
@@ -126,6 +128,8 @@ type PipelineOperationOptions struct {
 	RemoteBranch              *string                      `json:"remote_branch,omitempty"`
 	RemoteProjectName         *string                      `json:"remote_project_name,omitempty"`
 	RemoteParameters          *[]*PipelineRemoteParameter  `json:"remote_parameters,omitempty"`
+	Disabled                  *bool                        `json:"disabled,omitempty"`
+	DisabledReason            *string                      `json:"disabled_reason,omitempty"`
 }
 
 func (s *PipelineService) Create(domain string, projectName string, opt *PipelineOperationOptions) (*Pipeline, *http.Response, error) {

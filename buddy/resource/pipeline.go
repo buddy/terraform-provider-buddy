@@ -130,6 +130,16 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},
+			"disabled": {
+				Description: "Defines wheter or not the pipeline can be run",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
+			"disabling_reason": {
+				Description: "The pipeline's disabling reason",
+				Type:        schema.TypeString,
+				Optional:    true,
+			},
 			"fail_on_prepare_env_warning": {
 				Description: "Defines either or not run should fail if any warning occurs in prepare environment",
 				Type:        schema.TypeBool,
@@ -544,6 +554,11 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	if d.HasChange("remote_parameter") {
 		opt.RemoteParameters = util.MapPipelineRemoteParametersToApi(d.Get("remote_parameter"))
 	}
+
+	if d.HasChanges("disabled", "disabling_reason") {
+		opt.Disabled = util.InterfaceBoolToPointer(d.Get("disabled"))
+		opt.DisabledReason = util.InterfaceStringToPointer(d.Get("disabling_reason"))
+	}
 	_, _, err = c.PipelineService.Update(domain, projectName, pipelineId, &opt)
 	if err != nil {
 		return diag.FromErr(err)
@@ -654,6 +669,12 @@ func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	}
 	if remoteParameter, ok := d.GetOk("remote_parameter"); ok {
 		opt.RemoteParameters = util.MapPipelineRemoteParametersToApi(remoteParameter)
+	}
+	if disabled, ok := d.GetOk("disabled"); ok {
+		opt.Disabled = util.InterfaceBoolToPointer(disabled)
+	}
+	if disablingReason, ok := d.GetOk("disabling_reason"); ok {
+		opt.DisabledReason = util.InterfaceStringToPointer(disablingReason)
 	}
 	if triggerCondition, ok := d.GetOk("trigger_condition"); ok {
 		opt.TriggerConditions = util.MapTriggerConditionsToApi(triggerCondition)
