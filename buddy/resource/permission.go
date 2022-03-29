@@ -52,12 +52,13 @@ func Permission() *schema.Resource {
 				}, false),
 			},
 			"repository_access_level": {
-				Description: "The permission's access level to repository. Allowed: `READ_ONLY`, `READ_WRITE`",
+				Description: "The permission's access level to repository. Allowed: `READ_ONLY`, `READ_WRITE`, `MANAGE`",
 				Type:        schema.TypeString,
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
 					api.PermissionAccessLevelReadOnly,
 					api.PermissionAccessLevelReadWrite,
+					api.PermissionAccessLevelManage,
 				}, false),
 			},
 			"sandbox_access_level": {

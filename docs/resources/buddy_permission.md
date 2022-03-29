@@ -36,7 +36,7 @@ resource "buddy_permission" "testers" {
 - **domain** (String) The workspace's URL handle
 - **name** (String) The permission's name
 - **pipeline_access_level** (String) The permission's access level to pipelines. Allowed: `DENIED`, `READ_ONLY`, `RUN_ONLY`, `READ_WRITE`
-- **repository_access_level** (String) The permission's access level to repository. Allowed: `READ_ONLY`, `READ_WRITE`
+- **repository_access_level** (String) The permission's access level to repository. Allowed: `READ_ONLY`, `READ_WRITE`, `MANAGE`
 - **sandbox_access_level** (String) The permission's access level to sandboxes. Allowed: `DENIED`, `READ_ONLY`, `READ_WRITE`
 
 ### Optional

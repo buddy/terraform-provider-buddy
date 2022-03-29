@@ -8,6 +8,7 @@ const (
 	PermissionAccessLevelDenied    = "DENIED"
 	PermissionAccessLevelReadOnly  = "READ_ONLY"
 	PermissionAccessLevelReadWrite = "READ_WRITE"
+	PermissionAccessLevelManage    = "MANAGE"
 	PermissionAccessLevelRunOnly   = "RUN_ONLY"
 
 	PermissionTypeDeveloper = "DEVELOPER"

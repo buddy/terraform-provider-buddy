@@ -20,7 +20,7 @@ func TestAccPermission(t *testing.T) {
 	sandboxAccessLevel := api.PermissionAccessLevelReadOnly
 	newName := util.RandString(5)
 	newPipelineAccessLevel := api.PermissionAccessLevelDenied
-	newRepositoryAccessLevel := api.PermissionAccessLevelReadOnly
+	newRepositoryAccessLevel := api.PermissionAccessLevelManage
 	newSandboxAccessLevel := api.PermissionAccessLevelReadWrite
 	newDescription := util.RandString(5)
 	resource.Test(t, resource.TestCase{
