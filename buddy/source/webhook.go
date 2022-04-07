@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -55,9 +55,9 @@ func Webhook() *schema.Resource {
 }
 
 func readContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
-	var webhook *api.Webhook
+	var webhook *buddy.Webhook
 	var err error
 	domain := d.Get("domain").(string)
 	if webhookId, ok := d.GetOk("webhook_id"); ok {

@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -97,5 +97,5 @@ data "buddy_integrations" "type" {
     type = "AMAZON"
     depends_on = [buddy_integration.a, buddy_integration.b]
 }
-`, util.UniqueString(), api.IntegrationTypeAmazon, api.IntegrationScopeAdmin, api.IntegrationTypeDigitalOcean, api.IntegrationScopeWorkspace)
+`, util.UniqueString(), buddy.IntegrationTypeAmazon, buddy.IntegrationScopeAdmin, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeWorkspace)
 }

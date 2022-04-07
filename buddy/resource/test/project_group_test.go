@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccProjectGroup(t *testing.T) {
-	var group api.ProjectGroup
+	var group buddy.ProjectGroup
 	domain := util.UniqueString()
 	nameA := util.RandString(10)
 	nameB := util.RandString(10)
@@ -69,7 +69,7 @@ func TestAccProjectGroup(t *testing.T) {
 	})
 }
 
-func testAccProjectGroupAttributes(n string, group *api.ProjectGroup, permissionName string) resource.TestCheckFunc {
+func testAccProjectGroupAttributes(n string, group *buddy.ProjectGroup, permissionName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -119,7 +119,7 @@ func testAccProjectGroupAttributes(n string, group *api.ProjectGroup, permission
 	}
 }
 
-func testAccProjectGroupGet(n string, group *api.ProjectGroup) resource.TestCheckFunc {
+func testAccProjectGroupGet(n string, group *buddy.ProjectGroup) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -198,13 +198,13 @@ resource "buddy_project_group" "bar" {
 		projectDisplayNameA,
 		projectDisplayNameB,
 		permissionNameA,
-		api.PermissionAccessLevelReadOnly,
-		api.PermissionAccessLevelReadOnly,
-		api.PermissionAccessLevelReadOnly,
+		buddy.PermissionAccessLevelReadOnly,
+		buddy.PermissionAccessLevelReadOnly,
+		buddy.PermissionAccessLevelReadOnly,
 		permissionNameB,
-		api.PermissionAccessLevelReadWrite,
-		api.PermissionAccessLevelReadWrite,
-		api.PermissionAccessLevelReadWrite,
+		buddy.PermissionAccessLevelReadWrite,
+		buddy.PermissionAccessLevelReadWrite,
+		buddy.PermissionAccessLevelReadWrite,
 		whichProject,
 		whichGroup,
 		whichPermission,

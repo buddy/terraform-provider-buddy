@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,16 +12,16 @@ import (
 )
 
 func TestAccPermission(t *testing.T) {
-	var permission api.Permission
+	var permission buddy.Permission
 	domain := util.UniqueString()
 	name := util.RandString(5)
-	pipelineAccessLevel := api.PermissionAccessLevelRunOnly
-	repositoryAccessLevel := api.PermissionAccessLevelReadWrite
-	sandboxAccessLevel := api.PermissionAccessLevelReadOnly
+	pipelineAccessLevel := buddy.PermissionAccessLevelRunOnly
+	repositoryAccessLevel := buddy.PermissionAccessLevelReadWrite
+	sandboxAccessLevel := buddy.PermissionAccessLevelReadOnly
 	newName := util.RandString(5)
-	newPipelineAccessLevel := api.PermissionAccessLevelDenied
-	newRepositoryAccessLevel := api.PermissionAccessLevelManage
-	newSandboxAccessLevel := api.PermissionAccessLevelReadWrite
+	newPipelineAccessLevel := buddy.PermissionAccessLevelDenied
+	newRepositoryAccessLevel := buddy.PermissionAccessLevelManage
+	newSandboxAccessLevel := buddy.PermissionAccessLevelReadWrite
 	newDescription := util.RandString(5)
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acc.PreCheck(t) },
@@ -77,7 +77,7 @@ type testAccPermissionExpectedAttributes struct {
 	Description           string
 }
 
-func testAccPermissionAttributes(n string, permission *api.Permission, want *testAccPermissionExpectedAttributes) resource.TestCheckFunc {
+func testAccPermissionAttributes(n string, permission *buddy.Permission, want *testAccPermissionExpectedAttributes) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -131,7 +131,7 @@ func testAccPermissionAttributes(n string, permission *api.Permission, want *tes
 	}
 }
 
-func testAccPermissionGet(n string, permission *api.Permission) resource.TestCheckFunc {
+func testAccPermissionGet(n string, permission *buddy.Permission) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

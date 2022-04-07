@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -95,7 +95,7 @@ func Variable() *schema.Resource {
 }
 
 func deleteContextVariable(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, vid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -113,7 +113,7 @@ func deleteContextVariable(_ context.Context, d *schema.ResourceData, meta inter
 }
 
 func updateContextVariable(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, vid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -122,7 +122,7 @@ func updateContextVariable(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	opt := api.VariableOperationOptions{
+	opt := buddy.VariableOps{
 		Value: util.InterfaceStringToPointer(d.Get("value")),
 	}
 	if d.HasChange("encrypted") {
@@ -142,7 +142,7 @@ func updateContextVariable(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func readContextVariable(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, vid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -160,7 +160,7 @@ func readContextVariable(_ context.Context, d *schema.ResourceData, meta interfa
 		}
 		return diag.FromErr(err)
 	}
-	if variable.Type != api.VariableTypeVar {
+	if variable.Type != buddy.VariableTypeVar {
 		return diag.Errorf("Variable not found")
 	}
 	err = util.ApiVariableToResourceData(domain, variable, d, true)
@@ -171,12 +171,12 @@ func readContextVariable(_ context.Context, d *schema.ResourceData, meta interfa
 }
 
 func createContextVariable(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.VariableOperationOptions{
+	opt := buddy.VariableOps{
 		Key:   util.InterfaceStringToPointer(d.Get("key")),
 		Value: util.InterfaceStringToPointer(d.Get("value")),
-		Type:  util.InterfaceStringToPointer(api.VariableTypeVar),
+		Type:  util.InterfaceStringToPointer(buddy.VariableTypeVar),
 	}
 	if settable, ok := d.GetOk("settable"); ok {
 		opt.Settable = util.InterfaceBoolToPointer(settable)
@@ -188,17 +188,17 @@ func createContextVariable(ctx context.Context, d *schema.ResourceData, meta int
 		opt.Description = util.InterfaceStringToPointer(description)
 	}
 	if projectName, ok := d.GetOk("project_name"); ok {
-		opt.Project = &api.VariableProject{
+		opt.Project = &buddy.VariableProject{
 			Name: projectName.(string),
 		}
 	}
 	if pipelineId, ok := d.GetOk("pipeline_id"); ok {
-		opt.Pipeline = &api.VariablePipeline{
+		opt.Pipeline = &buddy.VariablePipeline{
 			Id: pipelineId.(int),
 		}
 	}
 	if actionId, ok := d.GetOk("action_id"); ok {
-		opt.Action = &api.VariableAction{
+		opt.Action = &buddy.VariableAction{
 			Id: actionId.(int),
 		}
 	}

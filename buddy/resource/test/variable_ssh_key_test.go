@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -13,13 +13,13 @@ import (
 )
 
 func TestAccVariableSshKey_workspace(t *testing.T) {
-	var variable api.Variable
+	var variable buddy.Variable
 	domain := util.UniqueString()
 	key := util.UniqueString()
 	newKey := util.UniqueString()
 	desc := util.RandString(10)
 	displayName := util.RandString(10)
-	filePlace := api.VariableSshKeyFilePlaceContainer
+	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test"
 	fileChmod := "600"
 	resource.Test(t, resource.TestCase{
@@ -73,13 +73,13 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 }
 
 func TestAccVariableSshKey_project(t *testing.T) {
-	var variable api.Variable
+	var variable buddy.Variable
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	key := util.UniqueString()
 	desc := util.RandString(10)
 	displayName := util.RandString(10)
-	filePlace := api.VariableSshKeyFilePlaceContainer
+	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
 	resource.Test(t, resource.TestCase{
@@ -116,7 +116,7 @@ func TestAccVariableSshKey_project(t *testing.T) {
 	})
 }
 
-func testAccVariableSshKeyAttributes(n string, variable *api.Variable, domain string, key string, val string, displayName string, filePlace string, filePath string, fileChmod string, description string) resource.TestCheckFunc {
+func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain string, key string, val string, displayName string, filePlace string, filePath string, fileChmod string, description string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

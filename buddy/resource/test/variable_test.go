@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -13,7 +13,7 @@ import (
 )
 
 func TestAccVariable_workspace(t *testing.T) {
-	var variable api.Variable
+	var variable buddy.Variable
 	domain := util.UniqueString()
 	key := util.UniqueString()
 	val := util.RandString(10)
@@ -72,7 +72,7 @@ func TestAccVariable_workspace(t *testing.T) {
 }
 
 func TestAccVariable_project(t *testing.T) {
-	var variable api.Variable
+	var variable buddy.Variable
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	key := util.UniqueString()
@@ -114,7 +114,7 @@ func TestAccVariable_project(t *testing.T) {
 	})
 }
 
-func testAccVariableAttributes(n string, variable *api.Variable, domain string, key string, val string, description string, encrypted bool, settable bool) resource.TestCheckFunc {
+func testAccVariableAttributes(n string, variable *buddy.Variable, domain string, key string, val string, description string, encrypted bool, settable bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -182,7 +182,7 @@ func testAccVariableAttributes(n string, variable *api.Variable, domain string, 
 	}
 }
 
-func testAccVariableGet(n string, variable *api.Variable) resource.TestCheckFunc {
+func testAccVariableGet(n string, variable *buddy.Variable) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

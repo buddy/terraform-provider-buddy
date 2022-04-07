@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccProject_buddy(t *testing.T) {
-	var project api.Project
+	var project buddy.Project
 	domain := util.UniqueString()
 	displayName := util.RandString(10)
 	newDisplayName := util.RandString(10)
@@ -50,7 +50,7 @@ func TestAccProject_buddy(t *testing.T) {
 }
 
 func TestAccProject_custom(t *testing.T) {
-	var project api.Project
+	var project buddy.Project
 	repoUrl := "git@github.com:octocat/Hello-World.git"
 	domain := util.UniqueString()
 	displayName := util.RandString(10)
@@ -90,7 +90,7 @@ func TestAccProject_custom(t *testing.T) {
 	})
 }
 
-func testAccProjectAttributes(n string, project *api.Project, displayName string) resource.TestCheckFunc {
+func testAccProjectAttributes(n string, project *buddy.Project, displayName string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -147,7 +147,7 @@ func testAccProjectAttributes(n string, project *api.Project, displayName string
 	}
 }
 
-func testAccProjectGet(n string, project *api.Project) resource.TestCheckFunc {
+func testAccProjectGet(n string, project *buddy.Project) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

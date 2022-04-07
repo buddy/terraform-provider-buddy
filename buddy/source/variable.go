@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -95,9 +95,9 @@ func Variable() *schema.Resource {
 }
 
 func readContextVariable(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
-	var variable *api.Variable
+	var variable *buddy.Variable
 	var err error
 	domain := d.Get("domain").(string)
 	if variableId, ok := d.GetOk("variable_id"); ok {
@@ -105,12 +105,12 @@ func readContextVariable(_ context.Context, d *schema.ResourceData, meta interfa
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		if variable.Type != api.VariableTypeVar {
+		if variable.Type != buddy.VariableTypeVar {
 			return diag.Errorf("Variable not found")
 		}
 	} else {
 		key := d.Get("key").(string)
-		opt := api.VariableGetListQuery{}
+		opt := buddy.VariableGetListQuery{}
 		if projectName, ok := d.GetOk("project_name"); ok {
 			opt.ProjectName = projectName.(string)
 		}
@@ -125,7 +125,7 @@ func readContextVariable(_ context.Context, d *schema.ResourceData, meta interfa
 			return diag.FromErr(err)
 		}
 		for _, v := range variables.Variables {
-			if v.Type != api.VariableTypeVar {
+			if v.Type != buddy.VariableTypeVar {
 				continue
 			}
 			if v.Key == key {

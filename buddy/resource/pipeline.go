@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -61,10 +61,10 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ForceNew:    true,
-				Default:     api.PipelineDefinitionSourceLocal,
+				Default:     buddy.PipelineDefinitionSourceLocal,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PipelineDefinitionSourceLocal,
-					api.PipelineDefinitionSourceRemote,
+					buddy.PipelineDefinitionSourceLocal,
+					buddy.PipelineDefinitionSourceRemote,
 				}, false),
 			},
 			"remote_project_name": {
@@ -104,9 +104,9 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PipelineOnClick,
-					api.PipelineOnEvent,
-					api.PipelineOnSchedule,
+					buddy.PipelineOnClick,
+					buddy.PipelineOnEvent,
+					buddy.PipelineOnSchedule,
 				}, false),
 			},
 			"priority": {
@@ -115,9 +115,9 @@ func Pipeline() *schema.Resource {
 				Optional:    true,
 				Computed:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PipelinePriorityHigh,
-					api.PipelinePriorityNormal,
-					api.PipelinePriorityLow,
+					buddy.PipelinePriorityHigh,
+					buddy.PipelinePriorityNormal,
+					buddy.PipelinePriorityLow,
 				}, false),
 			},
 			"fetch_all_refs": {
@@ -349,9 +349,9 @@ func Pipeline() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
-								api.PipelineEventTypePush,
-								api.PipelineEventTypeCreateRef,
-								api.PipelineEventTypeDeleteRef,
+								buddy.PipelineEventTypePush,
+								buddy.PipelineEventTypeCreateRef,
+								buddy.PipelineEventTypeDeleteRef,
 							}, false),
 						},
 						"refs": {
@@ -378,14 +378,14 @@ func Pipeline() *schema.Resource {
 							Type:     schema.TypeString,
 							Required: true,
 							ValidateFunc: validation.StringInSlice([]string{
-								api.PipelineTriggerConditionOnChange,
-								api.PipelineTriggerConditionOnChangeAtPath,
-								api.PipelineTriggerConditionVarIs,
-								api.PipelineTriggerConditionVarIsNot,
-								api.PipelineTriggerConditionVarContains,
-								api.PipelineTriggerConditionVarNotContains,
-								api.PipelineTriggerConditionDateTime,
-								api.PipelineTriggerConditionSuccessPipeline,
+								buddy.PipelineTriggerConditionOnChange,
+								buddy.PipelineTriggerConditionOnChangeAtPath,
+								buddy.PipelineTriggerConditionVarIs,
+								buddy.PipelineTriggerConditionVarIsNot,
+								buddy.PipelineTriggerConditionVarContains,
+								buddy.PipelineTriggerConditionVarNotContains,
+								buddy.PipelineTriggerConditionDateTime,
+								buddy.PipelineTriggerConditionSuccessPipeline,
 							}, false),
 						},
 						"paths": {
@@ -446,7 +446,7 @@ func Pipeline() *schema.Resource {
 }
 
 func deleteContextPipeline(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, projectName, pid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -464,7 +464,7 @@ func deleteContextPipeline(_ context.Context, d *schema.ResourceData, meta inter
 }
 
 func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, projectName, pid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -473,7 +473,7 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	opt := api.PipelineOperationOptions{
+	opt := buddy.PipelineOps{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
 	}
 	if d.HasChange("on") {
@@ -567,7 +567,7 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 }
 
 func readContextPipeline(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, projectName, pid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -593,10 +593,10 @@ func readContextPipeline(_ context.Context, d *schema.ResourceData, meta interfa
 }
 
 func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	projectName := d.Get("project_name").(string)
-	opt := api.PipelineOperationOptions{
+	opt := buddy.PipelineOps{
 		Name:                    util.InterfaceStringToPointer(d.Get("name")),
 		FailOnPrepareEnvWarning: util.InterfaceBoolToPointer(d.Get("fail_on_prepare_env_warning")),
 		FetchAllRefs:            util.InterfaceBoolToPointer(d.Get("fetch_all_refs")),

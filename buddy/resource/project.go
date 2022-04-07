@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -203,7 +203,7 @@ func Project() *schema.Resource {
 }
 
 func deleteContextProject(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, name, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -217,12 +217,12 @@ func deleteContextProject(_ context.Context, d *schema.ResourceData, meta interf
 }
 
 func updateContextProject(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, name, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	u := api.ProjectUpdateOptions{
+	u := buddy.ProjectUpdateOps{
 		DisplayName: util.InterfaceStringToPointer(d.Get("display_name")),
 	}
 	p, _, err := c.ProjectService.Update(domain, name, &u)
@@ -234,7 +234,7 @@ func updateContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func readContextProject(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, name, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -256,13 +256,13 @@ func readContextProject(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 func createContextProject(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.ProjectCreateOptions{
+	opt := buddy.ProjectCreateOps{
 		DisplayName: util.InterfaceStringToPointer(d.Get("display_name")),
 	}
 	if integrationId, ok := d.GetOk("integration_id"); ok {
-		opt.Integration = &api.ProjectIntegration{
+		opt.Integration = &buddy.ProjectIntegration{
 			HashId: integrationId.(string),
 		}
 	}

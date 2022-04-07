@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccProfile(t *testing.T) {
-	var profile api.Profile
+	var profile buddy.Profile
 	r := util.RandInt()
 	resource.Test(t, resource.TestCase{
 		PreCheck:          func() { acc.PreCheck(t) },
@@ -43,7 +43,7 @@ type testAccProfileExpectedAttributes struct {
 	Name string
 }
 
-func testAccProfileAttributes(n string, profile *api.Profile, want *testAccProfileExpectedAttributes) resource.TestCheckFunc {
+func testAccProfileAttributes(n string, profile *buddy.Profile, want *testAccProfileExpectedAttributes) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -70,7 +70,7 @@ func testAccProfileAttributes(n string, profile *api.Profile, want *testAccProfi
 	}
 }
 
-func testAccProfileGet(profile *api.Profile) resource.TestCheckFunc {
+func testAccProfileGet(profile *buddy.Profile) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		p, _, err := acc.ApiClient.ProfileService.Get()
 		if err != nil {

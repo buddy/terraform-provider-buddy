@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -87,11 +87,11 @@ func Variables() *schema.Resource {
 }
 
 func readContextVariables(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	var keyRegex *regexp.Regexp
 	domain := d.Get("domain").(string)
-	opt := api.VariableGetListQuery{}
+	opt := buddy.VariableGetListQuery{}
 	if projectName, ok := d.GetOk("project_name"); ok {
 		opt.ProjectName = projectName.(string)
 	}
@@ -110,7 +110,7 @@ func readContextVariables(_ context.Context, d *schema.ResourceData, meta interf
 	}
 	var result []interface{}
 	for _, v := range variables.Variables {
-		if v.Type != api.VariableTypeVar {
+		if v.Type != buddy.VariableTypeVar {
 			continue
 		}
 		if keyRegex != nil && !keyRegex.MatchString(v.Key) {

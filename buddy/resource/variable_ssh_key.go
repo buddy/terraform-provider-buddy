@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -57,8 +57,8 @@ func VariableSshKey() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.VariableSshKeyFilePlaceContainer,
-					api.VariableSshKeyFilePlaceNone,
+					buddy.VariableSshKeyFilePlaceContainer,
+					buddy.VariableSshKeyFilePlaceNone,
 				}, false),
 			},
 			"file_path": {
@@ -135,7 +135,7 @@ func VariableSshKey() *schema.Resource {
 }
 
 func deleteContextVariableSshKey(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, vid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -153,7 +153,7 @@ func deleteContextVariableSshKey(_ context.Context, d *schema.ResourceData, meta
 }
 
 func updateContextVariableSshKey(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, vid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -162,8 +162,8 @@ func updateContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	opt := api.VariableOperationOptions{
-		Type:      util.InterfaceStringToPointer(api.VariableTypeSshKey),
+	opt := buddy.VariableOps{
+		Type:      util.InterfaceStringToPointer(buddy.VariableTypeSshKey),
 		Value:     util.InterfaceStringToPointer(d.Get("value")),
 		FilePlace: util.InterfaceStringToPointer(d.Get("file_place")),
 		FileName:  util.InterfaceStringToPointer(d.Get("display_name")),
@@ -183,7 +183,7 @@ func updateContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 }
 
 func readContextVariableSshKey(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, vid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -201,7 +201,7 @@ func readContextVariableSshKey(_ context.Context, d *schema.ResourceData, meta i
 		}
 		return diag.FromErr(err)
 	}
-	if variable.Type != api.VariableTypeSshKey {
+	if variable.Type != buddy.VariableTypeSshKey {
 		return diag.Errorf("Variable not found")
 	}
 	err = util.ApiVariableSshKeyToResourceData(domain, variable, d, true)
@@ -212,12 +212,12 @@ func readContextVariableSshKey(_ context.Context, d *schema.ResourceData, meta i
 }
 
 func createContextVariableSshKey(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.VariableOperationOptions{
+	opt := buddy.VariableOps{
 		Key:       util.InterfaceStringToPointer(d.Get("key")),
 		Value:     util.InterfaceStringToPointer(d.Get("value")),
-		Type:      util.InterfaceStringToPointer(api.VariableTypeSshKey),
+		Type:      util.InterfaceStringToPointer(buddy.VariableTypeSshKey),
 		Encrypted: util.InterfaceBoolToPointer(true),
 		Settable:  util.InterfaceBoolToPointer(false),
 		FilePlace: util.InterfaceStringToPointer(d.Get("file_place")),
@@ -229,17 +229,17 @@ func createContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 		opt.Description = util.InterfaceStringToPointer(description)
 	}
 	if projectName, ok := d.GetOk("project_name"); ok {
-		opt.Project = &api.VariableProject{
+		opt.Project = &buddy.VariableProject{
 			Name: projectName.(string),
 		}
 	}
 	if pipelineId, ok := d.GetOk("pipeline_id"); ok {
-		opt.Pipeline = &api.VariablePipeline{
+		opt.Pipeline = &buddy.VariablePipeline{
 			Id: pipelineId.(int),
 		}
 	}
 	if actionId, ok := d.GetOk("action_id"); ok {
-		opt.Action = &api.VariableAction{
+		opt.Action = &buddy.VariableAction{
 			Id: actionId.(int),
 		}
 	}

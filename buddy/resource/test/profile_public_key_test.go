@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccProfilePublicKey(t *testing.T) {
-	var key api.PublicKey
+	var key buddy.PublicKey
 	content := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAAAgQCG0Ug3U8DoJ6+z36D2h2+oc4UoQRihLNGcAO9SHglFXp+dn1aGJrqeoOrmo4bj5AcydjY33Ylm7ixZEe85vD5INCeldMd8JGmZTj57mwzqpKXFrag+/v9F9qmSEPxKZ1cQj7Q/nRi/hJIoJbsxymrxWhdJZnDNeqwdusR78Xkftw== test"
 	title := util.RandString(10)
 	newContent := "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQC5h1SgFvq45BGpYIDowIlaWiGe24kZg2DJ8NYqFo003PcAGdk30oJNvBqJfooGaI7GUkVoCzx9w3Oz/CYmC/NKsz45yUafJRwOBAQ4Gtt1o5RfLNIgj4GlfP1WmCFXIe4cuzureUkPCUIx2K+i1oAOdbEVorzfR3zqPIN/0u3Jwq3nLGmLYS8xCTq3odJT7GvyAj1jyOnXo+dpYZRm6LIteAkhtrnIAI+Le87Bp7JivPZwov/DG7HjW4IuStlTCJOQoYSUtTTu/zBWfSIbmZFakNqIBpiw8vmCeOOgBeOA5u4/JdfNMxH3CP0zxspjPplxkl3DiK/bBs1EGL0zvJrf test2"
@@ -50,7 +50,7 @@ func TestAccProfilePublicKey(t *testing.T) {
 	})
 }
 
-func testAccProfilePublicKeyAttributes(n string, key *api.PublicKey, content string, title string) resource.TestCheckFunc {
+func testAccProfilePublicKeyAttributes(n string, key *buddy.PublicKey, content string, title string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -76,7 +76,7 @@ func testAccProfilePublicKeyAttributes(n string, key *api.PublicKey, content str
 	}
 }
 
-func testAccProfilePublicKeyGet(n string, key *api.PublicKey) resource.TestCheckFunc {
+func testAccProfilePublicKeyGet(n string, key *buddy.PublicKey) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

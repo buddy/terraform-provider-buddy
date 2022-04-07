@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -47,27 +47,27 @@ func Integration() *schema.Resource {
 				Required: true,
 				ForceNew: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.IntegrationTypeDigitalOcean,
-					api.IntegrationTypeAmazon,
-					api.IntegrationTypeShopify,
-					api.IntegrationTypePushover,
-					api.IntegrationTypeRackspace,
-					api.IntegrationTypeCloudflare,
-					api.IntegrationTypeNewRelic,
-					api.IntegrationTypeSentry,
-					api.IntegrationTypeRollbar,
-					api.IntegrationTypeDatadog,
-					api.IntegrationTypeDigitalOceanSpaces,
-					api.IntegrationTypeHoneybadger,
-					api.IntegrationTypeVultr,
-					api.IntegrationTypeSentryEnterprise,
-					api.IntegrationTypeLoggly,
-					api.IntegrationTypeFirebase,
-					api.IntegrationTypeUpcloud,
-					api.IntegrationTypeGhostInspector,
-					api.IntegrationTypeAzureCloud,
-					api.IntegrationTypeDockerHub,
-					api.IntegrationTypeGoogleServiceAccount,
+					buddy.IntegrationTypeDigitalOcean,
+					buddy.IntegrationTypeAmazon,
+					buddy.IntegrationTypeShopify,
+					buddy.IntegrationTypePushover,
+					buddy.IntegrationTypeRackspace,
+					buddy.IntegrationTypeCloudflare,
+					buddy.IntegrationTypeNewRelic,
+					buddy.IntegrationTypeSentry,
+					buddy.IntegrationTypeRollbar,
+					buddy.IntegrationTypeDatadog,
+					buddy.IntegrationTypeDigitalOceanSpaces,
+					buddy.IntegrationTypeHoneybadger,
+					buddy.IntegrationTypeVultr,
+					buddy.IntegrationTypeSentryEnterprise,
+					buddy.IntegrationTypeLoggly,
+					buddy.IntegrationTypeFirebase,
+					buddy.IntegrationTypeUpcloud,
+					buddy.IntegrationTypeGhostInspector,
+					buddy.IntegrationTypeAzureCloud,
+					buddy.IntegrationTypeDockerHub,
+					buddy.IntegrationTypeGoogleServiceAccount,
 				}, false),
 			},
 			"scope": {
@@ -82,13 +82,13 @@ func Integration() *schema.Resource {
 				Type:     schema.TypeString,
 				Required: true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.IntegrationScopePrivate,
-					api.IntegrationScopeWorkspace,
-					api.IntegrationScopeAdmin,
-					api.IntegrationScopeGroup,
-					api.IntegrationScopeProject,
-					api.IntegrationScopeAdminInProject,
-					api.IntegrationScopeGroupInProject,
+					buddy.IntegrationScopePrivate,
+					buddy.IntegrationScopeWorkspace,
+					buddy.IntegrationScopeAdmin,
+					buddy.IntegrationScopeGroup,
+					buddy.IntegrationScopeProject,
+					buddy.IntegrationScopeAdminInProject,
+					buddy.IntegrationScopeGroupInProject,
 				}, false),
 			},
 			"project_name": {
@@ -194,7 +194,7 @@ func Integration() *schema.Resource {
 }
 
 func deleteContextIntegration(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, hashId, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -208,12 +208,12 @@ func deleteContextIntegration(_ context.Context, d *schema.ResourceData, meta in
 }
 
 func updateContextIntegration(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, hashId, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	opt := api.IntegrationOperationOptions{
+	opt := buddy.IntegrationOps{
 		Name:  util.InterfaceStringToPointer(d.Get("name")),
 		Type:  util.InterfaceStringToPointer(d.Get("type")),
 		Scope: util.InterfaceStringToPointer(d.Get("scope")),
@@ -265,7 +265,7 @@ func updateContextIntegration(ctx context.Context, d *schema.ResourceData, meta 
 }
 
 func readContextIntegration(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, hashId, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -287,9 +287,9 @@ func readContextIntegration(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 func createContextIntegration(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.IntegrationOperationOptions{
+	opt := buddy.IntegrationOps{
 		Name:  util.InterfaceStringToPointer(d.Get("name")),
 		Type:  util.InterfaceStringToPointer(d.Get("type")),
 		Scope: util.InterfaceStringToPointer(d.Get("scope")),

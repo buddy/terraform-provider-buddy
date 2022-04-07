@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -71,7 +71,7 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 			if err := util.CheckFieldSet("pipelines.0.last_execution_status", attrs["pipelines.0.last_execution_status"]); err != nil {
 				return err
 			}
-			if err := util.CheckFieldEqualAndSet("pipelines.0.priority", attrs["pipelines.0.priority"], api.PipelinePriorityNormal); err != nil {
+			if err := util.CheckFieldEqualAndSet("pipelines.0.priority", attrs["pipelines.0.priority"], buddy.PipelinePriorityNormal); err != nil {
 				return err
 			}
 			if err := util.CheckIntFieldSet("pipelines.0.pipeline_id", attrsPipelineId); err != nil {

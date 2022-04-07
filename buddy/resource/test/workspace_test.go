@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccWorkspace(t *testing.T) {
-	var workspace api.Workspace
+	var workspace buddy.Workspace
 	domain := util.UniqueString()
 	salt := util.RandString(10)
 	name := "A" + util.RandString(10)
@@ -65,7 +65,7 @@ func testAccWorkspaceCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccWorkspaceAttributes(n string, workspace *api.Workspace, domain string, name string) resource.TestCheckFunc {
+func testAccWorkspaceAttributes(n string, workspace *buddy.Workspace, domain string, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -105,7 +105,7 @@ func testAccWorkspaceAttributes(n string, workspace *api.Workspace, domain strin
 	}
 }
 
-func testAccWorkspaceGet(n string, workspace *api.Workspace) resource.TestCheckFunc {
+func testAccWorkspaceGet(n string, workspace *buddy.Workspace) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -76,7 +76,7 @@ func Member() *schema.Resource {
 }
 
 func deleteContextMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, mid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -95,7 +95,7 @@ func deleteContextMember(_ context.Context, d *schema.ResourceData, meta interfa
 
 func updateContextMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	if d.HasChange("admin") {
-		c := meta.(*api.Client)
+		c := meta.(*buddy.Client)
 		domain, mid, err := util.DecomposeDoubleId(d.Id())
 		if err != nil {
 			return diag.FromErr(err)
@@ -104,7 +104,7 @@ func updateContextMember(ctx context.Context, d *schema.ResourceData, meta inter
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		_, _, err = c.MemberService.UpdateAdmin(domain, memberId, &api.MemberAdminOperationOptions{
+		_, _, err = c.MemberService.UpdateAdmin(domain, memberId, &buddy.MemberAdminOps{
 			Admin: util.InterfaceBoolToPointer(d.Get("admin")),
 		})
 		if err != nil {
@@ -115,7 +115,7 @@ func updateContextMember(ctx context.Context, d *schema.ResourceData, meta inter
 }
 
 func readContextMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, mid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -141,10 +141,10 @@ func readContextMember(_ context.Context, d *schema.ResourceData, meta interface
 }
 
 func createContextMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	admin := d.Get("admin").(bool)
-	opt := api.MemberOperationOptions{
+	opt := buddy.MemberOps{
 		Email: util.InterfaceStringToPointer(d.Get("email")),
 	}
 	member, _, err := c.MemberService.Create(domain, &opt)
@@ -152,7 +152,7 @@ func createContextMember(ctx context.Context, d *schema.ResourceData, meta inter
 		return diag.FromErr(err)
 	}
 	if admin {
-		_, _, err := c.MemberService.UpdateAdmin(domain, member.Id, &api.MemberAdminOperationOptions{
+		_, _, err := c.MemberService.UpdateAdmin(domain, member.Id, &buddy.MemberAdminOps{
 			Admin: util.InterfaceBoolToPointer(true),
 		})
 		if err != nil {

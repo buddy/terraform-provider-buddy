@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -45,10 +45,10 @@ func Permission() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PermissionAccessLevelDenied,
-					api.PermissionAccessLevelReadOnly,
-					api.PermissionAccessLevelRunOnly,
-					api.PermissionAccessLevelReadWrite,
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelRunOnly,
+					buddy.PermissionAccessLevelReadWrite,
 				}, false),
 			},
 			"repository_access_level": {
@@ -56,9 +56,9 @@ func Permission() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PermissionAccessLevelReadOnly,
-					api.PermissionAccessLevelReadWrite,
-					api.PermissionAccessLevelManage,
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelReadWrite,
+					buddy.PermissionAccessLevelManage,
 				}, false),
 			},
 			"sandbox_access_level": {
@@ -66,9 +66,9 @@ func Permission() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PermissionAccessLevelDenied,
-					api.PermissionAccessLevelReadOnly,
-					api.PermissionAccessLevelReadWrite,
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelReadWrite,
 				}, false),
 			},
 			"permission_id": {
@@ -96,7 +96,7 @@ func Permission() *schema.Resource {
 }
 
 func deleteContextPermission(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, pid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -114,7 +114,7 @@ func deleteContextPermission(_ context.Context, d *schema.ResourceData, meta int
 }
 
 func updateContextPermission(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, pid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -123,7 +123,7 @@ func updateContextPermission(ctx context.Context, d *schema.ResourceData, meta i
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	opt := api.PermissionOperationOptions{
+	opt := buddy.PermissionOps{
 		Name:                  util.InterfaceStringToPointer(d.Get("name")),
 		PipelineAccessLevel:   util.InterfaceStringToPointer(d.Get("pipeline_access_level")),
 		RepositoryAccessLevel: util.InterfaceStringToPointer(d.Get("repository_access_level")),
@@ -140,7 +140,7 @@ func updateContextPermission(ctx context.Context, d *schema.ResourceData, meta i
 }
 
 func readContextPermission(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, pid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -166,9 +166,9 @@ func readContextPermission(_ context.Context, d *schema.ResourceData, meta inter
 }
 
 func createContextPermission(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.PermissionOperationOptions{
+	opt := buddy.PermissionOps{
 		Name:                  util.InterfaceStringToPointer(d.Get("name")),
 		PipelineAccessLevel:   util.InterfaceStringToPointer(d.Get("pipeline_access_level")),
 		RepositoryAccessLevel: util.InterfaceStringToPointer(d.Get("repository_access_level")),

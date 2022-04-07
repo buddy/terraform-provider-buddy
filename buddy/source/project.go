@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -60,9 +60,9 @@ func Project() *schema.Resource {
 }
 
 func readContextProject(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
-	var project *api.Project
+	var project *buddy.Project
 	var err error
 	domain := d.Get("domain").(string)
 	if name, ok := d.GetOk("name"); ok {
@@ -72,7 +72,7 @@ func readContextProject(_ context.Context, d *schema.ResourceData, meta interfac
 		}
 	} else {
 		displayName := d.Get("display_name").(string)
-		projects, _, err := c.ProjectService.GetList(domain, &api.QueryProjectList{})
+		projects, _, err := c.ProjectService.GetListAll(domain, nil)
 		if err != nil {
 			return diag.FromErr(err)
 		}

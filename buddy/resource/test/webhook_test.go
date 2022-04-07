@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,10 +12,10 @@ import (
 )
 
 func TestAccWebhook(t *testing.T) {
-	var webhook api.Webhook
+	var webhook buddy.Webhook
 	domain := util.UniqueString()
-	event := api.WebhookEventPush
-	newEvent := api.WebhookEventExecutionSuccessful
+	event := buddy.WebhookEventPush
+	newEvent := buddy.WebhookEventExecutionSuccessful
 	projectName := util.UniqueString()
 	targetUrl := "https://127.0.0.1"
 	newTargetUrl := "https://aaaa.com"
@@ -53,7 +53,7 @@ func TestAccWebhook(t *testing.T) {
 	})
 }
 
-func testAccWebhookAttributes(n string, webhook *api.Webhook, projectName string, event string, targetUrl string, secretKey string) resource.TestCheckFunc {
+func testAccWebhookAttributes(n string, webhook *buddy.Webhook, projectName string, event string, targetUrl string, secretKey string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -110,7 +110,7 @@ func testAccWebhookAttributes(n string, webhook *api.Webhook, projectName string
 	}
 }
 
-func testAccWebhookGet(n string, webhook *api.Webhook) resource.TestCheckFunc {
+func testAccWebhookGet(n string, webhook *buddy.Webhook) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -54,7 +54,7 @@ func createContextProfile(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func readContextProfile(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	p, _, err := c.ProfileService.Get()
 	if err != nil {
@@ -68,8 +68,8 @@ func readContextProfile(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 func updateContextProfile(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
-	u := api.ProfileOperationOptions{
+	c := meta.(*buddy.Client)
+	u := buddy.ProfileOps{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
 	}
 	_, _, err := c.ProfileService.Update(&u)
