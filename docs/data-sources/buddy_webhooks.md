@@ -31,24 +31,24 @@ data "buddy_webhooks" "filter" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **target_url_regex** (String) The webhook's target_url regular expression to match
+- `target_url_regex` (String) The webhook's target_url regular expression to match
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **webhooks** (List of Object) List of webhooks (see [below for nested schema](#nestedatt--webhooks))
+- `id` (String) The Terraform resource identifier for this item
+- `webhooks` (List of Object) List of webhooks (see [below for nested schema](#nestedatt--webhooks))
 
 <a id="nestedatt--webhooks"></a>
 ### Nested Schema for `webhooks`
 
 Read-Only:
 
-- **html_url** (String)
-- **target_url** (String)
-- **webhook_id** (Number)
+- `html_url` (String)
+- `target_url` (String)
+- `webhook_id` (Number)
 
 

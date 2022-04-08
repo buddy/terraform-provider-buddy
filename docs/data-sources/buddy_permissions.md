@@ -31,29 +31,29 @@ data "buddy_permissions" "filter" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **name_regex** (String) The permission's name regular expression to match
-- **type** (String) Filter permissions by type (`CUSTOM`, `READ_ONLY`, `DEVELOPER`)
+- `name_regex` (String) The permission's name regular expression to match
+- `type` (String) Filter permissions by type (`CUSTOM`, `READ_ONLY`, `DEVELOPER`)
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **permissions** (List of Object) List of permissions (roles) (see [below for nested schema](#nestedatt--permissions))
+- `id` (String) The Terraform resource identifier for this item
+- `permissions` (List of Object) List of permissions (roles) (see [below for nested schema](#nestedatt--permissions))
 
 <a id="nestedatt--permissions"></a>
 ### Nested Schema for `permissions`
 
 Read-Only:
 
-- **html_url** (String)
-- **name** (String)
-- **permission_id** (Number)
-- **pipeline_access_level** (String)
-- **repository_access_level** (String)
-- **sandbox_access_level** (String)
-- **type** (String)
+- `html_url` (String)
+- `name` (String)
+- `permission_id` (Number)
+- `pipeline_access_level` (String)
+- `repository_access_level` (String)
+- `sandbox_access_level` (String)
+- `type` (String)
 
 

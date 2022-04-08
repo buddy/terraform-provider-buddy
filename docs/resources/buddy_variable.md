@@ -49,24 +49,24 @@ resource "buddy_variable" "in_pipeline" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **key** (String) The variable's name
-- **value** (String, Sensitive) The variable's value
+- `domain` (String) The workspace's URL handle
+- `key` (String) The variable's name
+- `value` (String, Sensitive) The variable's value
 
 ### Optional
 
-- **action_id** (Number) The variable's action ID
-- **description** (String) The variable's description
-- **encrypted** (Boolean) Is the variable's value encrypted
-- **pipeline_id** (Number) The variable's pipeline ID
-- **project_name** (String) The variable's project name
-- **settable** (Boolean) Is the variable's value changeable
+- `action_id` (Number) The variable's action ID
+- `description` (String) The variable's description
+- `encrypted` (Boolean) Is the variable's value encrypted
+- `pipeline_id` (Number) The variable's pipeline ID
+- `project_name` (String) The variable's project name
+- `settable` (Boolean) Is the variable's value changeable
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **value_processed** (String, Sensitive) The variable's processed value. Encrypted if **encrypted** == true
-- **variable_id** (Number) The variable's ID
+- `id` (String) The Terraform resource identifier for this item
+- `value_processed` (String, Sensitive) The variable's processed value. Encrypted if **encrypted** == true
+- `variable_id` (Number) The variable's ID
 
 ## Import
 

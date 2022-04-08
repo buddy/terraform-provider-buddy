@@ -34,40 +34,40 @@ data "buddy_pipeline" "by_id" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **project_name** (String) The project's name
+- `domain` (String) The workspace's URL handle
+- `project_name` (String) The project's name
 
 ### Optional
 
-- **name** (String) The pipeline's name
-- **pipeline_id** (Number) The pipeline's ID
+- `name` (String) The pipeline's name
+- `pipeline_id` (Number) The pipeline's ID
 
 ### Read-Only
 
-- **definition_source** (String) The pipeline's definition source
-- **disabled** (Boolean) Defines wheter or not the pipeline can be run
-- **disabling_reason** (String) The pipeline's disabling reason
-- **event** (List of Object) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
-- **html_url** (String) The pipeline's URL
-- **id** (String) The Terraform resource identifier for this item
-- **last_execution_revision** (String) The pipeline's last run revision
-- **last_execution_status** (String) The pipeline's last run status
-- **on** (String) The pipeline's trigger mode
-- **priority** (String) The pipeline's priority
-- **refs** (Set of String) The pipeline's list of refs
-- **remote_branch** (String) The pipeline's remote definition branch name
-- **remote_parameter** (List of Object) The pipeline's remote definition parameters (see [below for nested schema](#nestedatt--remote_parameter))
-- **remote_path** (String) The pipeline's remote definition path
-- **remote_project_name** (String) The pipeline's remote definition project name
-- **tags** (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
+- `definition_source` (String) The pipeline's definition source
+- `disabled` (Boolean) Defines wheter or not the pipeline can be run
+- `disabling_reason` (String) The pipeline's disabling reason
+- `event` (List of Object) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
+- `html_url` (String) The pipeline's URL
+- `id` (String) The Terraform resource identifier for this item
+- `last_execution_revision` (String) The pipeline's last run revision
+- `last_execution_status` (String) The pipeline's last run status
+- `on` (String) The pipeline's trigger mode
+- `priority` (String) The pipeline's priority
+- `refs` (Set of String) The pipeline's list of refs
+- `remote_branch` (String) The pipeline's remote definition branch name
+- `remote_parameter` (List of Object) The pipeline's remote definition parameters (see [below for nested schema](#nestedatt--remote_parameter))
+- `remote_path` (String) The pipeline's remote definition path
+- `remote_project_name` (String) The pipeline's remote definition project name
+- `tags` (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 
 <a id="nestedatt--event"></a>
 ### Nested Schema for `event`
 
 Read-Only:
 
-- **refs** (Set of String)
-- **type** (String)
+- `refs` (Set of String)
+- `type` (String)
 
 
 <a id="nestedatt--remote_parameter"></a>
@@ -75,7 +75,7 @@ Read-Only:
 
 Read-Only:
 
-- **key** (String)
-- **value** (String)
+- `key` (String)
+- `value` (String)
 
 

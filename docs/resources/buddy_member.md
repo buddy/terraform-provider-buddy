@@ -31,21 +31,21 @@ resource "buddy_member" "john" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **email** (String) The member's email
+- `domain` (String) The workspace's URL handle
+- `email` (String) The member's email
 
 ### Optional
 
-- **admin** (Boolean) Is the member a workspace administrator
+- `admin` (Boolean) Is the member a workspace administrator
 
 ### Read-Only
 
-- **avatar_url** (String) The member's avatar URL
-- **html_url** (String) The member's URL
-- **id** (String) The Terraform resource identifier for this item
-- **member_id** (Number) The member's ID
-- **name** (String) The member's name
-- **workspace_owner** (Boolean) Is the member the workspace owner
+- `avatar_url` (String) The member's avatar URL
+- `html_url` (String) The member's URL
+- `id` (String) The Terraform resource identifier for this item
+- `member_id` (Number) The member's ID
+- `name` (String) The member's name
+- `workspace_owner` (Boolean) Is the member the workspace owner
 
 ## Import
 

@@ -32,17 +32,17 @@ data "buddy_project" "by_display_name" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **display_name** (String) The project's display name
-- **name** (String) The project's unique name ID
+- `display_name` (String) The project's display name
+- `name` (String) The project's unique name ID
 
 ### Read-Only
 
-- **html_url** (String) The project's URL
-- **id** (String) The Terraform resource identifier for this item
-- **status** (String) The project's status
+- `html_url` (String) The project's URL
+- `id` (String) The Terraform resource identifier for this item
+- `status` (String) The project's status
 
 

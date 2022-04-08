@@ -25,10 +25,10 @@ data "buddy_profile" "me" {
 
 ### Read-Only
 
-- **avatar_url** (String) The user's avatar URL
-- **html_url** (String) The user's profile URL
-- **id** (String) The Terraform resource identifier for this item
-- **member_id** (Number) The user's ID
-- **name** (String) The user's name
+- `avatar_url` (String) The user's avatar URL
+- `html_url` (String) The user's profile URL
+- `id` (String) The Terraform resource identifier for this item
+- `member_id` (Number) The user's ID
+- `name` (String) The user's name
 
 

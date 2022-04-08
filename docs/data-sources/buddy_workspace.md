@@ -30,13 +30,13 @@ data "buddy_workspace" "by_domain" {
 
 ### Optional
 
-- **domain** (String) The workspace's URL handle
-- **name** (String) The workspace's name
+- `domain` (String) The workspace's URL handle
+- `name` (String) The workspace's name
 
 ### Read-Only
 
-- **html_url** (String) The workspace's URL
-- **id** (String) The Terraform resource identifier for this item
-- **workspace_id** (Number) The workspace's ID
+- `html_url` (String) The workspace's URL
+- `id` (String) The Terraform resource identifier for this item
+- `workspace_id` (Number) The workspace's ID
 
 

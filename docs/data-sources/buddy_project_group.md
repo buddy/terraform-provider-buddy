@@ -28,28 +28,28 @@ data "buddy_project_group" "pg" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **group_id** (Number) The group's ID
-- **project_name** (String) The project's name
+- `domain` (String) The workspace's URL handle
+- `group_id` (Number) The group's ID
+- `project_name` (String) The project's name
 
 ### Read-Only
 
-- **html_url** (String) The group's URL
-- **id** (String) The Terraform resource identifier for this item
-- **name** (String) The group's name
-- **permission** (List of Object) The group's permission in the project (see [below for nested schema](#nestedatt--permission))
+- `html_url` (String) The group's URL
+- `id` (String) The Terraform resource identifier for this item
+- `name` (String) The group's name
+- `permission` (List of Object) The group's permission in the project (see [below for nested schema](#nestedatt--permission))
 
 <a id="nestedatt--permission"></a>
 ### Nested Schema for `permission`
 
 Read-Only:
 
-- **html_url** (String)
-- **name** (String)
-- **permission_id** (Number)
-- **pipeline_access_level** (String)
-- **repository_access_level** (String)
-- **sandbox_access_level** (String)
-- **type** (String)
+- `html_url` (String)
+- `name` (String)
+- `permission_id` (Number)
+- `pipeline_access_level` (String)
+- `repository_access_level` (String)
+- `sandbox_access_level` (String)
+- `type` (String)
 
 

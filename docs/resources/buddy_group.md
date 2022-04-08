@@ -31,18 +31,18 @@ resource "buddy_group" "devs" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **name** (String) The group's name
+- `domain` (String) The workspace's URL handle
+- `name` (String) The group's name
 
 ### Optional
 
-- **description** (String) The group's description
+- `description` (String) The group's description
 
 ### Read-Only
 
-- **group_id** (Number) The group's ID
-- **html_url** (String) The group's URL
-- **id** (String) The Terraform resource identifier for this item
+- `group_id` (Number) The group's ID
+- `html_url` (String) The group's URL
+- `id` (String) The Terraform resource identifier for this item
 
 ## Import
 

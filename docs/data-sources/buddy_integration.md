@@ -32,17 +32,17 @@ data "buddy_integration" "azure" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **integration_id** (String) The integration's ID
-- **name** (String) The integration's name
+- `integration_id` (String) The integration's ID
+- `name` (String) The integration's name
 
 ### Read-Only
 
-- **html_url** (String) The integration's URL
-- **id** (String) The Terraform resource identifier for this item
-- **type** (String) The integration's type
+- `html_url` (String) The integration's URL
+- `id` (String) The Terraform resource identifier for this item
+- `type` (String) The integration's type
 
 

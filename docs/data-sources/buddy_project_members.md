@@ -27,29 +27,29 @@ data "buddy_project_members" "pm" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **project_name** (String) The project's name
+- `domain` (String) The workspace's URL handle
+- `project_name` (String) The project's name
 
 ### Optional
 
-- **name_regex** (String) The project member's name regular expression to match
+- `name_regex` (String) The project member's name regular expression to match
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **members** (List of Object) List of members (see [below for nested schema](#nestedatt--members))
+- `id` (String) The Terraform resource identifier for this item
+- `members` (List of Object) List of members (see [below for nested schema](#nestedatt--members))
 
 <a id="nestedatt--members"></a>
 ### Nested Schema for `members`
 
 Read-Only:
 
-- **admin** (Boolean)
-- **avatar_url** (String)
-- **email** (String)
-- **html_url** (String)
-- **member_id** (Number)
-- **name** (String)
-- **workspace_owner** (Boolean)
+- `admin` (Boolean)
+- `avatar_url` (String)
+- `email` (String)
+- `html_url` (String)
+- `member_id` (Number)
+- `name` (String)
+- `workspace_owner` (Boolean)
 
 

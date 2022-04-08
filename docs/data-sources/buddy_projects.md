@@ -46,28 +46,28 @@ data "buddy_projects" "with_display_name_ended" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **display_name_regex** (String) The project's display name regular expression to match
-- **membership** (Boolean) For workspace administrators all workspace projects are returned, set true to lists projects the user actually belongs to
-- **name_regex** (String) The project's name regular expression to match
-- **status** (String) Filter projects by status (`ACTIVE`, `CLOSED`)
+- `display_name_regex` (String) The project's display name regular expression to match
+- `membership` (Boolean) For workspace administrators all workspace projects are returned, set true to lists projects the user actually belongs to
+- `name_regex` (String) The project's name regular expression to match
+- `status` (String) Filter projects by status (`ACTIVE`, `CLOSED`)
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **projects** (List of Object) List of projects (see [below for nested schema](#nestedatt--projects))
+- `id` (String) The Terraform resource identifier for this item
+- `projects` (List of Object) List of projects (see [below for nested schema](#nestedatt--projects))
 
 <a id="nestedatt--projects"></a>
 ### Nested Schema for `projects`
 
 Read-Only:
 
-- **display_name** (String)
-- **html_url** (String)
-- **name** (String)
-- **status** (String)
+- `display_name` (String)
+- `html_url` (String)
+- `name` (String)
+- `status` (String)
 
 

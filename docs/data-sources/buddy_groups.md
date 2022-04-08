@@ -31,24 +31,24 @@ data "buddy_groups" "filter" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **name_regex** (String) The group's name regular expression to match
+- `name_regex` (String) The group's name regular expression to match
 
 ### Read-Only
 
-- **groups** (List of Object) List of groups (see [below for nested schema](#nestedatt--groups))
-- **id** (String) The Terraform resource identifier for this item
+- `groups` (List of Object) List of groups (see [below for nested schema](#nestedatt--groups))
+- `id` (String) The Terraform resource identifier for this item
 
 <a id="nestedatt--groups"></a>
 ### Nested Schema for `groups`
 
 Read-Only:
 
-- **group_id** (Number)
-- **html_url** (String)
-- **name** (String)
+- `group_id` (Number)
+- `html_url` (String)
+- `name` (String)
 
 

@@ -33,22 +33,22 @@ data "buddy_workspaces" "domain_ended" {
 
 ### Optional
 
-- **domain_regex** (String) The workspace URL handle regular expression to match
-- **name_regex** (String) The workspace name regular expression to match
+- `domain_regex` (String) The workspace URL handle regular expression to match
+- `name_regex` (String) The workspace name regular expression to match
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **workspaces** (List of Object) List of workspaces (see [below for nested schema](#nestedatt--workspaces))
+- `id` (String) The Terraform resource identifier for this item
+- `workspaces` (List of Object) List of workspaces (see [below for nested schema](#nestedatt--workspaces))
 
 <a id="nestedatt--workspaces"></a>
 ### Nested Schema for `workspaces`
 
 Read-Only:
 
-- **domain** (String)
-- **html_url** (String)
-- **name** (String)
-- **workspace_id** (Number)
+- `domain` (String)
+- `html_url` (String)
+- `name` (String)
+- `workspace_id` (Number)
 
 

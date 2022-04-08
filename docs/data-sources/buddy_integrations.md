@@ -31,26 +31,26 @@ data "buddy_integrations" "amazon" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **name_regex** (String) The integration's name regular expression to match
-- **type** (String) The integration's type
+- `name_regex` (String) The integration's name regular expression to match
+- `type` (String) The integration's type
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **integrations** (List of Object) List of integrations (see [below for nested schema](#nestedatt--integrations))
+- `id` (String) The Terraform resource identifier for this item
+- `integrations` (List of Object) List of integrations (see [below for nested schema](#nestedatt--integrations))
 
 <a id="nestedatt--integrations"></a>
 ### Nested Schema for `integrations`
 
 Read-Only:
 
-- **html_url** (String)
-- **integration_id** (String)
-- **name** (String)
-- **type** (String)
+- `html_url` (String)
+- `integration_id` (String)
+- `name` (String)
+- `type` (String)
 
 

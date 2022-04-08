@@ -32,21 +32,21 @@ data "buddy_permission" "by_id" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **name** (String) The permission's name
-- **permission_id** (Number) The permission's ID
+- `name` (String) The permission's name
+- `permission_id` (Number) The permission's ID
 
 ### Read-Only
 
-- **description** (String) The permission's description
-- **html_url** (String) The permission's URL
-- **id** (String) The Terraform resource identifier for this item
-- **pipeline_access_level** (String) The permission's access level to pipelines
-- **repository_access_level** (String) The permission's access level to repository
-- **sandbox_access_level** (String) The permission's access level to sandboxes
-- **type** (String) The permission's type
+- `description` (String) The permission's description
+- `html_url` (String) The permission's URL
+- `id` (String) The Terraform resource identifier for this item
+- `pipeline_access_level` (String) The permission's access level to pipelines
+- `repository_access_level` (String) The permission's access level to repository
+- `sandbox_access_level` (String) The permission's access level to sandboxes
+- `type` (String) The permission's type
 
 
