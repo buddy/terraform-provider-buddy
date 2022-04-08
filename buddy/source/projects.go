@@ -95,7 +95,7 @@ func readContextProjects(_ context.Context, d *schema.ResourceData, meta interfa
 		opt.Status = status.(string)
 	}
 	domain := d.Get("domain").(string)
-	projects, _, err := c.ProjectService.GetList(domain, &opt)
+	projects, _, err := c.ProjectService.GetListAll(domain, &opt)
 	if err != nil {
 		return diag.FromErr(err)
 	}
