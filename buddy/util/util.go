@@ -1,9 +1,9 @@
 package util
 
 import (
-	"buddy-terraform/buddy/api"
 	"errors"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
@@ -289,11 +289,11 @@ func ValidateEmail(v interface{}, _ string) (we []string, err []error) {
 	return
 }
 
-func MapTriggerConditionsToApi(l interface{}) *[]*api.PipelineTriggerCondition {
-	var expanded []*api.PipelineTriggerCondition
+func MapTriggerConditionsToApi(l interface{}) *[]*buddy.PipelineTriggerCondition {
+	var expanded []*buddy.PipelineTriggerCondition
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
-		c := api.PipelineTriggerCondition{
+		c := buddy.PipelineTriggerCondition{
 			TriggerCondition: m["condition"].(string),
 		}
 		if m["paths"] != nil {
@@ -325,11 +325,11 @@ func MapTriggerConditionsToApi(l interface{}) *[]*api.PipelineTriggerCondition {
 	return &expanded
 }
 
-func MapPipelineEventsToApi(l interface{}) *[]*api.PipelineEvent {
-	var expanded []*api.PipelineEvent
+func MapPipelineEventsToApi(l interface{}) *[]*buddy.PipelineEvent {
+	var expanded []*buddy.PipelineEvent
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
-		e := api.PipelineEvent{
+		e := buddy.PipelineEvent{
 			Type: m["type"].(string),
 			Refs: InterfaceStringSetToStringSlice(m["refs"]),
 		}
@@ -338,11 +338,11 @@ func MapPipelineEventsToApi(l interface{}) *[]*api.PipelineEvent {
 	return &expanded
 }
 
-func MapPipelineRemoteParametersToApi(l interface{}) *[]*api.PipelineRemoteParameter {
-	var expanded []*api.PipelineRemoteParameter
+func MapPipelineRemoteParametersToApi(l interface{}) *[]*buddy.PipelineRemoteParameter {
+	var expanded []*buddy.PipelineRemoteParameter
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
-		e := api.PipelineRemoteParameter{
+		e := buddy.PipelineRemoteParameter{
 			Key:   m["key"].(string),
 			Value: m["value"].(string),
 		}
@@ -351,7 +351,7 @@ func MapPipelineRemoteParametersToApi(l interface{}) *[]*api.PipelineRemoteParam
 	return &expanded
 }
 
-func ApiShortIntegrationToMap(i *api.Integration) map[string]interface{} {
+func ApiShortIntegrationToMap(i *buddy.Integration) map[string]interface{} {
 	if i == nil {
 		return nil
 	}
@@ -363,7 +363,7 @@ func ApiShortIntegrationToMap(i *api.Integration) map[string]interface{} {
 	return integration
 }
 
-func ApiTriggerConditionToMap(c *api.PipelineTriggerCondition) map[string]interface{} {
+func ApiTriggerConditionToMap(c *buddy.PipelineTriggerCondition) map[string]interface{} {
 	if c == nil {
 		return nil
 	}
@@ -380,7 +380,7 @@ func ApiTriggerConditionToMap(c *api.PipelineTriggerCondition) map[string]interf
 	return condition
 }
 
-func ApiPipelineTriggerConditionsToMap(l []*api.PipelineTriggerCondition) []interface{} {
+func ApiPipelineTriggerConditionsToMap(l []*buddy.PipelineTriggerCondition) []interface{} {
 	if l == nil {
 		return nil
 	}
@@ -391,7 +391,7 @@ func ApiPipelineTriggerConditionsToMap(l []*api.PipelineTriggerCondition) []inte
 	return list
 }
 
-func ApiPipelineRemoteParameterToMap(e *api.PipelineRemoteParameter) map[string]interface{} {
+func ApiPipelineRemoteParameterToMap(e *buddy.PipelineRemoteParameter) map[string]interface{} {
 	if e == nil {
 		return nil
 	}
@@ -401,7 +401,7 @@ func ApiPipelineRemoteParameterToMap(e *api.PipelineRemoteParameter) map[string]
 	return param
 }
 
-func ApiPipelineEventToMap(e *api.PipelineEvent) map[string]interface{} {
+func ApiPipelineEventToMap(e *buddy.PipelineEvent) map[string]interface{} {
 	if e == nil {
 		return nil
 	}
@@ -411,7 +411,7 @@ func ApiPipelineEventToMap(e *api.PipelineEvent) map[string]interface{} {
 	return event
 }
 
-func ApiPipelineEventsToMap(l []*api.PipelineEvent) []interface{} {
+func ApiPipelineEventsToMap(l []*buddy.PipelineEvent) []interface{} {
 	if l == nil {
 		return nil
 	}
@@ -422,7 +422,7 @@ func ApiPipelineEventsToMap(l []*api.PipelineEvent) []interface{} {
 	return list
 }
 
-func ApiPipelineRemoteParametersToMap(l []*api.PipelineRemoteParameter) []interface{} {
+func ApiPipelineRemoteParametersToMap(l []*buddy.PipelineRemoteParameter) []interface{} {
 	if l == nil {
 		return nil
 	}
@@ -433,7 +433,7 @@ func ApiPipelineRemoteParametersToMap(l []*api.PipelineRemoteParameter) []interf
 	return list
 }
 
-func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.Pipeline, d *schema.ResourceData, short bool) error {
+func ApiPipelineToResourceData(domain string, projectName string, pipeline *buddy.Pipeline, d *schema.ResourceData, short bool) error {
 	d.SetId(ComposeTripleId(domain, projectName, strconv.Itoa(pipeline.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -559,7 +559,7 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.
 	}
 	definitionSource := pipeline.DefinitionSource
 	if definitionSource == "" {
-		definitionSource = api.PipelineDefinitionSourceLocal
+		definitionSource = buddy.PipelineDefinitionSourceLocal
 	}
 	err = d.Set("definition_source", definitionSource)
 	if err != nil {
@@ -592,7 +592,7 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *api.
 	return d.Set("event", ApiPipelineEventsToMap(pipeline.Events))
 }
 
-func ApiIntegrationToResourceData(domain string, i *api.Integration, d *schema.ResourceData, short bool) error {
+func ApiIntegrationToResourceData(domain string, i *buddy.Integration, d *schema.ResourceData, short bool) error {
 	d.SetId(ComposeDoubleId(domain, i.HashId))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -627,11 +627,11 @@ func ApiIntegrationToResourceData(domain string, i *api.Integration, d *schema.R
 	return d.Set("html_url", i.HtmlUrl)
 }
 
-func MapRoleAssumptionsToApi(l interface{}) *[]*api.RoleAssumption {
-	var expanded []*api.RoleAssumption
+func MapRoleAssumptionsToApi(l interface{}) *[]*buddy.RoleAssumption {
+	var expanded []*buddy.RoleAssumption
 	for _, v := range l.([]interface{}) {
 		m := v.(map[string]interface{})
-		r := api.RoleAssumption{
+		r := buddy.RoleAssumption{
 			Arn: m["arn"].(string),
 		}
 		if m["external_id"] != nil {
@@ -645,7 +645,7 @@ func MapRoleAssumptionsToApi(l interface{}) *[]*api.RoleAssumption {
 	return &expanded
 }
 
-func ApiShortGroupToMap(g *api.Group) map[string]interface{} {
+func ApiShortGroupToMap(g *buddy.Group) map[string]interface{} {
 	if g == nil {
 		return nil
 	}
@@ -656,7 +656,7 @@ func ApiShortGroupToMap(g *api.Group) map[string]interface{} {
 	return group
 }
 
-func ApiShortVariableToMap(v *api.Variable) map[string]interface{} {
+func ApiShortVariableToMap(v *buddy.Variable) map[string]interface{} {
 	if v == nil {
 		return nil
 	}
@@ -670,7 +670,7 @@ func ApiShortVariableToMap(v *api.Variable) map[string]interface{} {
 	return variable
 }
 
-func ApiShortWebhookToMap(w *api.Webhook) map[string]interface{} {
+func ApiShortWebhookToMap(w *buddy.Webhook) map[string]interface{} {
 	if w == nil {
 		return nil
 	}
@@ -681,7 +681,7 @@ func ApiShortWebhookToMap(w *api.Webhook) map[string]interface{} {
 	return webhook
 }
 
-func ApiShortVariableSshKeyToMap(v *api.Variable) map[string]interface{} {
+func ApiShortVariableSshKeyToMap(v *buddy.Variable) map[string]interface{} {
 	if v == nil {
 		return nil
 	}
@@ -702,7 +702,7 @@ func ApiShortVariableSshKeyToMap(v *api.Variable) map[string]interface{} {
 	return variable
 }
 
-func ApiShortMemberToMap(m *api.Member) map[string]interface{} {
+func ApiShortMemberToMap(m *buddy.Member) map[string]interface{} {
 	if m == nil {
 		return nil
 	}
@@ -717,7 +717,7 @@ func ApiShortMemberToMap(m *api.Member) map[string]interface{} {
 	return member
 }
 
-func ApiShortWorkspaceToMap(w *api.Workspace) map[string]interface{} {
+func ApiShortWorkspaceToMap(w *buddy.Workspace) map[string]interface{} {
 	if w == nil {
 		return nil
 	}
@@ -729,7 +729,7 @@ func ApiShortWorkspaceToMap(w *api.Workspace) map[string]interface{} {
 	return workspace
 }
 
-func ApiShortProjectToMap(p *api.Project) map[string]interface{} {
+func ApiShortProjectToMap(p *buddy.Project) map[string]interface{} {
 	if p == nil {
 		return nil
 	}
@@ -741,7 +741,7 @@ func ApiShortProjectToMap(p *api.Project) map[string]interface{} {
 	return project
 }
 
-func ApiShortPermissionToMap(permission *api.Permission) map[string]interface{} {
+func ApiShortPermissionToMap(permission *buddy.Permission) map[string]interface{} {
 	if permission == nil {
 		return nil
 	}
@@ -756,7 +756,7 @@ func ApiShortPermissionToMap(permission *api.Permission) map[string]interface{} 
 	return permissionMap
 }
 
-func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
+func ApiShortPipelineToMap(p *buddy.Pipeline) map[string]interface{} {
 	if p == nil {
 		return nil
 	}
@@ -775,7 +775,7 @@ func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
 	pipeline["event"] = ApiPipelineEventsToMap(p.Events)
 	definitionSource := p.DefinitionSource
 	if definitionSource == "" {
-		definitionSource = api.PipelineDefinitionSourceLocal
+		definitionSource = buddy.PipelineDefinitionSourceLocal
 	}
 	pipeline["definition_source"] = definitionSource
 	pipeline["remote_path"] = p.RemotePath
@@ -785,7 +785,7 @@ func ApiShortPipelineToMap(p *api.Pipeline) map[string]interface{} {
 	return pipeline
 }
 
-func ApiVariableSshKeyToResourceData(domain string, variable *api.Variable, d *schema.ResourceData, useValueProcessed bool) error {
+func ApiVariableSshKeyToResourceData(domain string, variable *buddy.Variable, d *schema.ResourceData, useValueProcessed bool) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -846,7 +846,7 @@ func ApiVariableSshKeyToResourceData(domain string, variable *api.Variable, d *s
 	return d.Set("public_value", variable.PublicValue)
 }
 
-func ApiVariableToResourceData(domain string, variable *api.Variable, d *schema.ResourceData, useValueProcessed bool) error {
+func ApiVariableToResourceData(domain string, variable *buddy.Variable, d *schema.ResourceData, useValueProcessed bool) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -879,7 +879,7 @@ func ApiVariableToResourceData(domain string, variable *api.Variable, d *schema.
 	return d.Set("variable_id", variable.Id)
 }
 
-func ApiWebhookToResourceData(domain string, webhook *api.Webhook, d *schema.ResourceData, short bool) error {
+func ApiWebhookToResourceData(domain string, webhook *buddy.Webhook, d *schema.ResourceData, short bool) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(webhook.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -910,7 +910,7 @@ func ApiWebhookToResourceData(domain string, webhook *api.Webhook, d *schema.Res
 	return d.Set("html_url", webhook.HtmlUrl)
 }
 
-func ApiProjectGroupToResourceData(domain string, projectName string, group *api.ProjectGroup, d *schema.ResourceData, setParentPermissionId bool) error {
+func ApiProjectGroupToResourceData(domain string, projectName string, group *buddy.ProjectGroup, d *schema.ResourceData, setParentPermissionId bool) error {
 	d.SetId(ComposeTripleId(domain, projectName, strconv.Itoa(group.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -941,7 +941,7 @@ func ApiProjectGroupToResourceData(domain string, projectName string, group *api
 	return d.Set("permission", []interface{}{ApiShortPermissionToMap(group.PermissionSet)})
 }
 
-func ApiProjectMemberToResourceData(domain string, projectName string, member *api.ProjectMember, d *schema.ResourceData, setParentPermissionId bool) error {
+func ApiProjectMemberToResourceData(domain string, projectName string, member *buddy.ProjectMember, d *schema.ResourceData, setParentPermissionId bool) error {
 	d.SetId(ComposeTripleId(domain, projectName, strconv.Itoa(member.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -988,7 +988,7 @@ func ApiProjectMemberToResourceData(domain string, projectName string, member *a
 	return d.Set("permission", []interface{}{ApiShortPermissionToMap(member.PermissionSet)})
 }
 
-func ApiProjectToResourceData(domain string, project *api.Project, d *schema.ResourceData, short bool) error {
+func ApiProjectToResourceData(domain string, project *buddy.Project, d *schema.ResourceData, short bool) error {
 	d.SetId(ComposeDoubleId(domain, project.Name))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -1040,7 +1040,7 @@ func ApiProjectToResourceData(domain string, project *api.Project, d *schema.Res
 	return nil
 }
 
-func ApiPermissionToResourceData(domain string, p *api.Permission, d *schema.ResourceData) error {
+func ApiPermissionToResourceData(domain string, p *buddy.Permission, d *schema.ResourceData) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(p.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -1077,7 +1077,7 @@ func ApiPermissionToResourceData(domain string, p *api.Permission, d *schema.Res
 	return d.Set("type", p.Type)
 }
 
-func ApiWorkspaceToResourceData(workspace *api.Workspace, d *schema.ResourceData, short bool) error {
+func ApiWorkspaceToResourceData(workspace *buddy.Workspace, d *schema.ResourceData, short bool) error {
 	d.SetId(workspace.Domain)
 	err := d.Set("domain", workspace.Domain)
 	if err != nil {
@@ -1109,7 +1109,7 @@ func ApiWorkspaceToResourceData(workspace *api.Workspace, d *schema.ResourceData
 	return nil
 }
 
-func ApiProfileEmailToResourceData(p *api.ProfileEmail, d *schema.ResourceData) error {
+func ApiProfileEmailToResourceData(p *buddy.ProfileEmail, d *schema.ResourceData) error {
 	d.SetId(p.Email)
 	err := d.Set("email", p.Email)
 	if err != nil {
@@ -1118,7 +1118,7 @@ func ApiProfileEmailToResourceData(p *api.ProfileEmail, d *schema.ResourceData) 
 	return d.Set("confirmed", p.Confirmed)
 }
 
-func ApiPublicKeyToResourceData(k *api.PublicKey, d *schema.ResourceData) error {
+func ApiPublicKeyToResourceData(k *buddy.PublicKey, d *schema.ResourceData) error {
 	d.SetId(strconv.Itoa(k.Id))
 	err := d.Set("content", k.Content)
 	if err != nil {
@@ -1131,7 +1131,7 @@ func ApiPublicKeyToResourceData(k *api.PublicKey, d *schema.ResourceData) error 
 	return d.Set("title", k.Title)
 }
 
-func ApiProfileToResourceData(p *api.Profile, d *schema.ResourceData) error {
+func ApiProfileToResourceData(p *buddy.Profile, d *schema.ResourceData) error {
 	d.SetId("me")
 	err := d.Set("member_id", p.Id)
 	if err != nil {
@@ -1148,7 +1148,7 @@ func ApiProfileToResourceData(p *api.Profile, d *schema.ResourceData) error {
 	return d.Set("avatar_url", p.AvatarUrl)
 }
 
-func ApiMemberToResourceData(domain string, m *api.Member, d *schema.ResourceData) error {
+func ApiMemberToResourceData(domain string, m *buddy.Member, d *schema.ResourceData) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(m.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -1181,7 +1181,7 @@ func ApiMemberToResourceData(domain string, m *api.Member, d *schema.ResourceDat
 	return d.Set("workspace_owner", m.WorkspaceOwner)
 }
 
-func ApiGroupToResourceData(domain string, g *api.Group, d *schema.ResourceData) error {
+func ApiGroupToResourceData(domain string, g *buddy.Group, d *schema.ResourceData) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(g.Id)))
 	err := d.Set("name", g.Name)
 	if err != nil {
@@ -1202,7 +1202,7 @@ func ApiGroupToResourceData(domain string, g *api.Group, d *schema.ResourceData)
 	return d.Set("description", g.Description)
 }
 
-func ApiGroupMemberToResourceData(domain string, groupId int, m *api.Member, d *schema.ResourceData) error {
+func ApiGroupMemberToResourceData(domain string, groupId int, m *buddy.Member, d *schema.ResourceData) error {
 	d.SetId(ComposeTripleId(domain, strconv.Itoa(groupId), strconv.Itoa(m.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {

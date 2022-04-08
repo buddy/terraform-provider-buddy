@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -104,7 +104,7 @@ func ProjectGroup() *schema.Resource {
 }
 
 func deleteContextProjectGroup(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, projectName, gid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -122,12 +122,12 @@ func deleteContextProjectGroup(_ context.Context, d *schema.ResourceData, meta i
 }
 
 func updateContextProjectGroup(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	projectName := d.Get("project_name").(string)
 	groupId := d.Get("group_id").(int)
-	_, _, err := c.ProjectGroupService.UpdateProjectGroup(domain, projectName, groupId, &api.ProjectGroupOperationOptions{
-		PermissionSet: &api.ProjectGroupOperationOptions{
+	_, _, err := c.ProjectGroupService.UpdateProjectGroup(domain, projectName, groupId, &buddy.ProjectGroupOps{
+		PermissionSet: &buddy.ProjectGroupOps{
 			Id: util.InterfaceIntToPointer(d.Get("permission_id")),
 		},
 	})
@@ -139,7 +139,7 @@ func updateContextProjectGroup(ctx context.Context, d *schema.ResourceData, meta
 }
 
 func readContextProjectGroup(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, projectName, gid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -165,12 +165,12 @@ func readContextProjectGroup(_ context.Context, d *schema.ResourceData, meta int
 }
 
 func createContextProjectGroup(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	projectName := d.Get("project_name").(string)
-	group, _, err := c.ProjectGroupService.CreateProjectGroup(domain, projectName, &api.ProjectGroupOperationOptions{
+	group, _, err := c.ProjectGroupService.CreateProjectGroup(domain, projectName, &buddy.ProjectGroupOps{
 		Id: util.InterfaceIntToPointer(d.Get("group_id")),
-		PermissionSet: &api.ProjectGroupOperationOptions{
+		PermissionSet: &buddy.ProjectGroupOps{
 			Id: util.InterfaceIntToPointer(d.Get("permission_id")),
 		},
 	})

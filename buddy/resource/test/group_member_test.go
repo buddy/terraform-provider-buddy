@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccGroupMember(t *testing.T) {
-	var member api.Member
+	var member buddy.Member
 	domain := util.UniqueString()
 	groupNameA := util.RandString(5)
 	groupNameB := util.RandString(5)
@@ -59,7 +59,7 @@ func TestAccGroupMember(t *testing.T) {
 	})
 }
 
-func testAccGroupMemberAttributes(n string, member *api.Member) resource.TestCheckFunc {
+func testAccGroupMemberAttributes(n string, member *buddy.Member) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -85,7 +85,7 @@ func testAccGroupMemberAttributes(n string, member *api.Member) resource.TestChe
 	}
 }
 
-func testAccGroupMemberGet(n string, member *api.Member) resource.TestCheckFunc {
+func testAccGroupMemberGet(n string, member *buddy.Member) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

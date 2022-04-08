@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -26,12 +26,12 @@ var ignoreImportVerify = []string{
 }
 
 func TestAccIntegration_amazon(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
-	scope := api.IntegrationScopeAdmin
-	newScope := api.IntegrationScopeWorkspace
+	scope := buddy.IntegrationScopeAdmin
+	newScope := buddy.IntegrationScopeWorkspace
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -44,7 +44,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 				Config: testAccIntegrationAmazon(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeAmazon, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, scope, false, false),
 				),
 			},
 			// update integration
@@ -52,7 +52,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 				Config: testAccIntegrationAmazon(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeAmazon, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, newScope, false, false),
 				),
 			},
 			// import integration
@@ -67,7 +67,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 }
 
 func TestAccIntegration_digitalocean(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
@@ -85,7 +85,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 				Config: testAccIntegrationDigitalOcean(domain, name, groupNameA, groupNameB, groupNameA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeDigitalOcean, api.IntegrationScopeGroup, false, true),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeGroup, false, true),
 				),
 			},
 			// update integration
@@ -93,7 +93,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 				Config: testAccIntegrationDigitalOcean(domain, newName, groupNameA, groupNameB, groupNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeDigitalOcean, api.IntegrationScopeGroup, false, true),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeGroup, false, true),
 				),
 			},
 			// import integration
@@ -108,7 +108,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 }
 
 func TestAccIntegration_shopify(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
@@ -126,7 +126,7 @@ func TestAccIntegration_shopify(t *testing.T) {
 				Config: testAccIntegrationShopify(domain, name, projectNameA, projectNameB, projectNameA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeShopify, api.IntegrationScopeProject, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject, true, false),
 				),
 			},
 			// update integration
@@ -134,7 +134,7 @@ func TestAccIntegration_shopify(t *testing.T) {
 				Config: testAccIntegrationShopify(domain, newName, projectNameA, projectNameB, projectNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeShopify, api.IntegrationScopeProject, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject, true, false),
 				),
 			},
 			// import integration
@@ -149,12 +149,12 @@ func TestAccIntegration_shopify(t *testing.T) {
 }
 
 func TestAccIntegration_rackspace(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
-	scope := api.IntegrationScopeWorkspace
-	newScope := api.IntegrationScopeAdmin
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeAdmin
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -167,7 +167,7 @@ func TestAccIntegration_rackspace(t *testing.T) {
 				Config: testAccIntegrationRackspace(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeRackspace, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeRackspace, scope, false, false),
 				),
 			},
 			// update integration
@@ -175,7 +175,7 @@ func TestAccIntegration_rackspace(t *testing.T) {
 				Config: testAccIntegrationRackspace(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeRackspace, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeRackspace, newScope, false, false),
 				),
 			},
 			// import integration
@@ -190,12 +190,12 @@ func TestAccIntegration_rackspace(t *testing.T) {
 }
 
 func TestAccIntegration_cloudflare(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
-	scope := api.IntegrationScopeWorkspace
-	newScope := api.IntegrationScopeAdmin
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeAdmin
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -208,7 +208,7 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 				Config: testAccIntegrationCloudflare(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeCloudflare, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeCloudflare, scope, false, false),
 				),
 			},
 			// update integration
@@ -216,7 +216,7 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 				Config: testAccIntegrationCloudflare(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeCloudflare, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeCloudflare, newScope, false, false),
 				),
 			},
 			// import integration
@@ -231,12 +231,12 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 }
 
 func TestAccIntegration_upcloud(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
-	scope := api.IntegrationScopeWorkspace
-	newScope := api.IntegrationScopeAdmin
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeAdmin
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -249,7 +249,7 @@ func TestAccIntegration_upcloud(t *testing.T) {
 				Config: testAccIntegrationUpcloud(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeUpcloud, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeUpcloud, scope, false, false),
 				),
 			},
 			// update integration
@@ -257,7 +257,7 @@ func TestAccIntegration_upcloud(t *testing.T) {
 				Config: testAccIntegrationUpcloud(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeUpcloud, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeUpcloud, newScope, false, false),
 				),
 			},
 			// import integration
@@ -272,12 +272,12 @@ func TestAccIntegration_upcloud(t *testing.T) {
 }
 
 func TestAccIntegration_azurecloud(t *testing.T) {
-	var integration api.Integration
+	var integration buddy.Integration
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
-	scope := api.IntegrationScopeWorkspace
-	newScope := api.IntegrationScopeAdmin
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeAdmin
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -290,7 +290,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 				Config: testAccIntegrationAzureCloud(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, api.IntegrationTypeAzureCloud, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, scope, false, false),
 				),
 			},
 			// update integration
@@ -298,7 +298,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 				Config: testAccIntegrationAzureCloud(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, api.IntegrationTypeAzureCloud, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, newScope, false, false),
 				),
 			},
 			// import integration
@@ -312,7 +312,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 	})
 }
 
-func testAccIntegrationAttributes(n string, integration *api.Integration, name string, typ string, scope string, testScopeProject bool, testScopeGroup bool) resource.TestCheckFunc {
+func testAccIntegrationAttributes(n string, integration *buddy.Integration, name string, typ string, scope string, testScopeProject bool, testScopeGroup bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -360,7 +360,7 @@ func testAccIntegrationAttributes(n string, integration *api.Integration, name s
 	}
 }
 
-func testAccIntegrationGet(n string, integration *api.Integration) resource.TestCheckFunc {
+func testAccIntegrationGet(n string, integration *buddy.Integration) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -403,7 +403,7 @@ resource "buddy_integration" "bar" {
         duration = 100
     }
 }
-`, domain, name, api.IntegrationTypeAmazon, scope)
+`, domain, name, buddy.IntegrationTypeAmazon, scope)
 }
 
 func testAccIntegrationRackspace(domain string, name string, scope string) string {
@@ -420,7 +420,7 @@ resource "buddy_integration" "bar" {
     username = "ABC1234567890"
     token = "ABC1234567890"
 }
-`, domain, name, api.IntegrationTypeRackspace, scope)
+`, domain, name, buddy.IntegrationTypeRackspace, scope)
 }
 
 func testAccIntegrationCloudflare(domain string, name string, scope string) string {
@@ -438,7 +438,7 @@ resource "buddy_integration" "bar" {
     token = "ABC1234567890"
     email = "test@test.pl"
 }
-`, domain, name, api.IntegrationTypeCloudflare, scope)
+`, domain, name, buddy.IntegrationTypeCloudflare, scope)
 }
 
 func testAccIntegrationUpcloud(domain string, name string, scope string) string {
@@ -455,7 +455,7 @@ resource "buddy_integration" "bar" {
     username = "ABC1234567890"
     password = "ABC1234567890"
 }
-`, domain, name, api.IntegrationTypeUpcloud, scope)
+`, domain, name, buddy.IntegrationTypeUpcloud, scope)
 }
 
 func testAccIntegrationAzureCloud(domain string, name string, scope string) string {
@@ -473,7 +473,7 @@ resource "buddy_integration" "bar" {
     tenant_id = "test@test.pl"
     password = "ABC1234567890"
 }
-`, domain, name, api.IntegrationTypeAzureCloud, scope)
+`, domain, name, buddy.IntegrationTypeAzureCloud, scope)
 }
 
 func testAccIntegrationDigitalOcean(domain string, name string, groupNameA string, groupNameB string, scopeGroupName string) string {
@@ -500,7 +500,7 @@ resource "buddy_integration" "bar" {
     group_id = "${buddy_group.%s.group_id}"
     token = "ABC"
 }
-`, domain, groupNameA, groupNameA, groupNameB, groupNameB, name, api.IntegrationTypeDigitalOcean, api.IntegrationScopeGroup, scopeGroupName)
+`, domain, groupNameA, groupNameA, groupNameB, groupNameB, name, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeGroup, scopeGroupName)
 }
 
 func testAccIntegrationShopify(domain string, name string, projectNameA string, projectNameB string, scopeProjectName string) string {
@@ -528,7 +528,7 @@ resource "buddy_integration" "bar" {
     shop = "ABC"
     token = "ABC"
 }
-`, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, api.IntegrationTypeShopify, api.IntegrationScopeProject, scopeProjectName)
+`, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject, scopeProjectName)
 }
 
 func testAccIntegrationCheckDestroy(s *terraform.State) error {

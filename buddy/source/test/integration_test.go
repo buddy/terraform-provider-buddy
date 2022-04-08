@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"testing"
@@ -13,8 +13,8 @@ import (
 func TestAccSourceIntegration(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
-	typ := api.IntegrationTypeAmazon
-	scope := api.IntegrationScopeAdmin
+	typ := buddy.IntegrationTypeAmazon
+	scope := buddy.IntegrationScopeAdmin
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)

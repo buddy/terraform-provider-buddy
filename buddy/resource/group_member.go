@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -80,7 +80,7 @@ func GroupMember() *schema.Resource {
 }
 
 func deleteContextGroupMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, gid, mid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -102,7 +102,7 @@ func deleteContextGroupMember(_ context.Context, d *schema.ResourceData, meta in
 }
 
 func readContextGroupMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, gid, mid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -132,10 +132,10 @@ func readContextGroupMember(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 func createContextGroupMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	groupId := d.Get("group_id").(int)
-	member, _, err := c.GroupService.AddGroupMember(domain, groupId, &api.GroupMemberOperationOptions{
+	member, _, err := c.GroupService.AddGroupMember(domain, groupId, &buddy.GroupMemberOps{
 		Id: util.InterfaceIntToPointer(d.Get("member_id")),
 	})
 	if err != nil {

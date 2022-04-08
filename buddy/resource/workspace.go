@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -74,7 +74,7 @@ func Workspace() *schema.Resource {
 }
 
 func deleteContextWorkspace(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	_, err := c.WorkspaceService.Delete(d.Id())
 	if err != nil {
@@ -84,7 +84,7 @@ func deleteContextWorkspace(_ context.Context, d *schema.ResourceData, meta inte
 }
 
 func readContextWorkspace(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	workspace, resp, err := c.WorkspaceService.Get(d.Id())
 	if err != nil {
@@ -102,10 +102,10 @@ func readContextWorkspace(_ context.Context, d *schema.ResourceData, meta interf
 }
 
 func updateContextWorkspace(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	if d.HasChanges("name", "encryption_salt") {
 		domain := d.Get("domain").(string)
-		opt := api.WorkspaceOperationOptions{}
+		opt := buddy.WorkspaceUpdateOps{}
 		if d.HasChange("encryption_salt") {
 			opt.EncryptionSalt = util.InterfaceStringToPointer(d.Get("encryption_salt"))
 		}
@@ -121,8 +121,8 @@ func updateContextWorkspace(ctx context.Context, d *schema.ResourceData, meta in
 }
 
 func createContextWorkspace(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
-	opt := api.WorkspaceOperationOptions{
+	c := meta.(*buddy.Client)
+	opt := buddy.WorkspaceCreateOps{
 		Domain: util.InterfaceStringToPointer(d.Get("domain")),
 	}
 	if salt, ok := d.GetOk("encryption_salt"); ok {

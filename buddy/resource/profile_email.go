@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -40,7 +40,7 @@ func ProfileEmail() *schema.Resource {
 }
 
 func deleteContextProfileEmail(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	_, err := c.ProfileEmailService.Delete(d.Id())
 	if err != nil {
@@ -50,7 +50,7 @@ func deleteContextProfileEmail(_ context.Context, d *schema.ResourceData, meta i
 }
 
 func readContextProfileEmail(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	p, resp, err := c.ProfileEmailService.GetList()
 	if err != nil {
@@ -78,8 +78,8 @@ func readContextProfileEmail(_ context.Context, d *schema.ResourceData, meta int
 }
 
 func createContextProfileEmail(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
-	p, _, err := c.ProfileEmailService.Create(&api.ProfileEmailOperationOptions{
+	c := meta.(*buddy.Client)
+	p, _, err := c.ProfileEmailService.Create(&buddy.ProfileEmailOps{
 		Email: util.InterfaceStringToPointer(d.Get("email")),
 	})
 	if err != nil {

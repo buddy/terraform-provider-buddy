@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -38,26 +38,26 @@ func Integrations() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.IntegrationTypeDigitalOcean,
-					api.IntegrationTypeAmazon,
-					api.IntegrationTypeShopify,
-					api.IntegrationTypePushover,
-					api.IntegrationTypeRackspace,
-					api.IntegrationTypeCloudflare,
-					api.IntegrationTypeNewRelic,
-					api.IntegrationTypeSentry,
-					api.IntegrationTypeRollbar,
-					api.IntegrationTypeDatadog,
-					api.IntegrationTypeDigitalOceanSpaces,
-					api.IntegrationTypeHoneybadger,
-					api.IntegrationTypeVultr,
-					api.IntegrationTypeSentryEnterprise,
-					api.IntegrationTypeLoggly,
-					api.IntegrationTypeFirebase,
-					api.IntegrationTypeUpcloud,
-					api.IntegrationTypeGhostInspector,
-					api.IntegrationTypeAzureCloud,
-					api.IntegrationTypeDockerHub,
+					buddy.IntegrationTypeDigitalOcean,
+					buddy.IntegrationTypeAmazon,
+					buddy.IntegrationTypeShopify,
+					buddy.IntegrationTypePushover,
+					buddy.IntegrationTypeRackspace,
+					buddy.IntegrationTypeCloudflare,
+					buddy.IntegrationTypeNewRelic,
+					buddy.IntegrationTypeSentry,
+					buddy.IntegrationTypeRollbar,
+					buddy.IntegrationTypeDatadog,
+					buddy.IntegrationTypeDigitalOceanSpaces,
+					buddy.IntegrationTypeHoneybadger,
+					buddy.IntegrationTypeVultr,
+					buddy.IntegrationTypeSentryEnterprise,
+					buddy.IntegrationTypeLoggly,
+					buddy.IntegrationTypeFirebase,
+					buddy.IntegrationTypeUpcloud,
+					buddy.IntegrationTypeGhostInspector,
+					buddy.IntegrationTypeAzureCloud,
+					buddy.IntegrationTypeDockerHub,
 				}, false),
 			},
 			"integrations": {
@@ -90,7 +90,7 @@ func Integrations() *schema.Resource {
 }
 
 func readContextIntegrations(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	var nameRegex *regexp.Regexp
 	domain := d.Get("domain").(string)

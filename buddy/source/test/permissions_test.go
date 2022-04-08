@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -99,5 +99,5 @@ data "buddy_permissions" "type" {
     depends_on = [buddy_permission.perm]
     type = "DEVELOPER"
 }
-`, domain, api.PermissionTypeReadOnly, api.PermissionTypeReadOnly, api.PermissionTypeReadOnly)
+`, domain, buddy.PermissionTypeReadOnly, buddy.PermissionTypeReadOnly, buddy.PermissionTypeReadOnly)
 }

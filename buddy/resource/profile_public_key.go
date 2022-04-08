@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -47,7 +47,7 @@ func ProfilePublicKey() *schema.Resource {
 }
 
 func deleteContextProfilePublicKey(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	keyId, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -61,7 +61,7 @@ func deleteContextProfilePublicKey(_ context.Context, d *schema.ResourceData, me
 }
 
 func readContextProfilePublicKey(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	keyId, err := strconv.Atoi(d.Id())
 	if err != nil {
@@ -83,8 +83,8 @@ func readContextProfilePublicKey(_ context.Context, d *schema.ResourceData, meta
 }
 
 func createContextProfilePublicKey(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
-	opt := api.PublicKeyOperationOptions{
+	c := meta.(*buddy.Client)
+	opt := buddy.PublicKeyOps{
 		Content: util.InterfaceStringToPointer(d.Get("content")),
 	}
 	if title, ok := d.GetOk("title"); ok {

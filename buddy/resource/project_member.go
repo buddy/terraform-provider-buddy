@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -124,7 +124,7 @@ func ProjectMember() *schema.Resource {
 }
 
 func deleteContextProjectMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, projectName, mid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -142,12 +142,12 @@ func deleteContextProjectMember(_ context.Context, d *schema.ResourceData, meta 
 }
 
 func updateContextProjectMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	projectName := d.Get("project_name").(string)
 	memberId := d.Get("member_id").(int)
-	_, _, err := c.ProjectMemberService.UpdateProjectMember(domain, projectName, memberId, &api.ProjectMemberOperationOptions{
-		PermissionSet: &api.ProjectMemberOperationOptions{
+	_, _, err := c.ProjectMemberService.UpdateProjectMember(domain, projectName, memberId, &buddy.ProjectMemberOps{
+		PermissionSet: &buddy.ProjectMemberOps{
 			Id: util.InterfaceIntToPointer(d.Get("permission_id")),
 		},
 	})
@@ -159,7 +159,7 @@ func updateContextProjectMember(ctx context.Context, d *schema.ResourceData, met
 }
 
 func readContextProjectMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, projectName, mid, err := util.DecomposeTripleId(d.Id())
 	if err != nil {
@@ -185,12 +185,12 @@ func readContextProjectMember(_ context.Context, d *schema.ResourceData, meta in
 }
 
 func createContextProjectMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	projectName := d.Get("project_name").(string)
-	member, _, err := c.ProjectMemberService.CreateProjectMember(domain, projectName, &api.ProjectMemberOperationOptions{
+	member, _, err := c.ProjectMemberService.CreateProjectMember(domain, projectName, &buddy.ProjectMemberOps{
 		Id: util.InterfaceIntToPointer(d.Get("member_id")),
-		PermissionSet: &api.ProjectMemberOperationOptions{
+		PermissionSet: &buddy.ProjectMemberOps{
 			Id: util.InterfaceIntToPointer(d.Get("permission_id")),
 		},
 	})

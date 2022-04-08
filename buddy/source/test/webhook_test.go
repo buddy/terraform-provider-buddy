@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -13,7 +13,7 @@ import (
 
 func TestAccSourceWebhook(t *testing.T) {
 	domain := util.UniqueString()
-	event := api.WebhookEventPush
+	event := buddy.WebhookEventPush
 	projectName := util.UniqueString()
 	targetUrl := "https://127.0.0.1"
 	secretKey := util.RandString(10)

@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -14,9 +14,9 @@ import (
 func TestAccSourcePermission(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
-	pipelineAccessLevel := api.PermissionAccessLevelReadWrite
-	repositoryAccessLevel := api.PermissionAccessLevelReadOnly
-	sandboxAccessLevel := api.PermissionAccessLevelDenied
+	pipelineAccessLevel := buddy.PermissionAccessLevelReadWrite
+	repositoryAccessLevel := buddy.PermissionAccessLevelReadOnly
+	sandboxAccessLevel := buddy.PermissionAccessLevelDenied
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)

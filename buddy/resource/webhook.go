@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -43,11 +43,11 @@ func Webhook() *schema.Resource {
 				Elem: &schema.Schema{
 					Type: schema.TypeString,
 					ValidateFunc: validation.StringInSlice([]string{
-						api.WebhookEventPush,
-						api.WebhookEventExecutionStarted,
-						api.WebhookEventExecutionSuccessful,
-						api.WebhookEventExecutionFailed,
-						api.WebhookEventExecutionFinished,
+						buddy.WebhookEventPush,
+						buddy.WebhookEventExecutionStarted,
+						buddy.WebhookEventExecutionSuccessful,
+						buddy.WebhookEventExecutionFailed,
+						buddy.WebhookEventExecutionFinished,
 					}, false),
 				},
 			},
@@ -85,7 +85,7 @@ func Webhook() *schema.Resource {
 }
 
 func updateContextWebhook(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, wid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -94,7 +94,7 @@ func updateContextWebhook(ctx context.Context, d *schema.ResourceData, meta inte
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	opt := api.WebhookOperationOptions{}
+	opt := buddy.WebhookOps{}
 	if d.HasChange("target_url") {
 		opt.TargetUrl = util.InterfaceStringToPointer(d.Get("target_url"))
 	}
@@ -115,7 +115,7 @@ func updateContextWebhook(ctx context.Context, d *schema.ResourceData, meta inte
 }
 
 func deleteContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, wid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -133,7 +133,7 @@ func deleteContextWebhook(_ context.Context, d *schema.ResourceData, meta interf
 }
 
 func readContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, wid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -159,9 +159,9 @@ func readContextWebhook(_ context.Context, d *schema.ResourceData, meta interfac
 }
 
 func createContextWebhook(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.WebhookOperationOptions{
+	opt := buddy.WebhookOps{
 		TargetUrl: util.InterfaceStringToPointer(d.Get("target_url")),
 		Events:    util.InterfaceStringSetToPointer(d.Get("events")),
 	}

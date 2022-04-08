@@ -1,10 +1,10 @@
 package provider
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/resource"
 	"buddy-terraform/buddy/source"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"os"
@@ -104,7 +104,7 @@ func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, 
 	baseUrl := d.Get("base_url").(string)
 	insecure := d.Get("insecure").(bool)
 	var diags diag.Diagnostics
-	c, err := api.NewClient(token, baseUrl, insecure)
+	c, err := buddy.NewClient(token, baseUrl, insecure)
 	if err != nil {
 		return nil, diag.FromErr(err)
 	}

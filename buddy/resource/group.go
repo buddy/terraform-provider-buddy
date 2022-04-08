@@ -1,9 +1,9 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"strconv"
@@ -59,9 +59,9 @@ func Group() *schema.Resource {
 }
 
 func createContextGroup(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
-	opt := api.GroupOperationOptions{
+	opt := buddy.GroupOps{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
 	}
 	if description, ok := d.GetOk("description"); ok {
@@ -76,7 +76,7 @@ func createContextGroup(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func readContextGroup(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, gid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
@@ -102,7 +102,7 @@ func readContextGroup(_ context.Context, d *schema.ResourceData, meta interface{
 }
 
 func updateContextGroup(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	domain, gid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {
 		return diag.FromErr(err)
@@ -111,7 +111,7 @@ func updateContextGroup(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	u := api.GroupOperationOptions{
+	u := buddy.GroupOps{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
 	}
 	if d.HasChange("description") {
@@ -125,7 +125,7 @@ func updateContextGroup(ctx context.Context, d *schema.ResourceData, meta interf
 }
 
 func deleteContextGroup(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	domain, gid, err := util.DecomposeDoubleId(d.Id())
 	if err != nil {

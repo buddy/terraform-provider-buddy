@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -16,7 +16,7 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 	key := util.RandString(10)
 	desc := util.RandString(10)
 	displayName := util.RandString(10)
-	filePlace := api.VariableSshKeyFilePlaceContainer
+	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
 	resource.Test(t, resource.TestCase{

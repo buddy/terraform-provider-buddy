@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -12,7 +12,7 @@ import (
 )
 
 func TestAccProfileEmail(t *testing.T) {
-	var pe api.ProfileEmail
+	var pe buddy.ProfileEmail
 	email := util.RandEmail()
 	newEmail := util.RandEmail()
 	resource.Test(t, resource.TestCase{
@@ -48,7 +48,7 @@ func TestAccProfileEmail(t *testing.T) {
 	})
 }
 
-func testAccProfileEmailAttributes(n string, pe *api.ProfileEmail, email string) resource.TestCheckFunc {
+func testAccProfileEmailAttributes(n string, pe *buddy.ProfileEmail, email string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -72,7 +72,7 @@ func testAccProfileEmailAttributes(n string, pe *api.ProfileEmail, email string)
 	}
 }
 
-func testAccProfileEmailGet(n string, pe *api.ProfileEmail) resource.TestCheckFunc {
+func testAccProfileEmailGet(n string, pe *buddy.ProfileEmail) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

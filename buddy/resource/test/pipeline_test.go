@@ -2,10 +2,10 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"encoding/base64"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"log"
@@ -34,11 +34,11 @@ type testAccPipelineExpectedAttributes struct {
 	TargetSiteUrl             string
 	Disabled                  bool
 	DisablingReason           string
-	Creator                   *api.Profile
-	Project                   *api.Project
+	Creator                   *buddy.Profile
+	Project                   *buddy.Project
 	Ref                       string
-	Event                     *api.PipelineEvent
-	TriggerConditions         []*api.PipelineTriggerCondition
+	Event                     *buddy.PipelineEvent
+	TriggerConditions         []*buddy.PipelineTriggerCondition
 }
 
 type testAccPipelineRemoteExpectedAttributes struct {
@@ -48,14 +48,14 @@ type testAccPipelineRemoteExpectedAttributes struct {
 	RemoteBranch      string
 	RemotePath        string
 	RemoteParam       string
-	Creator           *api.Profile
-	Project           *api.Project
+	Creator           *buddy.Profile
+	Project           *buddy.Project
 }
 
 func TestAccPipeline_remote(t *testing.T) {
-	var pipeline api.Pipeline
-	var project api.Project
-	var profile api.Profile
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	remoteProjectName := util.UniqueString()
@@ -96,7 +96,7 @@ func TestAccPipeline_remote(t *testing.T) {
 						RemoteProjectName: remoteProjectName,
 						RemoteBranch:      remoteBranch,
 						RemotePath:        remotePath,
-						DefinitionSource:  api.PipelineDefinitionSourceRemote,
+						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
 						Creator:           &profile,
 						Project:           &project,
 					}),
@@ -115,7 +115,7 @@ func TestAccPipeline_remote(t *testing.T) {
 						RemoteProjectName: remoteProjectName2,
 						RemoteBranch:      remoteBranch,
 						RemotePath:        remotePath2,
-						DefinitionSource:  api.PipelineDefinitionSourceRemote,
+						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
 						Creator:           &profile,
 						Project:           &project,
 					}),
@@ -130,7 +130,7 @@ func TestAccPipeline_remote(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
 						Name:             name,
-						DefinitionSource: api.PipelineDefinitionSourceLocal,
+						DefinitionSource: buddy.PipelineDefinitionSourceLocal,
 						Creator:          &profile,
 						Project:          &project,
 					}),
@@ -141,17 +141,17 @@ func TestAccPipeline_remote(t *testing.T) {
 }
 
 func TestAccPipeline_schedule(t *testing.T) {
-	var pipeline api.Pipeline
-	var project api.Project
-	var profile api.Profile
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
 	startDate := time.Now().UTC().Add(time.Hour).Format(time.RFC3339)
 	newStartDate := time.Now().UTC().Add(5 * time.Hour).Format(time.RFC3339)
-	priority := api.PipelinePriorityLow
-	newPriority := api.PipelinePriorityHigh
+	priority := buddy.PipelinePriorityLow
+	newPriority := buddy.PipelinePriorityHigh
 	delay := 5
 	newDelay := 7
 	resource.Test(t, resource.TestCase{
@@ -170,7 +170,7 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    name,
-						On:                      api.PipelineOnSchedule,
+						On:                      buddy.PipelineOnSchedule,
 						Project:                 &project,
 						Creator:                 &profile,
 						StartDate:               startDate,
@@ -191,7 +191,7 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      api.PipelineOnSchedule,
+						On:                      buddy.PipelineOnSchedule,
 						Project:                 &project,
 						Creator:                 &profile,
 						StartDate:               newStartDate,
@@ -215,9 +215,9 @@ func TestAccPipeline_schedule(t *testing.T) {
 }
 
 func TestAccPipeline_schedule_cron(t *testing.T) {
-	var pipeline api.Pipeline
-	var project api.Project
-	var profile api.Profile
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
@@ -241,11 +241,11 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    name,
-						On:                      api.PipelineOnSchedule,
+						On:                      buddy.PipelineOnSchedule,
 						Project:                 &project,
 						Creator:                 &profile,
 						Cron:                    cron,
-						Priority:                api.PipelinePriorityNormal,
+						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  true,
@@ -261,11 +261,11 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      api.PipelineOnSchedule,
+						On:                      buddy.PipelineOnSchedule,
 						Project:                 &project,
 						Creator:                 &profile,
 						Cron:                    newCron,
-						Priority:                api.PipelinePriorityNormal,
+						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
@@ -281,11 +281,11 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      api.PipelineOnSchedule,
+						On:                      buddy.PipelineOnSchedule,
 						Project:                 &project,
 						Creator:                 &profile,
 						Cron:                    newCron,
-						Priority:                api.PipelinePriorityNormal,
+						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
@@ -303,11 +303,11 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      api.PipelineOnSchedule,
+						On:                      buddy.PipelineOnSchedule,
 						Project:                 &project,
 						Creator:                 &profile,
 						Cron:                    newCron,
-						Priority:                api.PipelinePriorityNormal,
+						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
@@ -401,7 +401,7 @@ func testAccPipelineGetRemoteYaml(branch string) string {
 func testAccPipelineCreateRemoteYaml(domain string, projectName string, path string, yaml string) {
 	content := base64.StdEncoding.EncodeToString([]byte(yaml))
 	message := "test"
-	_, err := acc.ApiClient.SourceService.CreateFile(domain, projectName, &api.SourceFileOperationOptions{
+	_, _, err := acc.ApiClient.SourceService.CreateFile(domain, projectName, &buddy.SourceFileOps{
 		Content: &content,
 		Path:    &path,
 		Message: &message,
@@ -531,9 +531,9 @@ resource "buddy_pipeline" "bar" {
 }
 
 func TestAccPipeline_event(t *testing.T) {
-	var pipeline api.Pipeline
-	var project api.Project
-	var profile api.Profile
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
@@ -552,8 +552,8 @@ func TestAccPipeline_event(t *testing.T) {
 	newTcDays := 3
 	tcZoneId := "America/Monterrey"
 	newTcZoneId := "Europe/Amsterdam"
-	eventType := api.PipelineEventTypePush
-	newEventType := api.PipelineEventTypeCreateRef
+	eventType := buddy.PipelineEventTypePush
+	newEventType := buddy.PipelineEventTypeCreateRef
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -570,46 +570,46 @@ func TestAccPipeline_event(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    name,
-						On:                      api.PipelineOnEvent,
+						On:                      buddy.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
-						Priority:                api.PipelinePriorityNormal,
-						Event: &api.PipelineEvent{
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
 							Type: eventType,
 							Refs: []string{ref},
 						},
-						TriggerConditions: []*api.PipelineTriggerCondition{
+						TriggerConditions: []*buddy.PipelineTriggerCondition{
 							{
-								TriggerCondition: api.PipelineTriggerConditionOnChange,
+								TriggerCondition: buddy.PipelineTriggerConditionOnChange,
 							},
 							{
-								TriggerCondition:      api.PipelineTriggerConditionOnChangeAtPath,
+								TriggerCondition:      buddy.PipelineTriggerConditionOnChangeAtPath,
 								TriggerConditionPaths: []string{tcChangePath},
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarIs,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarIs,
 								TriggerVariableKey:   tcVarKey,
 								TriggerVariableValue: tcVarValue,
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarIsNot,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarIsNot,
 								TriggerVariableKey:   tcVarKey,
 								TriggerVariableValue: tcVarValue,
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarContains,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarContains,
 								TriggerVariableKey:   tcVarKey,
 								TriggerVariableValue: tcVarValue,
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarNotContains,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarNotContains,
 								TriggerVariableKey:   tcVarKey,
 								TriggerVariableValue: tcVarValue,
 							},
 							{
-								TriggerCondition: api.PipelineTriggerConditionDateTime,
+								TriggerCondition: buddy.PipelineTriggerConditionDateTime,
 								TriggerHours:     []int{tcHours},
 								TriggerDays:      []int{tcDays},
 								ZoneId:           tcZoneId,
@@ -627,46 +627,46 @@ func TestAccPipeline_event(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      api.PipelineOnEvent,
+						On:                      buddy.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
-						Priority:                api.PipelinePriorityNormal,
-						Event: &api.PipelineEvent{
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
 							Type: newEventType,
 							Refs: []string{newRef},
 						},
-						TriggerConditions: []*api.PipelineTriggerCondition{
+						TriggerConditions: []*buddy.PipelineTriggerCondition{
 							{
-								TriggerCondition: api.PipelineTriggerConditionOnChange,
+								TriggerCondition: buddy.PipelineTriggerConditionOnChange,
 							},
 							{
-								TriggerCondition:      api.PipelineTriggerConditionOnChangeAtPath,
+								TriggerCondition:      buddy.PipelineTriggerConditionOnChangeAtPath,
 								TriggerConditionPaths: []string{newTcChangePath},
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarIs,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarIs,
 								TriggerVariableKey:   newTcVarKey,
 								TriggerVariableValue: newTcVarValue,
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarIsNot,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarIsNot,
 								TriggerVariableKey:   newTcVarKey,
 								TriggerVariableValue: newTcVarValue,
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarContains,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarContains,
 								TriggerVariableKey:   newTcVarKey,
 								TriggerVariableValue: newTcVarValue,
 							},
 							{
-								TriggerCondition:     api.PipelineTriggerConditionVarNotContains,
+								TriggerCondition:     buddy.PipelineTriggerConditionVarNotContains,
 								TriggerVariableKey:   newTcVarKey,
 								TriggerVariableValue: newTcVarValue,
 							},
 							{
-								TriggerCondition: api.PipelineTriggerConditionDateTime,
+								TriggerCondition: buddy.PipelineTriggerConditionDateTime,
 								TriggerHours:     []int{newTcHours},
 								TriggerDays:      []int{newTcDays},
 								ZoneId:           newTcZoneId,
@@ -687,9 +687,9 @@ func TestAccPipeline_event(t *testing.T) {
 }
 
 func TestAccPipeline_click(t *testing.T) {
-	var pipeline api.Pipeline
-	var project api.Project
-	var profile api.Profile
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
@@ -718,7 +718,7 @@ func TestAccPipeline_click(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        api.PipelineOnClick,
+						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         true,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        true,
@@ -726,7 +726,7 @@ func TestAccPipeline_click(t *testing.T) {
 						IgnoreFailOnProjectStatus: true,
 						FetchAllRefs:              true,
 						FailOnPrepareEnvWarning:   false,
-						Priority:                  api.PipelinePriorityNormal,
+						Priority:                  buddy.PipelinePriorityNormal,
 						TargetSiteUrl:             targetUrl,
 						ExecutionMessageTemplate:  msgTemplate,
 						Project:                   &project,
@@ -745,7 +745,7 @@ func TestAccPipeline_click(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      newName,
-						On:                        api.PipelineOnClick,
+						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            true,
 						NoSkipToMostRecent:        false,
@@ -753,7 +753,7 @@ func TestAccPipeline_click(t *testing.T) {
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
 						FailOnPrepareEnvWarning:   true,
-						Priority:                  api.PipelinePriorityNormal,
+						Priority:                  buddy.PipelinePriorityNormal,
 						TargetSiteUrl:             newTargetUrl,
 						ExecutionMessageTemplate:  newMsgTemplate,
 						Project:                   &project,
@@ -774,7 +774,7 @@ func TestAccPipeline_click(t *testing.T) {
 	})
 }
 
-func testAccPipelineRemoteAttributes(n string, pipeline *api.Pipeline, want *testAccPipelineRemoteExpectedAttributes) resource.TestCheckFunc {
+func testAccPipelineRemoteAttributes(n string, pipeline *buddy.Pipeline, want *testAccPipelineRemoteExpectedAttributes) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -861,7 +861,7 @@ func testAccPipelineRemoteAttributes(n string, pipeline *api.Pipeline, want *tes
 		if err := util.CheckFieldEqualAndSet("definition_source", attrs["definition_source"], want.DefinitionSource); err != nil {
 			return err
 		}
-		if want.DefinitionSource == api.PipelineDefinitionSourceRemote {
+		if want.DefinitionSource == buddy.PipelineDefinitionSourceRemote {
 			if err := util.CheckFieldEqualAndSet("DefinitionSource", pipeline.DefinitionSource, want.DefinitionSource); err != nil {
 				return err
 			}
@@ -908,7 +908,7 @@ func testAccPipelineRemoteAttributes(n string, pipeline *api.Pipeline, want *tes
 	}
 }
 
-func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPipelineExpectedAttributes) resource.TestCheckFunc {
+func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAccPipelineExpectedAttributes) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -1153,7 +1153,7 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 				if err := util.CheckFieldEqualAndSet(fmt.Sprintf("trigger_condition.%d.condition", i), attrs[fmt.Sprintf("trigger_condition.%d.condition", i)], triggerCondition.TriggerCondition); err != nil {
 					return err
 				}
-				if triggerCondition.TriggerCondition == api.PipelineTriggerConditionOnChangeAtPath {
+				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionOnChangeAtPath {
 					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerConditionPaths[0]", i), pipeline.TriggerConditions[i].TriggerConditionPaths[0], triggerCondition.TriggerConditionPaths[0]); err != nil {
 						return err
 					}
@@ -1161,10 +1161,10 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 						return err
 					}
 				}
-				if triggerCondition.TriggerCondition == api.PipelineTriggerConditionVarIs ||
-					triggerCondition.TriggerCondition == api.PipelineTriggerConditionVarIsNot ||
-					triggerCondition.TriggerCondition == api.PipelineTriggerConditionVarContains ||
-					triggerCondition.TriggerCondition == api.PipelineTriggerConditionVarNotContains {
+				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarIs ||
+					triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarIsNot ||
+					triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarContains ||
+					triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarNotContains {
 					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerVariableKey", i), pipeline.TriggerConditions[i].TriggerVariableKey, triggerCondition.TriggerVariableKey); err != nil {
 						return err
 					}
@@ -1178,7 +1178,7 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 						return err
 					}
 				}
-				if triggerCondition.TriggerCondition == api.PipelineTriggerConditionDateTime {
+				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionDateTime {
 					attrsTriggerConditionsHours, _ := strconv.Atoi(attrs[fmt.Sprintf("trigger_condition.%d.hours.0", i)])
 					attrsTriggerConditionsDays, _ := strconv.Atoi(attrs[fmt.Sprintf("trigger_condition.%d.days.0", i)])
 					if err := util.CheckIntFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerHours[0]", i), pipeline.TriggerConditions[i].TriggerHours[0], triggerCondition.TriggerHours[0]); err != nil {
@@ -1200,7 +1200,7 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 						return err
 					}
 				}
-				if triggerCondition.TriggerCondition == api.PipelineTriggerConditionSuccessPipeline {
+				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionSuccessPipeline {
 					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerProjectName", i), pipeline.TriggerConditions[i].TriggerProjectName, triggerCondition.TriggerProjectName); err != nil {
 						return err
 					}
@@ -1220,7 +1220,7 @@ func testAccPipelineAttributes(n string, pipeline *api.Pipeline, want *testAccPi
 	}
 }
 
-func testAccPipelineGet(n string, pipeline *api.Pipeline) resource.TestCheckFunc {
+func testAccPipelineGet(n string, pipeline *buddy.Pipeline) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {

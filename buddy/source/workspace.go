@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 )
@@ -55,9 +55,9 @@ func Workspace() *schema.Resource {
 }
 
 func readContextWorkspace(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
-	var workspace *api.Workspace
+	var workspace *buddy.Workspace
 	var err error
 	if domain, ok := d.GetOk("domain"); ok {
 		workspace, _, err = c.WorkspaceService.Get(domain.(string))

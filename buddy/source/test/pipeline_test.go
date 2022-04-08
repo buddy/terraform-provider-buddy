@@ -2,9 +2,9 @@ package test
 
 import (
 	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"strconv"
@@ -26,26 +26,26 @@ func TestAccSourcePipeline(t *testing.T) {
 		Steps: []resource.TestStep{
 			// click
 			{
-				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, api.PipelinePriorityHigh),
+				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, false, ""),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, ""),
 				),
 			},
 			// click disabled
 			{
-				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, api.PipelinePriorityHigh, reason),
+				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, buddy.PipelinePriorityHigh, reason),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, true, reason),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnClick, ref, "", api.PipelinePriorityHigh, true, reason),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, true, reason),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, true, reason),
 				),
 			},
 			// event
 			{
-				Config: testAccSourcePipelineConfigEvent(domain, projectName, name, ref, api.PipelinePriorityLow),
+				Config: testAccSourcePipelineConfigEvent(domain, projectName, name, ref, buddy.PipelinePriorityLow),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, api.PipelineOnEvent, "", ref, api.PipelinePriorityLow, false, ""),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, api.PipelineOnEvent, "", ref, api.PipelinePriorityLow, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, "", ref, buddy.PipelinePriorityLow, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, "", ref, buddy.PipelinePriorityLow, false, ""),
 				),
 			},
 		},

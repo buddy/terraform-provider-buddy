@@ -1,9 +1,9 @@
 package source
 
 import (
-	"buddy-terraform/buddy/api"
 	"buddy-terraform/buddy/util"
 	"context"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
@@ -38,9 +38,9 @@ func Permissions() *schema.Resource {
 				Type:        schema.TypeString,
 				Optional:    true,
 				ValidateFunc: validation.StringInSlice([]string{
-					api.PermissionTypeCustom,
-					api.PermissionTypeReadOnly,
-					api.PermissionTypeDeveloper,
+					buddy.PermissionTypeCustom,
+					buddy.PermissionTypeReadOnly,
+					buddy.PermissionTypeDeveloper,
 				}, false),
 			},
 			"permissions": {
@@ -85,7 +85,7 @@ func Permissions() *schema.Resource {
 }
 
 func readContextPermissions(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*api.Client)
+	c := meta.(*buddy.Client)
 	var diags diag.Diagnostics
 	var nameRegex *regexp.Regexp
 	domain := d.Get("domain").(string)
