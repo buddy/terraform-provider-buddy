@@ -37,20 +37,20 @@ data "buddy_member" "by_id" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **email** (String) The member's email
-- **member_id** (Number) The member's ID
-- **name** (String) The member's name
+- `email` (String) The member's email
+- `member_id` (Number) The member's ID
+- `name` (String) The member's name
 
 ### Read-Only
 
-- **admin** (Boolean) Is the member a workspace administrator
-- **avatar_url** (String) The member's avatar URL
-- **html_url** (String) The member's URL
-- **id** (String) The Terraform resource identifier for this item
-- **workspace_owner** (Boolean) Is the member the workspace owner
+- `admin` (Boolean) Is the member a workspace administrator
+- `avatar_url` (String) The member's avatar URL
+- `html_url` (String) The member's URL
+- `id` (String) The Terraform resource identifier for this item
+- `workspace_owner` (Boolean) Is the member the workspace owner
 
 

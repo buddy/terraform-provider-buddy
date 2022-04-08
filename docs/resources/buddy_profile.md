@@ -26,14 +26,14 @@ resource "buddy_profile" "me" {
 
 ### Required
 
-- **name** (String) The user's name
+- `name` (String) The user's name
 
 ### Read-Only
 
-- **avatar_url** (String) The user's avatar URL
-- **html_url** (String) The user's URL
-- **id** (String) The Terraform resource identifier for this item
-- **member_id** (Number) The user's ID
+- `avatar_url` (String) The user's avatar URL
+- `html_url` (String) The user's URL
+- `id` (String) The Terraform resource identifier for this item
+- `member_id` (Number) The user's ID
 
 ## Import
 

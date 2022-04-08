@@ -41,30 +41,30 @@ data "buddy_variables" "pipeline" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **action_id** (Number) Get only from provided action
-- **key_regex** (String) The variable's key regular expression to match
-- **pipeline_id** (Number) Get only from provided pipeline
-- **project_name** (String) Get only from provided project
+- `action_id` (Number) Get only from provided action
+- `key_regex` (String) The variable's key regular expression to match
+- `pipeline_id` (Number) Get only from provided pipeline
+- `project_name` (String) Get only from provided project
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **variables** (List of Object) List of variables (see [below for nested schema](#nestedatt--variables))
+- `id` (String) The Terraform resource identifier for this item
+- `variables` (List of Object) List of variables (see [below for nested schema](#nestedatt--variables))
 
 <a id="nestedatt--variables"></a>
 ### Nested Schema for `variables`
 
 Read-Only:
 
-- **description** (String)
-- **encrypted** (Boolean)
-- **key** (String)
-- **settable** (Boolean)
-- **value** (String)
-- **variable_id** (Number)
+- `description` (String)
+- `encrypted` (Boolean)
+- `key` (String)
+- `settable` (Boolean)
+- `value` (String)
+- `variable_id` (Number)
 
 

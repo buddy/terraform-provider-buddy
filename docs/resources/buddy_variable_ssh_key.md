@@ -39,31 +39,31 @@ EOT
 
 ### Required
 
-- **display_name** (String) The variable's display name
-- **domain** (String) The workspace's URL handle
-- **file_chmod** (String) The variable's file permission in an action's container
-- **file_path** (String) The variable's path in the action's container
-- **file_place** (String) Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)
-- **key** (String) The variable's name
-- **value** (String, Sensitive) The variable's value
+- `display_name` (String) The variable's display name
+- `domain` (String) The workspace's URL handle
+- `file_chmod` (String) The variable's file permission in an action's container
+- `file_path` (String) The variable's path in the action's container
+- `file_place` (String) Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)
+- `key` (String) The variable's name
+- `value` (String, Sensitive) The variable's value
 
 ### Optional
 
-- **action_id** (Number) The variable's action ID
-- **description** (String) The variable's description
-- **pipeline_id** (Number) The variable's pipeline ID
-- **project_name** (String) The variable's project name
+- `action_id` (Number) The variable's action ID
+- `description` (String) The variable's description
+- `pipeline_id` (Number) The variable's pipeline ID
+- `project_name` (String) The variable's project name
 
 ### Read-Only
 
-- **checksum** (String) The variable's checksum
-- **encrypted** (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key
-- **id** (String) The Terraform resource identifier for this item
-- **key_fingerprint** (String) The variable's fingerprint
-- **public_value** (String) The variable's public key
-- **settable** (Boolean) Is the variable's value changeable, always false for buddy_variable_ssh_key
-- **value_processed** (String, Sensitive) The variable's value, always encrypted for buddy_variable_ssh_key
-- **variable_id** (Number) The variable's ID
+- `checksum` (String) The variable's checksum
+- `encrypted` (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key
+- `id` (String) The Terraform resource identifier for this item
+- `key_fingerprint` (String) The variable's fingerprint
+- `public_value` (String) The variable's public key
+- `settable` (Boolean) Is the variable's value changeable, always false for buddy_variable_ssh_key
+- `value_processed` (String, Sensitive) The variable's value, always encrypted for buddy_variable_ssh_key
+- `variable_id` (Number) The variable's ID
 
 ## Import
 

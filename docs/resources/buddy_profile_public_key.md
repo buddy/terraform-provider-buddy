@@ -26,16 +26,16 @@ resource "buddy_profile_public_key" "my_key" {
 
 ### Required
 
-- **content** (String) The public key's content (starts with ssh-rsa)
+- `content` (String) The public key's content (starts with ssh-rsa)
 
 ### Optional
 
-- **title** (String) The public key's title
+- `title` (String) The public key's title
 
 ### Read-Only
 
-- **html_url** (String) The public key's URL
-- **id** (String) The public key's ID
+- `html_url` (String) The public key's URL
+- `id` (String) The public key's ID
 
 ## Import
 

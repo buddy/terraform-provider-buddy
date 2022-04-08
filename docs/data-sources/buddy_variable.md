@@ -35,22 +35,22 @@ data "buddy_variable_ssh_key" "by_key_in_project" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **action_id** (Number) The variable's action ID
-- **key** (String) The variable's name
-- **pipeline_id** (Number) The variable's pipeline ID
-- **project_name** (String) The variable's project name
-- **variable_id** (Number) The variable's ID
+- `action_id` (Number) The variable's action ID
+- `key` (String) The variable's name
+- `pipeline_id` (Number) The variable's pipeline ID
+- `project_name` (String) The variable's project name
+- `variable_id` (Number) The variable's ID
 
 ### Read-Only
 
-- **description** (String) The variable's description
-- **encrypted** (Boolean) Is the variable's value encrypted
-- **id** (String) The Terraform resource identifier for this item
-- **settable** (Boolean) Is the variable's value changeable
-- **value** (String, Sensitive) The variable's value. Encrypted if **encrypted** == true
+- `description` (String) The variable's description
+- `encrypted` (Boolean) Is the variable's value encrypted
+- `id` (String) The Terraform resource identifier for this item
+- `settable` (Boolean) Is the variable's value changeable
+- `value` (String, Sensitive) The variable's value. Encrypted if **encrypted** == true
 
 

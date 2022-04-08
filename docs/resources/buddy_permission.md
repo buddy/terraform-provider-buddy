@@ -33,22 +33,22 @@ resource "buddy_permission" "testers" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **name** (String) The permission's name
-- **pipeline_access_level** (String) The permission's access level to pipelines. Allowed: `DENIED`, `READ_ONLY`, `RUN_ONLY`, `READ_WRITE`
-- **repository_access_level** (String) The permission's access level to repository. Allowed: `READ_ONLY`, `READ_WRITE`, `MANAGE`
-- **sandbox_access_level** (String) The permission's access level to sandboxes. Allowed: `DENIED`, `READ_ONLY`, `READ_WRITE`
+- `domain` (String) The workspace's URL handle
+- `name` (String) The permission's name
+- `pipeline_access_level` (String) The permission's access level to pipelines. Allowed: `DENIED`, `READ_ONLY`, `RUN_ONLY`, `READ_WRITE`
+- `repository_access_level` (String) The permission's access level to repository. Allowed: `READ_ONLY`, `READ_WRITE`, `MANAGE`
+- `sandbox_access_level` (String) The permission's access level to sandboxes. Allowed: `DENIED`, `READ_ONLY`, `READ_WRITE`
 
 ### Optional
 
-- **description** (String) The permission's description
+- `description` (String) The permission's description
 
 ### Read-Only
 
-- **html_url** (String) The permission's URL
-- **id** (String) The Terraform resource identifier for this item
-- **permission_id** (Number) The permission's ID
-- **type** (String) The permission's type
+- `html_url` (String) The permission's URL
+- `id` (String) The Terraform resource identifier for this item
+- `permission_id` (Number) The permission's ID
+- `type` (String) The permission's type
 
 ## Import
 

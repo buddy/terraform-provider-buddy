@@ -26,12 +26,12 @@ resource "buddy_profile_email" "my_second_email" {
 
 ### Required
 
-- **email** (String) The email to add to the user's profile
+- `email` (String) The email to add to the user's profile
 
 ### Read-Only
 
-- **confirmed** (Boolean) Is the email confirmed
-- **id** (String) The Terraform resource identifier for this item
+- `confirmed` (Boolean) Is the email confirmed
+- `id` (String) The Terraform resource identifier for this item
 
 ## Import
 

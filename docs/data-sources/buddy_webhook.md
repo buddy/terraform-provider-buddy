@@ -30,16 +30,16 @@ data "buddy_webhook" "by_target_url" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **target_url** (String) The webhook's target URL
-- **webhook_id** (Number) The webhook's ID
+- `target_url` (String) The webhook's target URL
+- `webhook_id` (Number) The webhook's ID
 
 ### Read-Only
 
-- **html_url** (String) The webhook's URL
-- **id** (String) The Terraform resource identifier for this item
+- `html_url` (String) The webhook's URL
+- `id` (String) The Terraform resource identifier for this item
 
 

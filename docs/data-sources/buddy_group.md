@@ -32,17 +32,17 @@ data "buddy_group" "admins" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
+- `domain` (String) The workspace's URL handle
 
 ### Optional
 
-- **group_id** (Number) The group's ID
-- **name** (String) The group's name
+- `group_id` (Number) The group's ID
+- `name` (String) The group's name
 
 ### Read-Only
 
-- **description** (String) The group's description
-- **html_url** (String) The group's URL
-- **id** (String) The Terraform resource identifier for this item
+- `description` (String) The group's description
+- `html_url` (String) The group's URL
+- `id` (String) The Terraform resource identifier for this item
 
 

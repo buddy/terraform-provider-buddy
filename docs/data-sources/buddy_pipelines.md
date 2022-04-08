@@ -39,48 +39,48 @@ data "buddy_pipelines" "with_name_ended" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **project_name** (String) The project's name
+- `domain` (String) The workspace's URL handle
+- `project_name` (String) The project's name
 
 ### Optional
 
-- **name_regex** (String) The pipeline's name regular expression to match
+- `name_regex` (String) The pipeline's name regular expression to match
 
 ### Read-Only
 
-- **id** (String) The Terraform resource identifier for this item
-- **pipelines** (List of Object) List of pipelines (see [below for nested schema](#nestedatt--pipelines))
+- `id` (String) The Terraform resource identifier for this item
+- `pipelines` (List of Object) List of pipelines (see [below for nested schema](#nestedatt--pipelines))
 
 <a id="nestedatt--pipelines"></a>
 ### Nested Schema for `pipelines`
 
 Read-Only:
 
-- **definition_source** (String)
-- **disabled** (Boolean)
-- **disabling_reason** (String)
-- **event** (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--event))
-- **html_url** (String)
-- **last_execution_revision** (String)
-- **last_execution_status** (String)
-- **name** (String)
-- **on** (String)
-- **pipeline_id** (Number)
-- **priority** (String)
-- **refs** (Set of String)
-- **remote_branch** (String)
-- **remote_parameter** (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--remote_parameter))
-- **remote_path** (String)
-- **remote_project_name** (String)
-- **tags** (Set of String)
+- `definition_source` (String)
+- `disabled` (Boolean)
+- `disabling_reason` (String)
+- `event` (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--event))
+- `html_url` (String)
+- `last_execution_revision` (String)
+- `last_execution_status` (String)
+- `name` (String)
+- `on` (String)
+- `pipeline_id` (Number)
+- `priority` (String)
+- `refs` (Set of String)
+- `remote_branch` (String)
+- `remote_parameter` (List of Object) (see [below for nested schema](#nestedobjatt--pipelines--remote_parameter))
+- `remote_path` (String)
+- `remote_project_name` (String)
+- `tags` (Set of String)
 
 <a id="nestedobjatt--pipelines--event"></a>
 ### Nested Schema for `pipelines.event`
 
 Read-Only:
 
-- **refs** (Set of String)
-- **type** (String)
+- `refs` (Set of String)
+- `type` (String)
 
 
 <a id="nestedobjatt--pipelines--remote_parameter"></a>
@@ -88,7 +88,7 @@ Read-Only:
 
 Read-Only:
 
-- **key** (String)
-- **value** (String)
+- `key` (String)
+- `value` (String)
 
 

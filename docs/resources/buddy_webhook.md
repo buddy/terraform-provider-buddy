@@ -32,20 +32,20 @@ resource "buddy_webhook" "ws" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **events** (Set of String) The webhook's event's list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`
-- **projects** (Set of String) To which projects the webhook should be assigned. If left empty all projects will be used
-- **target_url** (String) The webhook's target URL
+- `domain` (String) The workspace's URL handle
+- `events` (Set of String) The webhook's event's list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`
+- `projects` (Set of String) To which projects the webhook should be assigned. If left empty all projects will be used
+- `target_url` (String) The webhook's target URL
 
 ### Optional
 
-- **secret_key** (String) The webhook's secret value sent in the payload
+- `secret_key` (String) The webhook's secret value sent in the payload
 
 ### Read-Only
 
-- **html_url** (String) The webhook's URL
-- **id** (String) The Terraform resource identifier for this item
-- **webhook_id** (Number) The webhook's ID
+- `html_url` (String) The webhook's URL
+- `id` (String) The Terraform resource identifier for this item
+- `webhook_id` (Number) The webhook's ID
 
 ## Import
 

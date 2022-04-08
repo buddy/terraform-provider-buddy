@@ -31,19 +31,19 @@ resource "buddy_group_member" "john_in_devs" {
 
 ### Required
 
-- **domain** (String) The workspace's URL handle
-- **group_id** (Number) The group's ID
-- **member_id** (Number) The member's ID
+- `domain` (String) The workspace's URL handle
+- `group_id` (Number) The group's ID
+- `member_id` (Number) The member's ID
 
 ### Read-Only
 
-- **admin** (Boolean) Is the member a workspace administrator
-- **avatar_url** (String) The member's avatar URL
-- **email** (String) The member's email
-- **html_url** (String) The member's URL
-- **id** (String) The Terraform resource identifier for this item
-- **name** (String) The member's name
-- **workspace_owner** (Boolean) Is the member the workspace owner
+- `admin` (Boolean) Is the member a workspace administrator
+- `avatar_url` (String) The member's avatar URL
+- `email` (String) The member's email
+- `html_url` (String) The member's URL
+- `id` (String) The Terraform resource identifier for this item
+- `name` (String) The member's name
+- `workspace_owner` (Boolean) Is the member the workspace owner
 
 ## Import
 
