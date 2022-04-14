@@ -39,6 +39,18 @@ func Group() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"auto_assign_to_new_projects": {
+				Description: "Defines whether or not to automatically assign group to new projects",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+			},
+			"auto_assign_permission_set_id": {
+				Description: "The permission's ID with which the group will be assigned to new projects",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				Computed:    true,
+			},
 			"group_id": {
 				Description: "The group's ID",
 				Type:        schema.TypeInt,
@@ -61,11 +73,17 @@ func Group() *schema.Resource {
 func createContextGroup(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
+	assignToProjects := d.Get("auto_assign_to_new_projects").(bool)
 	opt := buddy.GroupOps{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
 	}
 	if description, ok := d.GetOk("description"); ok {
 		opt.Description = util.InterfaceStringToPointer(description)
+	}
+	if assignToProjects {
+		permissionId := d.Get("auto_assign_permission_set_id").(int)
+		opt.AutoAssignToNewProjects = &assignToProjects
+		opt.AutoAssignPermissionSetId = &permissionId
 	}
 	group, _, err := c.GroupService.Create(domain, &opt)
 	if err != nil {
@@ -116,6 +134,13 @@ func updateContextGroup(ctx context.Context, d *schema.ResourceData, meta interf
 	}
 	if d.HasChange("description") {
 		u.Description = util.InterfaceStringToPointer(d.Get("description"))
+	}
+	if d.HasChanges("auto_assign_to_new_projects", "auto_assign_permission_set_id") {
+		assignToProjects := d.Get("auto_assign_to_new_projects").(bool)
+		u.AutoAssignToNewProjects = &assignToProjects
+		if assignToProjects {
+			u.AutoAssignPermissionSetId = util.InterfaceIntToPointer(d.Get("auto_assign_permission_set_id"))
+		}
 	}
 	_, _, err = c.GroupService.Update(domain, groupId, &u)
 	if err != nil {
