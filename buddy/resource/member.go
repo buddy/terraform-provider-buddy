@@ -114,16 +114,13 @@ func updateContextMember(ctx context.Context, d *schema.ResourceData, meta inter
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		u := buddy.MemberUpdateOps{}
-		if d.HasChange("admin") {
-			u.Admin = util.InterfaceBoolToPointer(d.Get("admin"))
+		assign := d.Get("auto_assign_to_new_projects").(bool)
+		u := buddy.MemberUpdateOps{
+			Admin:                   util.InterfaceBoolToPointer(d.Get("admin")),
+			AutoAssignToNewProjects: &assign,
 		}
-		if d.HasChanges("auto_assign_to_new_projects", "auto_assign_permission_set_id") {
-			assign := d.Get("auto_assign_to_new_projects").(bool)
-			u.AutoAssignToNewProjects = &assign
-			if assign {
-				u.AutoAssignPermissionSetId = util.InterfaceIntToPointer(d.Get("auto_assign_permission_set_id"))
-			}
+		if assign {
+			u.AutoAssignPermissionSetId = util.InterfaceIntToPointer(d.Get("auto_assign_permission_set_id"))
 		}
 		_, _, err = c.MemberService.Update(domain, memberId, &u)
 		if err != nil {

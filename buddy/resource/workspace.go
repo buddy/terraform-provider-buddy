@@ -105,12 +105,11 @@ func updateContextWorkspace(ctx context.Context, d *schema.ResourceData, meta in
 	c := meta.(*buddy.Client)
 	if d.HasChanges("name", "encryption_salt") {
 		domain := d.Get("domain").(string)
-		opt := buddy.WorkspaceUpdateOps{}
-		if d.HasChange("encryption_salt") {
-			opt.EncryptionSalt = util.InterfaceStringToPointer(d.Get("encryption_salt"))
+		opt := buddy.WorkspaceUpdateOps{
+			Name: util.InterfaceStringToPointer(d.Get("name")),
 		}
-		if d.HasChange("name") {
-			opt.Name = util.InterfaceStringToPointer(d.Get("name"))
+		if salt, ok := d.GetOk("encryption_salt"); ok {
+			opt.EncryptionSalt = util.InterfaceStringToPointer(salt)
 		}
 		_, _, err := c.WorkspaceService.Update(domain, &opt)
 		if err != nil {
