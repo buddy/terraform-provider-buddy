@@ -13,6 +13,7 @@ import (
 
 func TestAccGroup(t *testing.T) {
 	var group buddy.Group
+	var permission buddy.Permission
 	domain := util.UniqueString()
 	name := util.RandString(5)
 	newName := util.RandString(5)
@@ -27,7 +28,7 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupConfig(domain, name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, name, ""),
+					testAccGroupAttributes("buddy_group.bar", &group, name, "", nil),
 				),
 			},
 			// update group
@@ -35,7 +36,16 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupUpdateConfig(domain, newName, newDescription),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, nil),
+				),
+			},
+			// update group assign
+			{
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newDescription),
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupGet("buddy_group.bar", &group),
+					testAccPermissionGet("buddy_permission.perm", &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, &permission),
 				),
 			},
 			// null desc
@@ -43,7 +53,7 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupConfig(domain, newName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, ""),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, "", nil),
 				),
 			},
 			// import group
@@ -56,13 +66,15 @@ func TestAccGroup(t *testing.T) {
 	})
 }
 
-func testAccGroupAttributes(n string, group *buddy.Group, name string, description string) resource.TestCheckFunc {
+func testAccGroupAttributes(n string, group *buddy.Group, name string, description string, defPerm *buddy.Permission) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("not found: %s", n)
 		}
 		attrs := rs.Primary.Attributes
+		attrsAutoAssignToProjects, _ := strconv.ParseBool(attrs["auto_assign_to_new_projects"])
+		attrsAutoAssignToProjectsPermissionId, _ := strconv.Atoi(attrs["auto_assign_permission_set_id"])
 		if err := util.CheckFieldEqualAndSet("Name", group.Name, name); err != nil {
 			return err
 		}
@@ -80,6 +92,20 @@ func testAccGroupAttributes(n string, group *buddy.Group, name string, descripti
 		}
 		if err := util.CheckFieldEqual("description", attrs["description"], group.Description); err != nil {
 			return err
+		}
+		if err := util.CheckBoolFieldEqual("auto_assign_to_new_projects", attrsAutoAssignToProjects, group.AutoAssignToNewProjects); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldEqual("auto_assign_permission_set_id", attrsAutoAssignToProjectsPermissionId, group.AutoAssignPermissionSetId); err != nil {
+			return err
+		}
+		if defPerm != nil {
+			if err := util.CheckBoolFieldEqual("AutoAssignToNewProjects", group.AutoAssignToNewProjects, true); err != nil {
+				return err
+			}
+			if err := util.CheckIntFieldEqual("AutoAssignPermissionSetId", group.AutoAssignPermissionSetId, defPerm.Id); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -114,6 +140,14 @@ resource "buddy_workspace" "foo" {
     domain = "%s"
 }
 
+resource "buddy_permission" "perm" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "test"
+    pipeline_access_level = "READ_ONLY"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
+}
+
 resource "buddy_group" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     name = "%s"
@@ -122,10 +156,42 @@ resource "buddy_group" "bar" {
 `, domain, name, description)
 }
 
+func testAccGroupUpdateProjectAssignConfig(domain string, name string, description string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_permission" "perm" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "test"
+    pipeline_access_level = "READ_ONLY"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
+}
+
+resource "buddy_group" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "%s"
+    description = "%s"
+	auto_assign_to_new_projects = true
+	auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
+}
+`, domain, name, description)
+}
+
 func testAccGroupConfig(domain string, name string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
+}
+
+resource "buddy_permission" "perm" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "test"
+    pipeline_access_level = "READ_ONLY"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
 }
 
 resource "buddy_group" "bar" {

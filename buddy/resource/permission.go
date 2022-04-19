@@ -128,9 +128,7 @@ func updateContextPermission(ctx context.Context, d *schema.ResourceData, meta i
 		PipelineAccessLevel:   util.InterfaceStringToPointer(d.Get("pipeline_access_level")),
 		RepositoryAccessLevel: util.InterfaceStringToPointer(d.Get("repository_access_level")),
 		SandboxAccessLevel:    util.InterfaceStringToPointer(d.Get("sandbox_access_level")),
-	}
-	if d.HasChange("description") {
-		opt.Description = util.InterfaceStringToPointer(d.Get("description"))
+		Description:           util.InterfaceStringToPointer(d.Get("description")),
 	}
 	_, _, err = c.PermissionService.Update(domain, permissionId, &opt)
 	if err != nil {

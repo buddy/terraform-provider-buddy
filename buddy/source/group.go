@@ -86,7 +86,7 @@ func readContextGroup(_ context.Context, d *schema.ResourceData, meta interface{
 			return diag.Errorf("Group not found")
 		}
 	}
-	err = util.ApiGroupToResourceData(domain, group, d)
+	err = util.ApiGroupToResourceData(domain, group, d, true)
 	if err != nil {
 		return diag.FromErr(err)
 	}

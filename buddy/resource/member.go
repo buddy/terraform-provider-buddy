@@ -46,6 +46,16 @@ func Member() *schema.Resource {
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},
+			"auto_assign_to_new_projects": {
+				Description: "Defines whether or not to automatically assign member to new projects",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
+			"auto_assign_permission_set_id": {
+				Description: "The permission's ID with which the member will be assigned to new projects",
+				Type:        schema.TypeInt,
+				Optional:    true,
+			},
 			"name": {
 				Description: "The member's name",
 				Type:        schema.TypeString,
@@ -94,7 +104,7 @@ func deleteContextMember(_ context.Context, d *schema.ResourceData, meta interfa
 }
 
 func updateContextMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	if d.HasChange("admin") {
+	if d.HasChanges("admin", "auto_assign_to_new_projects", "auto_assign_permission_set_id") {
 		c := meta.(*buddy.Client)
 		domain, mid, err := util.DecomposeDoubleId(d.Id())
 		if err != nil {
@@ -104,9 +114,15 @@ func updateContextMember(ctx context.Context, d *schema.ResourceData, meta inter
 		if err != nil {
 			return diag.FromErr(err)
 		}
-		_, _, err = c.MemberService.UpdateAdmin(domain, memberId, &buddy.MemberAdminOps{
-			Admin: util.InterfaceBoolToPointer(d.Get("admin")),
-		})
+		assign := d.Get("auto_assign_to_new_projects").(bool)
+		u := buddy.MemberUpdateOps{
+			Admin:                   util.InterfaceBoolToPointer(d.Get("admin")),
+			AutoAssignToNewProjects: &assign,
+		}
+		if assign {
+			u.AutoAssignPermissionSetId = util.InterfaceIntToPointer(d.Get("auto_assign_permission_set_id"))
+		}
+		_, _, err = c.MemberService.Update(domain, memberId, &u)
 		if err != nil {
 			return diag.FromErr(err)
 		}
@@ -133,7 +149,7 @@ func readContextMember(_ context.Context, d *schema.ResourceData, meta interface
 		}
 		return diag.FromErr(err)
 	}
-	err = util.ApiMemberToResourceData(domain, member, d)
+	err = util.ApiMemberToResourceData(domain, member, d, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -144,17 +160,23 @@ func createContextMember(ctx context.Context, d *schema.ResourceData, meta inter
 	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	admin := d.Get("admin").(bool)
-	opt := buddy.MemberOps{
+	autoAssign := d.Get("auto_assign_to_new_projects").(bool)
+	opt := buddy.MemberCreateOps{
 		Email: util.InterfaceStringToPointer(d.Get("email")),
 	}
 	member, _, err := c.MemberService.Create(domain, &opt)
 	if err != nil {
 		return diag.FromErr(err)
 	}
-	if admin {
-		_, _, err := c.MemberService.UpdateAdmin(domain, member.Id, &buddy.MemberAdminOps{
-			Admin: util.InterfaceBoolToPointer(true),
-		})
+	if admin || autoAssign {
+		u := buddy.MemberUpdateOps{
+			Admin:                   &admin,
+			AutoAssignToNewProjects: &autoAssign,
+		}
+		if autoAssign {
+			u.AutoAssignPermissionSetId = util.InterfaceIntToPointer(d.Get("auto_assign_permission_set_id"))
+		}
+		_, _, err := c.MemberService.Update(domain, member.Id, &u)
 		if err != nil {
 			return diag.FromErr(err)
 		}

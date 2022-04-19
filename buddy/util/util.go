@@ -1148,7 +1148,7 @@ func ApiProfileToResourceData(p *buddy.Profile, d *schema.ResourceData) error {
 	return d.Set("avatar_url", p.AvatarUrl)
 }
 
-func ApiMemberToResourceData(domain string, m *buddy.Member, d *schema.ResourceData) error {
+func ApiMemberToResourceData(domain string, m *buddy.Member, d *schema.ResourceData, short bool) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(m.Id)))
 	err := d.Set("domain", domain)
 	if err != nil {
@@ -1178,10 +1178,20 @@ func ApiMemberToResourceData(domain string, m *buddy.Member, d *schema.ResourceD
 	if err != nil {
 		return err
 	}
+	if !short {
+		err = d.Set("auto_assign_to_new_projects", m.AutoAssignToNewProjects)
+		if err != nil {
+			return err
+		}
+		err = d.Set("auto_assign_permission_set_id", m.AutoAssignPermissionSetId)
+		if err != nil {
+			return err
+		}
+	}
 	return d.Set("workspace_owner", m.WorkspaceOwner)
 }
 
-func ApiGroupToResourceData(domain string, g *buddy.Group, d *schema.ResourceData) error {
+func ApiGroupToResourceData(domain string, g *buddy.Group, d *schema.ResourceData, short bool) error {
 	d.SetId(ComposeDoubleId(domain, strconv.Itoa(g.Id)))
 	err := d.Set("name", g.Name)
 	if err != nil {
@@ -1198,6 +1208,16 @@ func ApiGroupToResourceData(domain string, g *buddy.Group, d *schema.ResourceDat
 	err = d.Set("html_url", g.HtmlUrl)
 	if err != nil {
 		return err
+	}
+	if !short {
+		err = d.Set("auto_assign_to_new_projects", g.AutoAssignToNewProjects)
+		if err != nil {
+			return err
+		}
+		err = d.Set("auto_assign_permission_set_id", g.AutoAssignPermissionSetId)
+		if err != nil {
+			return err
+		}
 	}
 	return d.Set("description", g.Description)
 }

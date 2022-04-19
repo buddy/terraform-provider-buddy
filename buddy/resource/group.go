@@ -39,6 +39,16 @@ func Group() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"auto_assign_to_new_projects": {
+				Description: "Defines whether or not to automatically assign group to new projects",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
+			"auto_assign_permission_set_id": {
+				Description: "The permission's ID with which the group will be assigned to new projects",
+				Type:        schema.TypeInt,
+				Optional:    true,
+			},
 			"group_id": {
 				Description: "The group's ID",
 				Type:        schema.TypeInt,
@@ -61,11 +71,17 @@ func Group() *schema.Resource {
 func createContextGroup(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
+	assignToProjects := d.Get("auto_assign_to_new_projects").(bool)
 	opt := buddy.GroupOps{
 		Name: util.InterfaceStringToPointer(d.Get("name")),
 	}
 	if description, ok := d.GetOk("description"); ok {
 		opt.Description = util.InterfaceStringToPointer(description)
+	}
+	if assignToProjects {
+		permissionId := d.Get("auto_assign_permission_set_id").(int)
+		opt.AutoAssignToNewProjects = &assignToProjects
+		opt.AutoAssignPermissionSetId = &permissionId
 	}
 	group, _, err := c.GroupService.Create(domain, &opt)
 	if err != nil {
@@ -94,7 +110,7 @@ func readContextGroup(_ context.Context, d *schema.ResourceData, meta interface{
 		}
 		return diag.FromErr(err)
 	}
-	err = util.ApiGroupToResourceData(domain, g, d)
+	err = util.ApiGroupToResourceData(domain, g, d, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}
@@ -111,11 +127,14 @@ func updateContextGroup(ctx context.Context, d *schema.ResourceData, meta interf
 	if err != nil {
 		return diag.FromErr(err)
 	}
+	assignToProjects := d.Get("auto_assign_to_new_projects").(bool)
 	u := buddy.GroupOps{
-		Name: util.InterfaceStringToPointer(d.Get("name")),
+		Name:                    util.InterfaceStringToPointer(d.Get("name")),
+		Description:             util.InterfaceStringToPointer(d.Get("description")),
+		AutoAssignToNewProjects: &assignToProjects,
 	}
-	if d.HasChange("description") {
-		u.Description = util.InterfaceStringToPointer(d.Get("description"))
+	if assignToProjects {
+		u.AutoAssignPermissionSetId = util.InterfaceIntToPointer(d.Get("auto_assign_permission_set_id"))
 	}
 	_, _, err = c.GroupService.Update(domain, groupId, &u)
 	if err != nil {

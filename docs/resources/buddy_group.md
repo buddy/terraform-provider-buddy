@@ -36,6 +36,8 @@ resource "buddy_group" "devs" {
 
 ### Optional
 
+- `auto_assign_permission_set_id` (Number) The permission's ID with which the group will be assigned to new projects
+- `auto_assign_to_new_projects` (Boolean) Defines whether or not to automatically assign group to new projects
 - `description` (String) The group's description
 
 ### Read-Only
