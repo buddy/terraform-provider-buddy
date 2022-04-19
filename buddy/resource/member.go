@@ -149,7 +149,7 @@ func readContextMember(_ context.Context, d *schema.ResourceData, meta interface
 		}
 		return diag.FromErr(err)
 	}
-	err = util.ApiMemberToResourceData(domain, member, d)
+	err = util.ApiMemberToResourceData(domain, member, d, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}

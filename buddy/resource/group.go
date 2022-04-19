@@ -110,7 +110,7 @@ func readContextGroup(_ context.Context, d *schema.ResourceData, meta interface{
 		}
 		return diag.FromErr(err)
 	}
-	err = util.ApiGroupToResourceData(domain, g, d)
+	err = util.ApiGroupToResourceData(domain, g, d, false)
 	if err != nil {
 		return diag.FromErr(err)
 	}

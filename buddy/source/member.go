@@ -113,7 +113,7 @@ func readContextMember(_ context.Context, d *schema.ResourceData, meta interface
 			return diag.Errorf("Member not found %d", len(list.Members))
 		}
 	}
-	err = util.ApiMemberToResourceData(domain, member, d)
+	err = util.ApiMemberToResourceData(domain, member, d, true)
 	if err != nil {
 		return diag.FromErr(err)
 	}
