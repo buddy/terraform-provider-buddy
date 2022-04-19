@@ -42,7 +42,7 @@ func Integration() *schema.Resource {
 				Description: "The integration's type. Allowed: `DIGITAL_OCEAN`, `AMAZON`, `SHOPIFY`, `PUSHOVER`, " +
 					"`RACKSPACE`, `CLOUDFLARE`, `NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `DO_SPACES`, `HONEYBADGER`, " +
 					"`VULTR`, `SENTRY_ENTERPRISE`, `LOGGLY`, `FIREBASE`, `UPCLOUD`, `GHOST_INSPECTOR`, `AZURE_CLOUD`, " +
-					"`DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`",
+					"`DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`, `GIT_HUB`, `GIT_LAB`",
 				Type:     schema.TypeString,
 				Required: true,
 				ForceNew: true,
@@ -68,6 +68,8 @@ func Integration() *schema.Resource {
 					buddy.IntegrationTypeAzureCloud,
 					buddy.IntegrationTypeDockerHub,
 					buddy.IntegrationTypeGoogleServiceAccount,
+					buddy.IntegrationTypeGitHub,
+					buddy.IntegrationTypeGitLab,
 				}, false),
 			},
 			"scope": {
@@ -114,7 +116,7 @@ func Integration() *schema.Resource {
 			"token": {
 				Description: "The integration's token. Provide for: `DIGITAL_OCEAN`, `SHOPIFY`, `RACKSPACE`, `CLOUDFLARE`, " +
 					"`NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `HONEYBADGER`, `VULTR`, `SENTRY_ENTERPRISE`, " +
-					"`LOGGLY`, `FIREBASE`, `GHOST_INSPECTOR`, `PUSHOVER`",
+					"`LOGGLY`, `FIREBASE`, `GHOST_INSPECTOR`, `PUSHOVER`, `GIT_LAB`, `GIT_HUB`",
 				Type:      schema.TypeString,
 				Optional:  true,
 				Sensitive: true,

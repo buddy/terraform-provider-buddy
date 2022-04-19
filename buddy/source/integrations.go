@@ -58,6 +58,8 @@ func Integrations() *schema.Resource {
 					buddy.IntegrationTypeGhostInspector,
 					buddy.IntegrationTypeAzureCloud,
 					buddy.IntegrationTypeDockerHub,
+					buddy.IntegrationTypeGitHub,
+					buddy.IntegrationTypeGitLab,
 				}, false),
 			},
 			"integrations": {

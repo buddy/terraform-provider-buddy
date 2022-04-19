@@ -218,7 +218,7 @@ func testAccGroupCheckDestroy(s *terraform.State) error {
 		if err == nil && group != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}

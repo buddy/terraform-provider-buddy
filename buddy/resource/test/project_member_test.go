@@ -240,7 +240,7 @@ func testAccProjectMemberCheckDestroy(s *terraform.State) error {
 		if err == nil && member != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}

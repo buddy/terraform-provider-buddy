@@ -148,6 +148,88 @@ func TestAccIntegration_shopify(t *testing.T) {
 	})
 }
 
+func TestAccIntegration_gitlab(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeWorkspace
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:      testAccIntegrationCheckDestroy,
+		Steps: []resource.TestStep{
+			// create integration
+			{
+				Config: testAccIntegrationGitLab(domain, name, scope),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitLab, scope, false, false),
+				),
+			},
+			// update integration
+			{
+				Config: testAccIntegrationGitLab(domain, newName, newScope),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitLab, newScope, false, false),
+				),
+			},
+			// import integration
+			{
+				ResourceName:            "buddy_integration.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: ignoreImportVerify,
+			},
+		},
+	})
+}
+
+func TestAccIntegration_github(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeWorkspace
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:      testAccIntegrationCheckDestroy,
+		Steps: []resource.TestStep{
+			// create integration
+			{
+				Config: testAccIntegrationGitHub(domain, name, scope),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitHub, scope, false, false),
+				),
+			},
+			// update integration
+			{
+				Config: testAccIntegrationGitHub(domain, newName, newScope),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitHub, newScope, false, false),
+				),
+			},
+			// import integration
+			{
+				ResourceName:            "buddy_integration.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: ignoreImportVerify,
+			},
+		},
+	})
+}
+
 func TestAccIntegration_rackspace(t *testing.T) {
 	var integration buddy.Integration
 	domain := util.UniqueString()
@@ -406,6 +488,38 @@ resource "buddy_integration" "bar" {
 `, domain, name, buddy.IntegrationTypeAmazon, scope)
 }
 
+func testAccIntegrationGitHub(domain string, name string, scope string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_integration" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "%s"
+    type = "%s"
+    scope = "%s"
+    token = "ABC1234567890"
+}
+`, domain, name, buddy.IntegrationTypeGitHub, scope)
+}
+
+func testAccIntegrationGitLab(domain string, name string, scope string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_integration" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "%s"
+    type = "%s"
+    scope = "%s"
+    token = "ABC1234567890"
+}
+`, domain, name, buddy.IntegrationTypeGitLab, scope)
+}
+
 func testAccIntegrationRackspace(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
@@ -544,7 +658,7 @@ func testAccIntegrationCheckDestroy(s *terraform.State) error {
 		if err == nil && integration != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}

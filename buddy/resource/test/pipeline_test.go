@@ -1348,7 +1348,7 @@ func testAccPipelineCheckDestroy(s *terraform.State) error {
 		if err == nil && pipeline != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}
