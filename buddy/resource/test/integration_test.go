@@ -658,7 +658,7 @@ func testAccIntegrationCheckDestroy(s *terraform.State) error {
 		if err == nil && integration != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}

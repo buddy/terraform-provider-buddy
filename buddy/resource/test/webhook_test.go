@@ -192,7 +192,7 @@ func testAccWebhookCheckDestroy(s *terraform.State) error {
 		if err == nil && webhook != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}

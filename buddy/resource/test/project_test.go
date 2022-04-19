@@ -206,7 +206,7 @@ func testAccProjectCheckDestroy(s *terraform.State) error {
 		if err == nil && project != nil {
 			return util.ErrorResourceExists()
 		}
-		if resp.StatusCode != 404 {
+		if !util.IsResourceNotFound(resp, err) {
 			return err
 		}
 	}
