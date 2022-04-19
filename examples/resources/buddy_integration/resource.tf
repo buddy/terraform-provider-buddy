@@ -184,6 +184,22 @@ resource "buddy_integration" "docker_hub" {
   password = "pass"
 }
 
+resource "buddy_integration" "github" {
+  domain   = "mydomain"
+  name     = "github"
+  type     = "GIT_HUB"
+  scope    = "ADMIN"
+  token    = "github token"
+}
+
+resource "buddy_integration" "gitlab" {
+  domain   = "mydomain"
+  name     = "gitlab"
+  type     = "GIT_LAB"
+  scope    = "ADMIN"
+  token    = "gitlab token"
+}
+
 resource "buddy_integration" "google_service_account" {
   domain  = "mydomain"
   name    = "google_service_account"
