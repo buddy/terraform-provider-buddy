@@ -1252,7 +1252,6 @@ func ApiGroupMemberToResourceData(domain string, groupId int, m *buddy.Member, d
 }
 
 func IsResourceNotFound(resp *http.Response, err error) bool {
-	fmt.Printf("check: '%d' '%s'", resp.StatusCode, err.Error())
 	if resp.StatusCode == http.StatusNotFound {
 		return true
 	}
