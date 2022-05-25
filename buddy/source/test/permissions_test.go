@@ -23,7 +23,7 @@ func TestAccSourcePermissions(t *testing.T) {
 			{
 				Config: testAccSourcePermissionsConfig(domain),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePermissionsAttributes("data.buddy_permissions.all", 3),
+					testAccSourcePermissionsAttributes("data.buddy_permissions.all", 4),
 					testAccSourcePermissionsAttributes("data.buddy_permissions.name", 1),
 					testAccSourcePermissionsAttributes("data.buddy_permissions.type", 1),
 				),
