@@ -45,6 +45,7 @@ func Project() *schema.Resource {
 				ConflictsWith: []string{
 					"custom_repo_url",
 					"custom_repo_user",
+					"custom_repo_ssh_key_id",
 					"custom_repo_pass",
 				},
 				RequiredWith: []string{
@@ -58,6 +59,7 @@ func Project() *schema.Resource {
 				ConflictsWith: []string{
 					"custom_repo_url",
 					"custom_repo_user",
+					"custom_repo_ssh_key_id",
 					"custom_repo_pass",
 				},
 				RequiredWith: []string{
@@ -71,6 +73,7 @@ func Project() *schema.Resource {
 				ConflictsWith: []string{
 					"custom_repo_url",
 					"custom_repo_user",
+					"custom_repo_ssh_key_id",
 					"custom_repo_pass",
 				},
 				RequiredWith: []string{
@@ -86,6 +89,19 @@ func Project() *schema.Resource {
 					"integration_id",
 					"external_project_id",
 					"git_lab_project_id",
+				},
+			},
+			"custom_repo_ssh_key_id": {
+				Description: "The project's custom repository SSH key ID. Needed when cloning from a custom repository",
+				Type:        schema.TypeInt,
+				Optional:    true,
+				ConflictsWith: []string{
+					"integration_id",
+					"external_project_id",
+					"git_lab_project_id",
+				},
+				RequiredWith: []string{
+					"custom_repo_url",
 				},
 			},
 			"custom_repo_user": {
@@ -188,16 +204,6 @@ func Project() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
-			"ssh_public_key": {
-				Description: "The project's public key",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"key_fingerprint": {
-				Description: "The project's key fingerprint",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
 		},
 	}
 }
@@ -280,6 +286,9 @@ func createContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if customRepoPass, ok := d.GetOk("custom_repo_pass"); ok {
 		opt.CustomRepoPass = util.InterfaceStringToPointer(customRepoPass)
+	}
+	if customRepoSshKeyId, ok := d.GetOk("custom_repo_ssh_key_id"); ok {
+		opt.CustomRepoSshKeyId = util.InterfaceIntToPointer(customRepoSshKeyId)
 	}
 	project, _, err := c.ProjectService.Create(domain, &opt)
 	if err != nil {

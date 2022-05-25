@@ -21,7 +21,7 @@ func TestAccSourceVariablesSshKeys(t *testing.T) {
 			{
 				Config: testAccSourceVariablesSshKeysConfig(),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 2),
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 3),
 					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.key", 1),
 					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.project", 1),
 				),

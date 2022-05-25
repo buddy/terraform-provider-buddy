@@ -95,6 +95,23 @@ func CheckFieldEqual(field string, got string, want string) error {
 	return nil
 }
 
+func CheckDateFieldEqual(field string, got string, want string) error {
+	gotDate, err := time.Parse(time.RFC3339, got)
+	if err != nil {
+		return err
+	}
+	wantDate, err := time.Parse(time.RFC3339, want)
+	if err != nil {
+		return err
+	}
+	gotDate = gotDate.Truncate(time.Second)
+	wantDate = wantDate.Truncate(time.Second)
+	if gotDate.Equal(wantDate) {
+		return nil
+	}
+	return ErrorFieldFormatted(field, gotDate.String(), wantDate.String())
+}
+
 func CheckFieldEqualAndSet(field string, got string, want string) error {
 	if err := CheckFieldEqual(field, got, want); err != nil {
 		return err
@@ -1027,14 +1044,6 @@ func ApiProjectToResourceData(domain string, project *buddy.Project, d *schema.R
 		if err != nil {
 			return err
 		}
-		err = d.Set("ssh_public_key", project.SshPublicKey)
-		if err != nil {
-			return err
-		}
-		err = d.Set("key_fingerprint", project.KeyFingerprint)
-		if err != nil {
-			return err
-		}
 		return d.Set("default_branch", project.DefaultBranch)
 	}
 	return nil
@@ -1263,7 +1272,7 @@ func IsResourceNotFound(resp *http.Response, err error) bool {
 	if resp.StatusCode == http.StatusNotFound {
 		return true
 	}
-	if resp.StatusCode == http.StatusForbidden && err.Error() == "Only active workspace have access to API" {
+	if resp.StatusCode == http.StatusForbidden && strings.Contains(err.Error(), "Only active workspace have access to API") {
 		return true
 	}
 	return false

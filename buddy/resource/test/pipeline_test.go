@@ -995,7 +995,7 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 			return err
 		}
 		if want.StartDate != "" {
-			if err := util.CheckFieldEqualAndSet("start_date", attrs["start_date"], want.StartDate); err != nil {
+			if err := util.CheckDateFieldEqual("start_date", attrs["start_date"], want.StartDate); err != nil {
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("StartDate", pipeline.StartDate, want.StartDate); err != nil {

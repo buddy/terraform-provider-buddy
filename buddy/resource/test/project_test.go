@@ -113,19 +113,13 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		if err := util.CheckFieldEqualAndSet("status", attrs["status"], project.Status); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("create_date", attrs["create_date"], project.CreateDate); err != nil {
+		if err := util.CheckDateFieldEqual("create_date", attrs["create_date"], project.CreateDate); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("http_repository", attrs["http_repository"], project.HttpRepository); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("ssh_repository", attrs["ssh_repository"], project.SshRepository); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("ssh_public_key", attrs["ssh_public_key"], project.SshPublicKey); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("key_fingerprint", attrs["key_fingerprint"], project.KeyFingerprint); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("default_branch", attrs["default_branch"], project.DefaultBranch); err != nil {
