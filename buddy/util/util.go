@@ -1256,7 +1256,7 @@ func IsResourceNotFound(resp *http.Response, err error) bool {
 	if resp.StatusCode == http.StatusNotFound {
 		return true
 	}
-	if resp.StatusCode == http.StatusForbidden && err.Error() == "Only active workspace have access to API" {
+	if resp.StatusCode == http.StatusForbidden && strings.Contains(err.Error(), "Only active workspace have access to API") {
 		return true
 	}
 	return false
