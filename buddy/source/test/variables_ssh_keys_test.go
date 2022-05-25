@@ -38,50 +38,50 @@ func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestC
 		}
 		attrs := rs.Primary.Attributes
 		attrsVariablesCount, _ := strconv.Atoi(attrs["variables.#"])
-		attrsVariableId, _ := strconv.Atoi(attrs["variables.0.variable_id"])
-		attrsSettable, _ := strconv.ParseBool(attrs["variables.0.settable"])
-		attrsEncrypted, _ := strconv.ParseBool(attrs["variables.0.encrypted"])
 		if err := util.CheckIntFieldEqualAndSet("variables.#", attrsVariablesCount, count); err != nil {
 			return err
 		}
-		if err := util.CheckIntFieldSet("variables.0.variable_id", attrsVariableId); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.key", attrs["variables.0.key"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.description", attrs["variables.0.description"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.value", attrs["variables.0.value"]); err != nil {
-			return err
-		}
-		if err := util.CheckBoolFieldEqual("variables.0.settable", attrsSettable, false); err != nil {
-			return err
-		}
-		if err := util.CheckBoolFieldEqual("variables.0.encrypted", attrsEncrypted, true); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.display_name", attrs["variables.0.display_name"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.file_place", attrs["variables.0.file_place"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.file_path", attrs["variables.0.file_path"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.file_chmod", attrs["variables.0.file_chmod"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.checksum", attrs["variables.0.checksum"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.key_fingerprint", attrs["variables.0.key_fingerprint"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldSet("variables.0.public_value", attrs["variables.0.public_value"]); err != nil {
-			return err
+		for i := 0; i < count; i += 1 {
+			index := "variables." + strconv.Itoa(i)
+			attrsVariableId, _ := strconv.Atoi(attrs[index+".variable_id"])
+			attrsSettable, _ := strconv.ParseBool(attrs[index+".settable"])
+			attrsEncrypted, _ := strconv.ParseBool(attrs[index+".encrypted"])
+			if err := util.CheckIntFieldSet(index+".variable_id", attrsVariableId); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".key", attrs[index+".key"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".value", attrs[index+".value"]); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual(index+".settable", attrsSettable, false); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual(index+".encrypted", attrsEncrypted, true); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".display_name", attrs[index+".display_name"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".file_place", attrs[index+".file_place"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".file_path", attrs[index+".file_path"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".file_chmod", attrs[index+".file_chmod"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".checksum", attrs[index+".checksum"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".key_fingerprint", attrs[index+".key_fingerprint"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".public_value", attrs[index+".public_value"]); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
