@@ -55,9 +55,10 @@ resource "buddy_project" "custom_http" {
 }
 
 resource "buddy_project" "custom_ssh" {
-  domain          = "mydomain"
-  display_name    = "custom"
-  custom_repo_url = "ssh://mygit.repo"
+  domain                 = "mydomain"
+  display_name           = "custom"
+  custom_repo_url        = "ssh://mygit.repo"
+  custom_repo_ssh_key_id = 12345
 }
 ```
 
@@ -72,6 +73,7 @@ resource "buddy_project" "custom_ssh" {
 ### Optional
 
 - `custom_repo_pass` (String) The project's custom repository password. Needed when cloning from a custom repository
+- `custom_repo_ssh_key_id` (Number) The project's custom repository SSH key ID. Needed when cloning from a custom repository
 - `custom_repo_url` (String) The project's custom repository URL. Needed when cloning from a custom repository
 - `custom_repo_user` (String) The project's custom repository user. Needed when cloning from a custom repository
 - `external_project_id` (String) The project's external project ID. Needed when cloning from GitHub, GitLab or BitBucket
@@ -86,9 +88,7 @@ resource "buddy_project" "custom_ssh" {
 - `html_url` (String) The project's URL
 - `http_repository` (String) The project's Git HTTP endpoint
 - `id` (String) The Terraform resource identifier for this item
-- `key_fingerprint` (String) The project's key fingerprint
 - `name` (String) The project's unique name ID
-- `ssh_public_key` (String) The project's public key
 - `ssh_repository` (String) The project's Git SSH endpoint
 - `status` (String) The project's status. Possible values: `CLOSED`, `ACTIVE`
 

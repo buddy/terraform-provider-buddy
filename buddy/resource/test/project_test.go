@@ -122,12 +122,6 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		if err := util.CheckFieldEqualAndSet("ssh_repository", attrs["ssh_repository"], project.SshRepository); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("ssh_public_key", attrs["ssh_public_key"], project.SshPublicKey); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("key_fingerprint", attrs["key_fingerprint"], project.KeyFingerprint); err != nil {
-			return err
-		}
 		if err := util.CheckFieldEqualAndSet("default_branch", attrs["default_branch"], project.DefaultBranch); err != nil {
 			return err
 		}

@@ -1027,14 +1027,6 @@ func ApiProjectToResourceData(domain string, project *buddy.Project, d *schema.R
 		if err != nil {
 			return err
 		}
-		err = d.Set("ssh_public_key", project.SshPublicKey)
-		if err != nil {
-			return err
-		}
-		err = d.Set("key_fingerprint", project.KeyFingerprint)
-		if err != nil {
-			return err
-		}
 		return d.Set("default_branch", project.DefaultBranch)
 	}
 	return nil

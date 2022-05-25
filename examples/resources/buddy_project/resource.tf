@@ -34,7 +34,8 @@ resource "buddy_project" "custom_http" {
 }
 
 resource "buddy_project" "custom_ssh" {
-  domain          = "mydomain"
-  display_name    = "custom"
-  custom_repo_url = "ssh://mygit.repo"
+  domain                 = "mydomain"
+  display_name           = "custom"
+  custom_repo_url        = "ssh://mygit.repo"
+  custom_repo_ssh_key_id = 12345
 }
