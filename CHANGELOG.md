@@ -1,3 +1,6 @@
+# Release v1.4.6 (2022-05-25)
+* Adds `custom_repo_ssh_key_id` when creating custom project
+
 # Release v1.4.5 (2022-04-19)
 * Adds `GitHub` & `GitLab` token integration
 
