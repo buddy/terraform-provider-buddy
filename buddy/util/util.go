@@ -109,7 +109,7 @@ func CheckDateFieldEqual(field string, got string, want string) error {
 	if gotDate.Equal(wantDate) {
 		return nil
 	}
-	return ErrorFieldFormatted(field, got, want)
+	return ErrorFieldFormatted(field, gotDate.String(), wantDate.String())
 }
 
 func CheckFieldEqualAndSet(field string, got string, want string) error {
