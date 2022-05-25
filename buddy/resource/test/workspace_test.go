@@ -98,7 +98,7 @@ func testAccWorkspaceAttributes(n string, workspace *buddy.Workspace, domain str
 		if err := util.CheckBoolFieldEqual("frozen", attrsFrozen, workspace.Frozen); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("create_date", attrs["create_date"], workspace.CreateDate); err != nil {
+		if err := util.CheckDateFieldEqual("create_date", attrs["create_date"], workspace.CreateDate); err != nil {
 			return err
 		}
 		return nil

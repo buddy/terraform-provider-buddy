@@ -95,6 +95,21 @@ func CheckFieldEqual(field string, got string, want string) error {
 	return nil
 }
 
+func CheckDateFieldEqual(field string, got string, want string) error {
+	gotDate, err := time.Parse(time.RFC3339, got)
+	if err != nil {
+		return err
+	}
+	wantDate, err := time.Parse(time.RFC3339, want)
+	if err != nil {
+		return err
+	}
+	if gotDate.Equal(wantDate) {
+		return nil
+	}
+	return ErrorFieldFormatted(field, got, want)
+}
+
 func CheckFieldEqualAndSet(field string, got string, want string) error {
 	if err := CheckFieldEqual(field, got, want); err != nil {
 		return err

@@ -113,7 +113,7 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		if err := util.CheckFieldEqualAndSet("status", attrs["status"], project.Status); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("create_date", attrs["create_date"], project.CreateDate); err != nil {
+		if err := util.CheckDateFieldEqual("create_date", attrs["create_date"], project.CreateDate); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("http_repository", attrs["http_repository"], project.HttpRepository); err != nil {
