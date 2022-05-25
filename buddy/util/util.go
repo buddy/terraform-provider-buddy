@@ -104,8 +104,8 @@ func CheckDateFieldEqual(field string, got string, want string) error {
 	if err != nil {
 		return err
 	}
-	gotDate = gotDate.Round(time.Second)
-	wantDate = wantDate.Round(time.Second)
+	gotDate = gotDate.Truncate(time.Second)
+	wantDate = wantDate.Truncate(time.Second)
 	if gotDate.Equal(wantDate) {
 		return nil
 	}
