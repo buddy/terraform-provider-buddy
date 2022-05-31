@@ -57,6 +57,7 @@ Read-Only:
 - `name` (String)
 - `permission_id` (Number)
 - `pipeline_access_level` (String)
+- `project_team_access_level` (String)
 - `repository_access_level` (String)
 - `sandbox_access_level` (String)
 - `type` (String)
