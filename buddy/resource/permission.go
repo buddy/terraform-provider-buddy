@@ -71,6 +71,16 @@ func Permission() *schema.Resource {
 					buddy.PermissionAccessLevelReadWrite,
 				}, false),
 			},
+			"project_team_access_level": {
+				Description: "The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				ValidateFunc: validation.StringInSlice([]string{
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelManage,
+				}, false),
+			},
 			"permission_id": {
 				Description: "The permission's ID",
 				Type:        schema.TypeInt,
@@ -124,11 +134,12 @@ func updateContextPermission(ctx context.Context, d *schema.ResourceData, meta i
 		return diag.FromErr(err)
 	}
 	opt := buddy.PermissionOps{
-		Name:                  util.InterfaceStringToPointer(d.Get("name")),
-		PipelineAccessLevel:   util.InterfaceStringToPointer(d.Get("pipeline_access_level")),
-		RepositoryAccessLevel: util.InterfaceStringToPointer(d.Get("repository_access_level")),
-		SandboxAccessLevel:    util.InterfaceStringToPointer(d.Get("sandbox_access_level")),
-		Description:           util.InterfaceStringToPointer(d.Get("description")),
+		Name:                   util.InterfaceStringToPointer(d.Get("name")),
+		PipelineAccessLevel:    util.InterfaceStringToPointer(d.Get("pipeline_access_level")),
+		RepositoryAccessLevel:  util.InterfaceStringToPointer(d.Get("repository_access_level")),
+		SandboxAccessLevel:     util.InterfaceStringToPointer(d.Get("sandbox_access_level")),
+		ProjectTeamAccessLevel: util.InterfaceStringToPointer(d.Get("project_team_access_level")),
+		Description:            util.InterfaceStringToPointer(d.Get("description")),
 	}
 	_, _, err = c.PermissionService.Update(domain, permissionId, &opt)
 	if err != nil {
@@ -171,6 +182,9 @@ func createContextPermission(ctx context.Context, d *schema.ResourceData, meta i
 		PipelineAccessLevel:   util.InterfaceStringToPointer(d.Get("pipeline_access_level")),
 		RepositoryAccessLevel: util.InterfaceStringToPointer(d.Get("repository_access_level")),
 		SandboxAccessLevel:    util.InterfaceStringToPointer(d.Get("sandbox_access_level")),
+	}
+	if projectTeamAccessLevel, ok := d.GetOk("project_team_access_level"); ok {
+		opt.ProjectTeamAccessLevel = util.InterfaceStringToPointer(projectTeamAccessLevel)
 	}
 	if description, ok := d.GetOk("description"); ok {
 		opt.Description = util.InterfaceStringToPointer(description)

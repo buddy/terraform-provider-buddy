@@ -34,13 +34,14 @@ func Permissions() *schema.Resource {
 				ValidateFunc: validation.StringIsValidRegExp,
 			},
 			"type": {
-				Description: "Filter permissions by type (`CUSTOM`, `READ_ONLY`, `DEVELOPER`)",
+				Description: "Filter permissions by type (`CUSTOM`, `READ_ONLY`, `DEVELOPER`, `PROJECT_MANAGER`)",
 				Type:        schema.TypeString,
 				Optional:    true,
 				ValidateFunc: validation.StringInSlice([]string{
 					buddy.PermissionTypeCustom,
 					buddy.PermissionTypeReadOnly,
 					buddy.PermissionTypeDeveloper,
+					buddy.PermissionTypeProjectManager,
 				}, false),
 			},
 			"permissions": {
@@ -58,6 +59,10 @@ func Permissions() *schema.Resource {
 							Computed: true,
 						},
 						"repository_access_level": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
+						"project_team_access_level": {
 							Type:     schema.TypeString,
 							Computed: true,
 						},

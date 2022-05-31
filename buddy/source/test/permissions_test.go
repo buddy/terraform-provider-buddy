@@ -81,6 +81,7 @@ resource "buddy_permission" "perm" {
     pipeline_access_level = "%s"
     repository_access_level = "%s"
 	sandbox_access_level = "%s"
+	project_team_access_level = "%s"
 }
 
 data "buddy_permissions" "all" {
@@ -99,5 +100,5 @@ data "buddy_permissions" "type" {
     depends_on = [buddy_permission.perm]
     type = "DEVELOPER"
 }
-`, domain, buddy.PermissionTypeReadOnly, buddy.PermissionTypeReadOnly, buddy.PermissionTypeReadOnly)
+`, domain, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage)
 }

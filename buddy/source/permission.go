@@ -45,6 +45,11 @@ func Permission() *schema.Resource {
 				Type:        schema.TypeString,
 				Computed:    true,
 			},
+			"project_team_access_level": {
+				Description: "The permission's access level to team",
+				Type:        schema.TypeString,
+				Computed:    true,
+			},
 			"sandbox_access_level": {
 				Description: "The permission's access level to sandboxes",
 				Type:        schema.TypeString,

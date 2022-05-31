@@ -42,6 +42,7 @@ resource "buddy_permission" "testers" {
 ### Optional
 
 - `description` (String) The permission's description
+- `project_team_access_level` (String) The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`
 
 ### Read-Only
 

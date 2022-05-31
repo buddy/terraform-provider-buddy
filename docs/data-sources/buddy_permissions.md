@@ -36,7 +36,7 @@ data "buddy_permissions" "filter" {
 ### Optional
 
 - `name_regex` (String) The permission's name regular expression to match
-- `type` (String) Filter permissions by type (`CUSTOM`, `READ_ONLY`, `DEVELOPER`)
+- `type` (String) Filter permissions by type (`CUSTOM`, `READ_ONLY`, `DEVELOPER`, `PROJECT_MANAGER`)
 
 ### Read-Only
 
@@ -52,6 +52,7 @@ Read-Only:
 - `name` (String)
 - `permission_id` (Number)
 - `pipeline_access_level` (String)
+- `project_team_access_level` (String)
 - `repository_access_level` (String)
 - `sandbox_access_level` (String)
 - `type` (String)

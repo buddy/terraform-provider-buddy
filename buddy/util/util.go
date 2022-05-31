@@ -767,6 +767,7 @@ func ApiShortPermissionToMap(permission *buddy.Permission) map[string]interface{
 	permissionMap["pipeline_access_level"] = permission.PipelineAccessLevel
 	permissionMap["repository_access_level"] = permission.RepositoryAccessLevel
 	permissionMap["sandbox_access_level"] = permission.SandboxAccessLevel
+	permissionMap["project_team_access_level"] = permission.ProjectTeamAccessLevel
 	permissionMap["permission_id"] = permission.Id
 	permissionMap["html_url"] = permission.HtmlUrl
 	permissionMap["type"] = permission.Type
@@ -1068,6 +1069,10 @@ func ApiPermissionToResourceData(domain string, p *buddy.Permission, d *schema.R
 		return err
 	}
 	err = d.Set("repository_access_level", p.RepositoryAccessLevel)
+	if err != nil {
+		return err
+	}
+	err = d.Set("project_team_access_level", p.ProjectTeamAccessLevel)
 	if err != nil {
 		return err
 	}
