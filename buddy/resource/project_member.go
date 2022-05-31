@@ -108,6 +108,10 @@ func ProjectMember() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"project_team_access_level": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"repository_access_level": {
 							Type:     schema.TypeString,
 							Computed: true,
