@@ -6,6 +6,7 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
 	"strconv"
 )
 
@@ -16,6 +17,7 @@ func GroupMember() *schema.Resource {
 			"Token scope required: `WORKSPACE`",
 		CreateContext: createContextGroupMember,
 		ReadContext:   readContextGroupMember,
+		UpdateContext: updateContexGroupMember,
 		DeleteContext: deleteContextGroupMember,
 		Importer: &schema.ResourceImporter{
 			StateContext: schema.ImportStatePassthroughContext,
@@ -44,6 +46,16 @@ func GroupMember() *schema.Resource {
 				Type:        schema.TypeInt,
 				Required:    true,
 				ForceNew:    true,
+			},
+			"status": {
+				Description: "The member's status",
+				Type:        schema.TypeString,
+				ValidateFunc: validation.StringInSlice([]string{
+					buddy.GroupMemberStatusMember,
+					buddy.GroupMemberStatusManager,
+				}, false),
+				Optional: true,
+				Computed: true,
 			},
 			"html_url": {
 				Description: "The member's URL",
@@ -131,13 +143,42 @@ func readContextGroupMember(_ context.Context, d *schema.ResourceData, meta inte
 	return diags
 }
 
+func updateContexGroupMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
+	c := meta.(*buddy.Client)
+	domain, gid, mid, err := util.DecomposeTripleId(d.Id())
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	groupId, err := strconv.Atoi(gid)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	memberId, err := strconv.Atoi(mid)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	status := buddy.GroupMemberStatusMember
+	if s, ok := d.GetOk("status"); ok {
+		status = s.(string)
+	}
+	_, _, err = c.GroupService.UpdateGroupMember(domain, groupId, memberId, status)
+	if err != nil {
+		return diag.FromErr(err)
+	}
+	return readContextGroupMember(ctx, d, meta)
+}
+
 func createContextGroupMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 	c := meta.(*buddy.Client)
 	domain := d.Get("domain").(string)
 	groupId := d.Get("group_id").(int)
-	member, _, err := c.GroupService.AddGroupMember(domain, groupId, &buddy.GroupMemberOps{
+	ops := buddy.GroupMemberOps{
 		Id: util.InterfaceIntToPointer(d.Get("member_id")),
-	})
+	}
+	if status, ok := d.GetOk("status"); ok {
+		ops.Status = util.InterfaceStringToPointer(status)
+	}
+	member, _, err := c.GroupService.AddGroupMember(domain, groupId, &ops)
 	if err != nil {
 		return diag.FromErr(err)
 	}

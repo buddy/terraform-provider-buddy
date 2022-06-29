@@ -54,6 +54,9 @@ func testAccSourceGroupMembersAttributes(n string, count int) resource.TestCheck
 		if err := util.CheckFieldSet("members.0.email", attrs["members.0.email"]); err != nil {
 			return err
 		}
+		if err := util.CheckFieldSet("members.0.status", attrs["members.0.status"]); err != nil {
+			return err
+		}
 		if err := util.CheckIntFieldSet("members.0.member_id", attrsMemberId); err != nil {
 			return err
 		}
@@ -96,12 +99,14 @@ resource "buddy_group_member" "gm2" {
     domain = "${buddy_workspace.w.domain}"
     group_id = "${buddy_group.g.group_id}"
     member_id = "${buddy_member.m2.member_id}"
+	status = "MEMBER"
 }
 
 resource "buddy_group_member" "gm3" {
     domain = "${buddy_workspace.w.domain}"
     group_id = "${buddy_group.g.group_id}"
     member_id = "${buddy_profile.me.member_id}"
+	status = "MANAGER"
 }
 
 data "buddy_group_members" "gm" {
