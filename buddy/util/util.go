@@ -734,6 +734,14 @@ func ApiShortMemberToMap(m *buddy.Member) map[string]interface{} {
 	return member
 }
 
+func ApiShortGroupMemberToMap(m *buddy.Member) map[string]interface{} {
+	member := ApiShortMemberToMap(m)
+	if member != nil {
+		member["status"] = m.Status
+	}
+	return member
+}
+
 func ApiShortWorkspaceToMap(w *buddy.Workspace) map[string]interface{} {
 	if w == nil {
 		return nil
@@ -1251,6 +1259,10 @@ func ApiGroupMemberToResourceData(domain string, groupId int, m *buddy.Member, d
 		return err
 	}
 	err = d.Set("html_url", m.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("status", m.Status)
 	if err != nil {
 		return err
 	}

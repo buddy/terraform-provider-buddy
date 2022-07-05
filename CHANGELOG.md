@@ -1,3 +1,6 @@
+# Release v1.6.0 (2022-06-29)
+* Adds `status` (`MANAGER`, `MEMBER`) to `buddy_group_member`
+
 # Release v1.5.0 (2022-05-31)
 * Adds `project_team_access_level` to permission
 

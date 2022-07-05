@@ -50,6 +50,7 @@ Read-Only:
 - `html_url` (String)
 - `member_id` (Number)
 - `name` (String)
+- `status` (String)
 - `workspace_owner` (Boolean)
 
 

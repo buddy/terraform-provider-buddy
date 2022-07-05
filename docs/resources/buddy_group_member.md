@@ -35,6 +35,10 @@ resource "buddy_group_member" "john_in_devs" {
 - `group_id` (Number) The group's ID
 - `member_id` (Number) The member's ID
 
+### Optional
+
+- `status` (String) The member's status
+
 ### Read-Only
 
 - `admin` (Boolean) Is the member a workspace administrator

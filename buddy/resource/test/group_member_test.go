@@ -30,7 +30,7 @@ func TestAccGroupMember(t *testing.T) {
 				Config: testAccGroupMemberConfig(domain, groupNameA, groupNameB, memberEmailA, memberEmailB, "a", "a"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupMemberGet("buddy_group_member.bar", &member),
-					testAccGroupMemberAttributes("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusMember),
 				),
 			},
 			// update group
@@ -38,7 +38,7 @@ func TestAccGroupMember(t *testing.T) {
 				Config: testAccGroupMemberConfig(domain, groupNameA, groupNameB, memberEmailA, memberEmailB, "a", "b"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupMemberGet("buddy_group_member.bar", &member),
-					testAccGroupMemberAttributes("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusMember),
 				),
 			},
 			// update member
@@ -46,7 +46,23 @@ func TestAccGroupMember(t *testing.T) {
 				Config: testAccGroupMemberConfig(domain, groupNameA, groupNameB, memberEmailA, memberEmailB, "b", "b"),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupMemberGet("buddy_group_member.bar", &member),
-					testAccGroupMemberAttributes("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusMember),
+				),
+			},
+			// add manager
+			{
+				Config: testAccGroupMemberWithStatusConfig(domain, groupNameA, memberEmailA, buddy.GroupMemberStatusManager),
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupMemberGet("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusManager),
+				),
+			},
+			// change to member
+			{
+				Config: testAccGroupMemberWithStatusConfig(domain, groupNameA, memberEmailA, buddy.GroupMemberStatusMember),
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupMemberGet("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusMember),
 				),
 			},
 			// import group member
@@ -59,7 +75,7 @@ func TestAccGroupMember(t *testing.T) {
 	})
 }
 
-func testAccGroupMemberAttributes(n string, member *buddy.Member) resource.TestCheckFunc {
+func testAccGroupMemberAttributes(n string, member *buddy.Member, status string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -79,6 +95,9 @@ func testAccGroupMemberAttributes(n string, member *buddy.Member) resource.TestC
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("workspace_owner", attrs["workspace_owner"], strconv.FormatBool(member.WorkspaceOwner)); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("status", attrs["status"], status); err != nil {
 			return err
 		}
 		return nil
@@ -110,6 +129,31 @@ func testAccGroupMemberGet(n string, member *buddy.Member) resource.TestCheckFun
 		*member = *m
 		return nil
 	}
+}
+
+func testAccGroupMemberWithStatusConfig(domain string, groupName string, memberEmail string, status string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_group" "g" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "%s"
+}
+
+resource "buddy_member" "m" {
+    domain = "${buddy_workspace.foo.domain}"
+    email = "%s"
+}
+
+resource "buddy_group_member" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    group_id = "${buddy_group.g.group_id}"
+    member_id = "${buddy_member.m.member_id}"
+	status = "%s"
+}
+`, domain, groupName, memberEmail, status)
 }
 
 func testAccGroupMemberConfig(domain string, groupNameA string, groupNameB string, memberEmailA string, memberEmailB string, whichMemberJoin string, whichGroupJoin string) string {

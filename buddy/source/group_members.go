@@ -56,6 +56,10 @@ func GroupMembers() *schema.Resource {
 							Type:     schema.TypeString,
 							Computed: true,
 						},
+						"status": {
+							Type:     schema.TypeString,
+							Computed: true,
+						},
 						"email": {
 							Type:     schema.TypeString,
 							Computed: true,
@@ -97,7 +101,7 @@ func readContextGroupMembers(_ context.Context, d *schema.ResourceData, meta int
 		if nameRegex != nil && !nameRegex.MatchString(m.Name) {
 			continue
 		}
-		result = append(result, util.ApiShortMemberToMap(m))
+		result = append(result, util.ApiShortGroupMemberToMap(m))
 	}
 	d.SetId(util.UniqueString())
 	err = d.Set("members", result)
