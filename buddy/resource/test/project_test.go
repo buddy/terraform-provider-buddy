@@ -33,21 +33,22 @@ func TestAccProject_github(t *testing.T) {
 			{
 				Config: testAccProjectGitHubConfig(domain, displayName, ghToken, ghPoject, false),
 				Check: resource.ComposeTestCheckFunc(
-					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, displayName, false),
+					util.TestSleep(10000),
+					testAccProjectGet("buddy_project.gh", &project),
+					testAccProjectAttributes("buddy_project.gh", &project, displayName, false),
 				),
 			},
 			// update project
 			{
 				Config: testAccProjectGitHubConfig(domain, newDisplayName, ghToken, ghPoject, true),
 				Check: resource.ComposeTestCheckFunc(
-					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, true),
+					testAccProjectGet("buddy_project.gh", &project),
+					testAccProjectAttributes("buddy_project.gh", &project, newDisplayName, true),
 				),
 			},
 			// import project
 			{
-				ResourceName:            "buddy_project.bar",
+				ResourceName:            "buddy_project.gh",
 				ImportState:             true,
 				ImportStateVerify:       true,
 				ImportStateVerifyIgnore: []string{"external_project_id", "integration_id"},
@@ -174,7 +175,7 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		if err := util.CheckFieldEqualAndSet("ssh_repository", attrs["ssh_repository"], project.SshRepository); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("default_branch", attrs["default_branch"], project.DefaultBranch); err != nil {
+		if err := util.CheckFieldSet("default_branch", attrs["default_branch"]); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("created_by.0.html_url", attrs["created_by.0.html_url"], project.CreatedBy.HtmlUrl); err != nil {
@@ -253,7 +254,7 @@ resource "buddy_integration" "gh" {
     token = "%s"
 }
 
-resource "buddy_project" "bar" {
+resource "buddy_project" "gh" {
     domain = "${buddy_workspace.foo.domain}"
     display_name = "%s"
     integration_id = "${buddy_integration.gh.integration_id}"
