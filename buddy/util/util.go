@@ -212,6 +212,10 @@ func InterfaceBoolToPointer(i interface{}) *bool {
 	return BoolToPointer(i.(bool))
 }
 
+func IsBoolPointerSet(i interface{}) bool {
+	return i != nil
+}
+
 func BoolToPointer(p bool) *bool {
 	b := new(bool)
 	*b = p
@@ -1050,6 +1054,10 @@ func ApiProjectToResourceData(domain string, project *buddy.Project, d *schema.R
 			return err
 		}
 		err = d.Set("ssh_repository", project.SshRepository)
+		if err != nil {
+			return err
+		}
+		err = d.Set("update_default_branch_from_external", project.UpdateDefaultBranchFromExternal)
 		if err != nil {
 			return err
 		}
