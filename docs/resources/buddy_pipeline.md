@@ -164,7 +164,7 @@ resource "buddy_pipeline" "conditions" {
 - `event` (Block List) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
 - `execution_message_template` (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
 - `fail_on_prepare_env_warning` (Boolean) Defines either or not run should fail if any warning occurs in prepare environment
-- `fetch_all_refs` (Boolean) Defines either or not fetch all refs from repository
+- `fetch_all_refs` (Boolean) Defines whether or not fetch all refs from repository
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `on` (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`

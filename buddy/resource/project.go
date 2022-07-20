@@ -66,6 +66,11 @@ func Project() *schema.Resource {
 					"integration_id",
 				},
 			},
+			"update_default_branch_from_external": {
+				Description: "Defines whether or not update default branch from external repository (GitHub, GitLab, BitBucket)",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
 			"git_lab_project_id": {
 				Description: "The project's GitLab project ID. Needed when cloning from a GitLab",
 				Type:        schema.TypeString,
@@ -231,6 +236,9 @@ func updateContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 	u := buddy.ProjectUpdateOps{
 		DisplayName: util.InterfaceStringToPointer(d.Get("display_name")),
 	}
+	if d.HasChange("update_default_branch_from_external") {
+		u.UpdateDefaultBranchFromExternal = util.InterfaceBoolToPointer(d.Get("update_default_branch_from_external"))
+	}
 	p, _, err := c.ProjectService.Update(domain, name, &u)
 	if err != nil {
 		return diag.FromErr(err)
@@ -289,6 +297,10 @@ func createContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if customRepoSshKeyId, ok := d.GetOk("custom_repo_ssh_key_id"); ok {
 		opt.CustomRepoSshKeyId = util.InterfaceIntToPointer(customRepoSshKeyId)
+	}
+	updateDefaultBranch := d.Get("update_default_branch_from_external")
+	if util.IsBoolPointerSet(updateDefaultBranch) {
+		opt.UpdateDefaultBranchFromExternal = util.InterfaceBoolToPointer(updateDefaultBranch)
 	}
 	project, _, err := c.ProjectService.Create(domain, &opt)
 	if err != nil {

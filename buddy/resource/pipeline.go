@@ -121,7 +121,7 @@ func Pipeline() *schema.Resource {
 				}, false),
 			},
 			"fetch_all_refs": {
-				Description: "Defines either or not fetch all refs from repository",
+				Description: "Defines whether or not fetch all refs from repository",
 				Type:        schema.TypeBool,
 				Optional:    true,
 			},

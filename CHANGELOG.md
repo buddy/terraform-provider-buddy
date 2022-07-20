@@ -1,3 +1,6 @@
+# Release v1.7.0 (2022-07-20)
+* Adds `update_default_branch_from_external` to `buddy_project`
+
 # Release v1.6.0 (2022-06-29)
 * Adds `status` (`MANAGER`, `MEMBER`) to `buddy_group_member`
 
