@@ -48,7 +48,7 @@ func GroupMember() *schema.Resource {
 				ForceNew:    true,
 			},
 			"status": {
-				Description: "The member's status",
+				Description: "The member's status. Allowed: `MEMBER`, `MANAGER`",
 				Type:        schema.TypeString,
 				ValidateFunc: validation.StringInSlice([]string{
 					buddy.GroupMemberStatusMember,

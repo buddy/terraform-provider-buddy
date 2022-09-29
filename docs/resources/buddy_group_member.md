@@ -44,7 +44,7 @@ resource "buddy_group_member" "sylvia_manager_in_devs" {
 
 ### Optional
 
-- `status` (String) The member's status
+- `status` (String) The member's status. Allowed: `MEMBER`, `MANAGER`
 
 ### Read-Only
 
