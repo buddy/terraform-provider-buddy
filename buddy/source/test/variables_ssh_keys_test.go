@@ -11,6 +11,14 @@ import (
 )
 
 func TestAccSourceVariablesSshKeys(t *testing.T) {
+	err, _, privateKey := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err, _, privateKey2 := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -19,7 +27,7 @@ func TestAccSourceVariablesSshKeys(t *testing.T) {
 		ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceVariablesSshKeysConfig(),
+				Config: testAccSourceVariablesSshKeysConfig(privateKey, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 3),
 					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.key", 1),
@@ -87,7 +95,7 @@ func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestC
 	}
 }
 
-func testAccSourceVariablesSshKeysConfig() string {
+func testAccSourceVariablesSshKeysConfig(privateKey string, privateKey2 string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -156,5 +164,5 @@ data "buddy_variables_ssh_keys" "project" {
     key_regex = "^te" 
 }
 
-`, util.UniqueString(), util.SshKey, util.SshKey2, util.SshKey)
+`, util.UniqueString(), privateKey, privateKey2, privateKey)
 }

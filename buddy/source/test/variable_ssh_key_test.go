@@ -19,6 +19,10 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
+	err, _, privateKey := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -27,7 +31,7 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 		ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceVariableSshKeyConfig(domain, key, desc, util.SshKey, filePlace, displayName, filePath, fileChmod),
+				Config: testAccSourceVariableSshKeyConfig(domain, key, desc, privateKey, filePlace, displayName, filePath, fileChmod),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.id", key, desc, filePlace, displayName, filePath, fileChmod),
 					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.key", key, desc, filePlace, displayName, filePath, fileChmod),
