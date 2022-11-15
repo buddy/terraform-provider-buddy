@@ -114,6 +114,8 @@ func TestAccIntegration_shopify(t *testing.T) {
 	newName := util.RandString(10)
 	projectNameA := util.RandString(10)
 	projectNameB := util.RandString(10)
+	scope := buddy.IntegrationScopeProject
+	newScope := buddy.IntegrationScopePrivateInProject
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -123,18 +125,18 @@ func TestAccIntegration_shopify(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create integration
 			{
-				Config: testAccIntegrationShopify(domain, name, projectNameA, projectNameB, projectNameA),
+				Config: testAccIntegrationShopify(domain, name, projectNameA, projectNameB, scope, projectNameA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, scope, true, false),
 				),
 			},
 			// update integration
 			{
-				Config: testAccIntegrationShopify(domain, newName, projectNameA, projectNameB, projectNameB),
+				Config: testAccIntegrationShopify(domain, newName, projectNameA, projectNameB, newScope, projectNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, newScope, true, false),
 				),
 			},
 			// import integration
@@ -617,7 +619,7 @@ resource "buddy_integration" "bar" {
 `, domain, groupNameA, groupNameA, groupNameB, groupNameB, name, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeGroup, scopeGroupName)
 }
 
-func testAccIntegrationShopify(domain string, name string, projectNameA string, projectNameB string, scopeProjectName string) string {
+func testAccIntegrationShopify(domain string, name string, projectNameA string, projectNameB string, scope string, scopeProjectName string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -642,7 +644,7 @@ resource "buddy_integration" "bar" {
     shop = "ABC"
     token = "ABC"
 }
-`, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject, scopeProjectName)
+`, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, scope, scopeProjectName)
 }
 
 func testAccIntegrationCheckDestroy(s *terraform.State) error {

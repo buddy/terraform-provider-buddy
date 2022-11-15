@@ -31,19 +31,19 @@ func TestAccProject_github(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create project
 			{
-				Config: testAccProjectGitHubConfig(domain, displayName, ghToken, ghPoject, false),
+				Config: testAccProjectGitHubConfig(domain, displayName, ghToken, ghPoject, false, true),
 				Check: resource.ComposeTestCheckFunc(
 					util.TestSleep(10000),
 					testAccProjectGet("buddy_project.gh", &project),
-					testAccProjectAttributes("buddy_project.gh", &project, displayName, false),
+					testAccProjectAttributes("buddy_project.gh", &project, displayName, false, buddy.ProjectAccessPrivate, true, false, ""),
 				),
 			},
 			// update project
 			{
-				Config: testAccProjectGitHubConfig(domain, newDisplayName, ghToken, ghPoject, true),
+				Config: testAccProjectGitHubConfig(domain, newDisplayName, ghToken, ghPoject, true, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.gh", &project),
-					testAccProjectAttributes("buddy_project.gh", &project, newDisplayName, true),
+					testAccProjectAttributes("buddy_project.gh", &project, newDisplayName, true, buddy.ProjectAccessPrivate, false, false, ""),
 				),
 			},
 			// import project
@@ -62,6 +62,8 @@ func TestAccProject_buddy(t *testing.T) {
 	domain := util.UniqueString()
 	displayName := util.RandString(10)
 	newDisplayName := util.RandString(10)
+	access := buddy.ProjectAccessPublic
+	newAccess := buddy.ProjectAccessPrivate
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -71,18 +73,18 @@ func TestAccProject_buddy(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create project
 			{
-				Config: testAccProjectBuddyConfig(domain, displayName),
+				Config: testAccProjectBuddyConfig(domain, displayName, access),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, displayName, false),
+					testAccProjectAttributes("buddy_project.bar", &project, displayName, false, access, false, false, ""),
 				),
 			},
 			// update project
 			{
-				Config: testAccProjectBuddyConfig(domain, newDisplayName),
+				Config: testAccProjectBuddyConfig(domain, newDisplayName, newAccess),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, false),
+					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, false, newAccess, false, false, ""),
 				),
 			},
 			// import project
@@ -101,6 +103,7 @@ func TestAccProject_custom(t *testing.T) {
 	domain := util.UniqueString()
 	displayName := util.RandString(10)
 	newDisplayName := util.RandString(10)
+	fetchSubmodulesEnv := "id_workspace"
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -110,19 +113,19 @@ func TestAccProject_custom(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create project
 			{
-				Config: testAccProjectCustomConfig(domain, repoUrl, displayName),
+				Config: testAccProjectCustomConfig(domain, repoUrl, displayName, true, fetchSubmodulesEnv),
 				Check: resource.ComposeTestCheckFunc(
 					util.TestSleep(10000),
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, displayName, false),
+					testAccProjectAttributes("buddy_project.bar", &project, displayName, false, buddy.ProjectAccessPrivate, false, true, fetchSubmodulesEnv),
 				),
 			},
 			// update project
 			{
-				Config: testAccProjectCustomConfig(domain, repoUrl, newDisplayName),
+				Config: testAccProjectCustomConfig(domain, repoUrl, newDisplayName, false, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, false),
+					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, false, buddy.ProjectAccessPrivate, false, false, ""),
 				),
 			},
 			// import project
@@ -136,7 +139,7 @@ func TestAccProject_custom(t *testing.T) {
 	})
 }
 
-func testAccProjectAttributes(n string, project *buddy.Project, displayName string, updateDefaultBranch bool) resource.TestCheckFunc {
+func testAccProjectAttributes(n string, project *buddy.Project, displayName string, updateDefaultBranch bool, access string, allowPullRequests bool, fetchSubmodules bool, fetchSubmodulesEnv string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -145,6 +148,8 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		attrs := rs.Primary.Attributes
 		attrsCreatedByMemberId, _ := strconv.Atoi(attrs["created_by.0.member_id"])
 		attrsUpdateDefaultBranch, _ := strconv.ParseBool(attrs["update_default_branch_from_external"])
+		attrsAllowPullRequests, _ := strconv.ParseBool(attrs["allow_pull_requests"])
+		attrsFetchSubmodules, _ := strconv.ParseBool(attrs["fetch_submodules"])
 		if err := util.CheckFieldEqualAndSet("DisplayName", project.DisplayName, displayName); err != nil {
 			return err
 		}
@@ -155,6 +160,32 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("UpdateDefaultBranchFromExternal", project.UpdateDefaultBranchFromExternal, updateDefaultBranch); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("allow_pull_requests", attrsAllowPullRequests, allowPullRequests); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("AllowPullRequests", project.AllowPullRequests, allowPullRequests); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("fetch_submodules", attrsFetchSubmodules, fetchSubmodules); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("FetchSubmodules", project.FetchSubmodules, fetchSubmodules); err != nil {
+			return err
+		}
+		if fetchSubmodules {
+			if err := util.CheckFieldEqualAndSet("fetch_submodules_env_key", attrs["fetch_submodules_env_key"], fetchSubmodulesEnv); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("FetchSubmodulesEnvKey", project.FetchSubmodulesEnvKey, fetchSubmodulesEnv); err != nil {
+				return err
+			}
+		}
+		if err := util.CheckFieldEqualAndSet("access", attrs["access"], access); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Access", project.Access, access); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], project.Name); err != nil {
@@ -213,7 +244,7 @@ func testAccProjectGet(n string, project *buddy.Project) resource.TestCheckFunc 
 	}
 }
 
-func testAccProjectCustomConfig(domain string, repoUrl string, displayName string) string {
+func testAccProjectCustomConfig(domain string, repoUrl string, displayName string, fetchSubmodules bool, fetchSubmodulesEnv string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -223,11 +254,13 @@ resource "buddy_project" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     display_name = "%s"
 	custom_repo_url = "%s"
+	fetch_submodules = "%t"
+    fetch_submodules_env_key = "%s"
 }
-`, domain, displayName, repoUrl)
+`, domain, displayName, repoUrl, fetchSubmodules, fetchSubmodulesEnv)
 }
 
-func testAccProjectBuddyConfig(domain string, name string) string {
+func testAccProjectBuddyConfig(domain string, name string, access string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -236,11 +269,12 @@ resource "buddy_workspace" "foo" {
 resource "buddy_project" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     display_name = "%s" 
+	access = "%s"
 }
-`, domain, name)
+`, domain, name, access)
 }
 
-func testAccProjectGitHubConfig(domain string, name string, ghToken string, ghProject string, updateBranch bool) string {
+func testAccProjectGitHubConfig(domain string, name string, ghToken string, ghProject string, updateBranch bool, allowPullRequests bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -260,8 +294,9 @@ resource "buddy_project" "gh" {
     integration_id = "${buddy_integration.gh.integration_id}"
     external_project_id = "%s"
     update_default_branch_from_external = "%t"
+	allow_pull_requests = "%t"
 }
-`, domain, ghToken, name, ghProject, updateBranch)
+`, domain, ghToken, name, ghProject, updateBranch, allowPullRequests)
 }
 
 func testAccProjectCheckDestroy(s *terraform.State) error {

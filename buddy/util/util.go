@@ -1020,6 +1020,22 @@ func ApiProjectToResourceData(domain string, project *buddy.Project, d *schema.R
 		if err != nil {
 			return err
 		}
+		err = d.Set("allow_pull_requests", project.AllowPullRequests)
+		if err != nil {
+			return err
+		}
+		err = d.Set("access", project.Access)
+		if err != nil {
+			return err
+		}
+		err = d.Set("fetch_submodules", project.FetchSubmodules)
+		if err != nil {
+			return err
+		}
+		err = d.Set("fetch_submodules_env_key", project.FetchSubmodulesEnvKey)
+		if err != nil {
+			return err
+		}
 		return d.Set("default_branch", project.DefaultBranch)
 	}
 	return nil

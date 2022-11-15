@@ -79,6 +79,7 @@ func Integration() *schema.Resource {
 					"`ADMIN` - only workspace administrators can use the integration\n\n" +
 					"`GROUP` - only group members can use the integration\n\n" +
 					"`PROJECT` - only project members can use the integration\n\n" +
+					"`PRIVATE_IN_PROJECT` - only creator of the integration in specified project can use it\n\n" +
 					"`ADMIN_IN_PROJECT` - only workspace administrators in specified project can use the integration\n\n" +
 					"`GROUP_IN_PROJECT` - only group members in specified project can use the integration",
 				Type:     schema.TypeString,
@@ -89,12 +90,13 @@ func Integration() *schema.Resource {
 					buddy.IntegrationScopeAdmin,
 					buddy.IntegrationScopeGroup,
 					buddy.IntegrationScopeProject,
+					buddy.IntegrationScopePrivateInProject,
 					buddy.IntegrationScopeAdminInProject,
 					buddy.IntegrationScopeGroupInProject,
 				}, false),
 			},
 			"project_name": {
-				Description: "The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`",
+				Description: "The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`, `PRIVATE_IN_PROJECT`",
 				Type:        schema.TypeString,
 				Optional:    true,
 			},

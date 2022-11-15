@@ -70,6 +70,37 @@ func Project() *schema.Resource {
 				Description: "Defines whether or not update default branch from external repository (GitHub, GitLab, BitBucket)",
 				Type:        schema.TypeBool,
 				Optional:    true,
+				Computed:    true,
+			},
+			"fetch_submodules": {
+				Description: "Defines wheter or not fetch submodules in repository",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
+				RequiredWith: []string{
+					"fetch_submodules_env_key",
+				},
+			},
+			"fetch_submodules_env_key": {
+				Description: "The project's environmental key name for fetching submodules",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+				RequiredWith: []string{
+					"fetch_submodules",
+				},
+			},
+			"access": {
+				Description: "The project's access. Possible values: `PRIVATE`, `PUBLIC`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Computed:    true,
+			},
+			"allow_pull_requests": {
+				Description: "Defines whether or not pull requests are enabled (GitHub)",
+				Type:        schema.TypeBool,
+				Optional:    true,
+				Computed:    true,
 			},
 			"git_lab_project_id": {
 				Description: "The project's GitLab project ID. Needed when cloning from a GitLab",
@@ -239,6 +270,16 @@ func updateContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 	if d.HasChange("update_default_branch_from_external") {
 		u.UpdateDefaultBranchFromExternal = util.InterfaceBoolToPointer(d.Get("update_default_branch_from_external"))
 	}
+	if d.HasChange("allow_pull_requests") {
+		u.AllowPullRequests = util.InterfaceBoolToPointer(d.Get("allow_pull_requests"))
+	}
+	if d.HasChange("access") {
+		u.Access = util.InterfaceStringToPointer(d.Get("access"))
+	}
+	if d.HasChanges("fetch_submodules", "fetch_submodules_env_key") {
+		u.FetchSubmodules = util.InterfaceBoolToPointer(d.Get("fetch_submodules"))
+		u.FetchSubmodulesEnvKey = util.InterfaceStringToPointer(d.Get("fetch_submodules_env_key"))
+	}
 	p, _, err := c.ProjectService.Update(domain, name, &u)
 	if err != nil {
 		return diag.FromErr(err)
@@ -298,9 +339,23 @@ func createContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 	if customRepoSshKeyId, ok := d.GetOk("custom_repo_ssh_key_id"); ok {
 		opt.CustomRepoSshKeyId = util.InterfaceIntToPointer(customRepoSshKeyId)
 	}
+	if access, ok := d.GetOk("access"); ok {
+		opt.Access = util.InterfaceStringToPointer(access)
+	}
+	if fetchSubmodulesEnv, ok := d.GetOk("fetch_submodules_env_key"); ok {
+		opt.FetchSubmodulesEnvKey = util.InterfaceStringToPointer(fetchSubmodulesEnv)
+	}
 	updateDefaultBranch := d.Get("update_default_branch_from_external")
 	if util.IsBoolPointerSet(updateDefaultBranch) {
 		opt.UpdateDefaultBranchFromExternal = util.InterfaceBoolToPointer(updateDefaultBranch)
+	}
+	allowPullRequests := d.Get("allow_pull_requests")
+	if util.IsBoolPointerSet(allowPullRequests) {
+		opt.AllowPullRequests = util.InterfaceBoolToPointer(allowPullRequests)
+	}
+	fetchSubmodules := d.Get("fetch_submodules")
+	if util.IsBoolPointerSet(fetchSubmodules) {
+		opt.FetchSubmodules = util.InterfaceBoolToPointer(fetchSubmodules)
 	}
 	project, _, err := c.ProjectService.Create(domain, &opt)
 	if err != nil {
