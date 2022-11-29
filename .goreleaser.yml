@@ -40,7 +40,6 @@ signs:
       - "${signature}"
       - "--detach-sign"
       - "${artifact}"
-    stdin: '{{ .Env.PASSPHRASE }}'
 release:
   github:
     owner: buddy
