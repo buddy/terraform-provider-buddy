@@ -246,6 +246,8 @@ resource "buddy_integration" "google_service_account" {
 
 `PROJECT` - only project members can use the integration
 
+`PRIVATE_IN_PROJECT` - only creator of the integration in specified project can use it
+
 `ADMIN_IN_PROJECT` - only workspace administrators in specified project can use the integration
 
 `GROUP_IN_PROJECT` - only group members in specified project can use the integration
@@ -259,7 +261,7 @@ resource "buddy_integration" "google_service_account" {
 - `email` (String) The integration's email. Provide for: `CLOUDFLARE`
 - `group_id` (Number) The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`
 - `password` (String, Sensitive) The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`
-- `project_name` (String) The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`
+- `project_name` (String) The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`, `PRIVATE_IN_PROJECT`
 - `role_assumption` (Block List) The integration's AWS role to assume. Provide for: `AMAZON` (see [below for nested schema](#nestedblock--role_assumption))
 - `secret_key` (String, Sensitive) The integration's secret key. Provide for: `DO_SPACES`, `AMAZON`
 - `shop` (String) The integration's shop. Provide for: `SHOPIFY`

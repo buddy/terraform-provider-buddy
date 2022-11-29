@@ -1,3 +1,7 @@
+# Release v1.8.0 (2022-11-29)
+* Adds `fetch_submodules, fetch_submodules_env_key, access, allow_pull_requests` to `buddy_project`
+* Adds new scope `PRIVATE_IN_PROJECT` to `buddy_integration`
+
 # Release v1.7.0 (2022-07-20)
 * Adds `update_default_branch_from_external` to `buddy_project`
 

@@ -4,10 +4,11 @@ go 1.17
 
 require (
 	github.com/bflad/tfproviderlint v0.28.1
-	github.com/buddy/api-go-sdk v1.4.0
+	github.com/buddy/api-go-sdk v1.5.0
 	github.com/golangci/golangci-lint v1.46.2
 	github.com/hashicorp/terraform-plugin-docs v0.8.1
 	github.com/hashicorp/terraform-plugin-sdk/v2 v2.16.0
+	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4
 )
 
 require (
@@ -194,7 +195,6 @@ require (
 	github.com/yeya24/promlinter v0.2.0 // indirect
 	github.com/zclconf/go-cty v1.10.0 // indirect
 	gitlab.com/bosi/decorder v0.2.1 // indirect
-	golang.org/x/crypto v0.0.0-20220411220226-7b82a4e95df4 // indirect
 	golang.org/x/exp/typeparams v0.0.0-20220218215828-6cf2b201936e // indirect
 	golang.org/x/mod v0.6.0-dev.0.20220106191415-9b9b3d81d5e3 // indirect
 	golang.org/x/net v0.0.0-20220412020605-290c469a71a5 // indirect
