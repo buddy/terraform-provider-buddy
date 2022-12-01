@@ -65,11 +65,6 @@ func VariableSshKey() *schema.Resource {
 				Computed:    true,
 				Sensitive:   true,
 			},
-			"display_name": {
-				Description: "The variable's display name",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
 			"file_place": {
 				Description: "Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)",
 				Type:        schema.TypeString,

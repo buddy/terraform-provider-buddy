@@ -47,11 +47,6 @@ func VariableSshKey() *schema.Resource {
 				Required:    true,
 				Sensitive:   true,
 			},
-			"display_name": {
-				Description: "The variable's display name",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
 			"file_place": {
 				Description: "Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)",
 				Type:        schema.TypeString,
@@ -166,7 +161,6 @@ func updateContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 		Type:      util.InterfaceStringToPointer(buddy.VariableTypeSshKey),
 		Value:     util.InterfaceStringToPointer(d.Get("value")),
 		FilePlace: util.InterfaceStringToPointer(d.Get("file_place")),
-		FileName:  util.InterfaceStringToPointer(d.Get("display_name")),
 		FilePath:  util.InterfaceStringToPointer(d.Get("file_path")),
 		FileChmod: util.InterfaceStringToPointer(d.Get("file_chmod")),
 		Encrypted: util.InterfaceBoolToPointer(true),
@@ -221,7 +215,6 @@ func createContextVariableSshKey(ctx context.Context, d *schema.ResourceData, me
 		Encrypted: util.InterfaceBoolToPointer(true),
 		Settable:  util.InterfaceBoolToPointer(false),
 		FilePlace: util.InterfaceStringToPointer(d.Get("file_place")),
-		FileName:  util.InterfaceStringToPointer(d.Get("display_name")),
 		FilePath:  util.InterfaceStringToPointer(d.Get("file_path")),
 		FileChmod: util.InterfaceStringToPointer(d.Get("file_chmod")),
 	}

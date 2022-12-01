@@ -62,7 +62,6 @@ Read-Only:
 
 - `checksum` (String)
 - `description` (String)
-- `display_name` (String)
 - `encrypted` (Boolean)
 - `file_chmod` (String)
 - `file_path` (String)

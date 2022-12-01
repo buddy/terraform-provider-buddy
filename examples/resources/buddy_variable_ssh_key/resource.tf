@@ -6,7 +6,6 @@ resource "buddy_variable_ssh_key" "mykey" {
 ...
 -----END PRIVATE KEY-----
 EOT
-  display_name  = "id_mykey"
   file_place = "CONTAINER"
   file_path  = "~/.ssh/id_mykey"
   file_chmod = "600"

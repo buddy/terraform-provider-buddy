@@ -69,9 +69,6 @@ func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestC
 			if err := util.CheckBoolFieldEqual(index+".encrypted", attrsEncrypted, true); err != nil {
 				return err
 			}
-			if err := util.CheckFieldSet(index+".display_name", attrs[index+".display_name"]); err != nil {
-				return err
-			}
 			if err := util.CheckFieldSet(index+".file_place", attrs[index+".file_place"]); err != nil {
 				return err
 			}
@@ -111,7 +108,6 @@ resource "buddy_variable_ssh_key" "a" {
     key = "abcdef"
     description = "abcdef"
     file_place = "CONTAINER"
-    display_name = "abcdef"
     file_path = "~/abcdef"
     file_chmod = "600"
     value = <<EOT
@@ -124,7 +120,6 @@ resource "buddy_variable_ssh_key" "b" {
     key = "test"
     description = "test"
     file_place = "CONTAINER"
-    display_name = "test"
     file_path = "~/test"
     file_chmod = "600"
     value = <<EOT
@@ -138,7 +133,6 @@ resource "buddy_variable_ssh_key" "c" {
     key = "test"
     description = "test"
     file_place = "CONTAINER"
-    display_name = "test"
     file_path = "~/test"
     file_chmod = "600"
     value = <<EOT
