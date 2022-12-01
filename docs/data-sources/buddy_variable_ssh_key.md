@@ -49,7 +49,6 @@ data "buddy_variable" "by_key_in_project" {
 
 - `checksum` (String) The variable's checksum
 - `description` (String) The variable's description
-- `display_name` (String) The variable's display name
 - `encrypted` (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key
 - `file_chmod` (String) The variable's file permission in an action's container
 - `file_path` (String) The variable's path in the action's container

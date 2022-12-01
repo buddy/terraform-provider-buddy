@@ -80,11 +80,6 @@ func VariablesSshKeys() *schema.Resource {
 							Type:        schema.TypeInt,
 							Computed:    true,
 						},
-						"display_name": {
-							Description: "The variable's display name",
-							Type:        schema.TypeString,
-							Computed:    true,
-						},
 						"file_place": {
 							Type:     schema.TypeString,
 							Computed: true,

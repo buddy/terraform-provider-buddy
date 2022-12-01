@@ -15,7 +15,6 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 	domain := util.UniqueString()
 	key := util.RandString(10)
 	desc := util.RandString(10)
-	displayName := util.RandString(10)
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
@@ -31,17 +30,17 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 		ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceVariableSshKeyConfig(domain, key, desc, privateKey, filePlace, displayName, filePath, fileChmod),
+				Config: testAccSourceVariableSshKeyConfig(domain, key, desc, privateKey, filePlace, filePath, fileChmod),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.id", key, desc, filePlace, displayName, filePath, fileChmod),
-					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.key", key, desc, filePlace, displayName, filePath, fileChmod),
+					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.id", key, desc, filePlace, filePath, fileChmod),
+					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.key", key, desc, filePlace, filePath, fileChmod),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, filePlace string, displayName string, filePath string, fileChmod string) resource.TestCheckFunc {
+func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, filePlace string, filePath string, fileChmod string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -55,9 +54,6 @@ func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, fi
 			return err
 		}
 		if err := util.CheckFieldSet("value", attrs["value"]); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("display_name", attrs["display_name"], displayName); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("file_place", attrs["file_place"], filePlace); err != nil {
@@ -94,7 +90,7 @@ func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, fi
 	}
 }
 
-func testAccSourceVariableSshKeyConfig(domain string, key string, desc string, val string, filePlace string, displayName string, filePath string, fileChmod string) string {
+func testAccSourceVariableSshKeyConfig(domain string, key string, desc string, val string, filePlace string, filePath string, fileChmod string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -104,7 +100,6 @@ resource "buddy_variable_ssh_key" "var" {
     domain = "${buddy_workspace.foo.domain}"
     key = "%s"
     file_place = "%s"
-    display_name = "%s"
     file_path = "%s"
     file_chmod = "%s"
 	description = "%s"
@@ -122,5 +117,5 @@ data "buddy_variable_ssh_key" "key" {
     domain = "${buddy_workspace.foo.domain}"
     key = "${buddy_variable_ssh_key.var.key}"
 }
-`, domain, key, filePlace, displayName, filePath, fileChmod, desc, val)
+`, domain, key, filePlace, filePath, fileChmod, desc, val)
 }

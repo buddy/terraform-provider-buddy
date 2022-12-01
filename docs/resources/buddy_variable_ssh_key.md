@@ -27,7 +27,6 @@ resource "buddy_variable_ssh_key" "mykey" {
 ...
 -----END PRIVATE KEY-----
 EOT
-  display_name  = "id_mykey"
   file_place = "CONTAINER"
   file_path  = "~/.ssh/id_mykey"
   file_chmod = "600"
@@ -39,7 +38,6 @@ EOT
 
 ### Required
 
-- `display_name` (String) The variable's display name
 - `domain` (String) The workspace's URL handle
 - `file_chmod` (String) The variable's file permission in an action's container
 - `file_path` (String) The variable's path in the action's container
