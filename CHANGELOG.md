@@ -1,4 +1,4 @@
-# Release v1.8.0 (2022-12-13)
+# Release v1.9.0 (2022-12-13)
 * Remove `display_name` from `buddy_variable_ssh_key`
 
 # Release v1.8.0 (2022-11-29)
