@@ -84,6 +84,7 @@ resource "buddy_project" "custom_ssh" {
 - `git_lab_project_id` (String) The project's GitLab project ID. Needed when cloning from a GitLab
 - `integration_id` (String) The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket
 - `update_default_branch_from_external` (Boolean) Defines whether or not update default branch from external repository (GitHub, GitLab, BitBucket)
+- `without_repository` (Boolean) Defines wheter or not create GIT repository
 
 ### Read-Only
 

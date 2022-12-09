@@ -1,5 +1,6 @@
 # Release v1.9.0 (2022-12-13)
 * Remove `display_name` from `buddy_variable_ssh_key`
+* Adds `without_repository` to `buddy_project`
 
 # Release v1.8.0 (2022-11-29)
 * Adds `fetch_submodules, fetch_submodules_env_key, access, allow_pull_requests` to `buddy_project`
