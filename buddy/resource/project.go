@@ -38,6 +38,11 @@ func Project() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"without_repository": {
+				Description: "Defines wheter or not create GIT repository",
+				Type:        schema.TypeBool,
+				Optional:    true,
+			},
 			"integration_id": {
 				Description: "The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket",
 				Type:        schema.TypeString,
@@ -344,6 +349,9 @@ func createContextProject(ctx context.Context, d *schema.ResourceData, meta inte
 	}
 	if fetchSubmodulesEnv, ok := d.GetOk("fetch_submodules_env_key"); ok {
 		opt.FetchSubmodulesEnvKey = util.InterfaceStringToPointer(fetchSubmodulesEnv)
+	}
+	if withoutRepository, ok := d.GetOk("without_repository"); ok {
+		opt.WithoutRepository = util.InterfaceBoolToPointer(withoutRepository)
 	}
 	updateDefaultBranch := d.Get("update_default_branch_from_external")
 	if util.IsBoolPointerSet(updateDefaultBranch) {

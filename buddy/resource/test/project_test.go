@@ -57,6 +57,36 @@ func TestAccProject_github(t *testing.T) {
 	})
 }
 
+func TestAccProject_withoutRepository(t *testing.T) {
+	var project buddy.Project
+	domain := util.UniqueString()
+	displayName := util.RandString(10)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:      testAccProjectCheckDestroy,
+		Steps: []resource.TestStep{
+			// create project
+			{
+				Config: testAccProjectWithoutRepositoryConfig(domain, displayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectGet("buddy_project.bar", &project),
+					testAccProjectAttributes("buddy_project.bar", &project, displayName, false, buddy.ProjectAccessPrivate, false, false, ""),
+				),
+			},
+			// import project
+			{
+				ResourceName:            "buddy_project.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"without_repository"},
+			},
+		},
+	})
+}
+
 func TestAccProject_buddy(t *testing.T) {
 	var project buddy.Project
 	domain := util.UniqueString()
@@ -272,6 +302,20 @@ resource "buddy_project" "bar" {
 	access = "%s"
 }
 `, domain, name, access)
+}
+
+func testAccProjectWithoutRepositoryConfig(domain string, name string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s" 
+	without_repository = true
+}
+`, domain, name)
 }
 
 func testAccProjectGitHubConfig(domain string, name string, ghToken string, ghProject string, updateBranch bool, allowPullRequests bool) string {
