@@ -5,6 +5,13 @@ resource "buddy_pipeline" "click" {
   on                  = "CLICK"
   refs                = ["main"]
   always_from_scratch = true
+  permissions {
+    others = "DENIED"
+    user {
+      id = 1
+      access_level = "READ_WRITE"
+    }
+  }
 }
 
 resource "buddy_pipeline" "event_push" {

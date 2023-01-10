@@ -23,6 +23,13 @@ resource "buddy_pipeline" "click" {
   on                  = "CLICK"
   refs                = ["main"]
   always_from_scratch = true
+  permissions {
+    others = "DENIED"
+    user {
+      id = 1
+      access_level = "READ_WRITE"
+    }
+  }
 }
 
 resource "buddy_pipeline" "event_push" {
@@ -169,6 +176,7 @@ resource "buddy_pipeline" "conditions" {
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `on` (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
 - `paused` (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
+- `permissions` (Block List, Max: 1) The pipeline's permissions (see [below for nested schema](#nestedblock--permissions))
 - `priority` (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
 - `refs` (Set of String) The pipeline's list of refs. Set it if `on: CLICK`
 - `remote_branch` (String) The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`
@@ -199,6 +207,40 @@ Required:
 
 - `refs` (Set of String)
 - `type` (String)
+
+
+<a id="nestedblock--permissions"></a>
+### Nested Schema for `permissions`
+
+Optional:
+
+- `group` (Block List) (see [below for nested schema](#nestedblock--permissions--group))
+- `others` (String)
+- `user` (Block List) (see [below for nested schema](#nestedblock--permissions--user))
+
+<a id="nestedblock--permissions--group"></a>
+### Nested Schema for `permissions.group`
+
+Required:
+
+- `access_level` (String)
+
+Read-Only:
+
+- `id` (Number) The ID of this resource.
+
+
+<a id="nestedblock--permissions--user"></a>
+### Nested Schema for `permissions.user`
+
+Required:
+
+- `access_level` (String)
+
+Read-Only:
+
+- `id` (Number) The ID of this resource.
+
 
 
 <a id="nestedblock--remote_parameter"></a>

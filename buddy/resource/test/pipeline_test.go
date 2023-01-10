@@ -39,6 +39,9 @@ type testAccPipelineExpectedAttributes struct {
 	Ref                       string
 	Event                     *buddy.PipelineEvent
 	TriggerConditions         []*buddy.PipelineTriggerCondition
+	Permissions               *buddy.PipelinePermissions
+	PermissionUser            *buddy.Member
+	PermissionGroup           *buddy.Group
 }
 
 type testAccPipelineRemoteExpectedAttributes struct {
@@ -50,6 +53,216 @@ type testAccPipelineRemoteExpectedAttributes struct {
 	RemoteParam       string
 	Creator           *buddy.Profile
 	Project           *buddy.Project
+}
+
+func TestAccPipeline_permissions(t *testing.T) {
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
+	var member buddy.Member
+	var group buddy.Group
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	ref := util.RandString(10)
+	email := util.RandEmail()
+	groupName := util.RandString(10)
+	othersPerm1 := buddy.PipelinePermissionDenied
+	userPerm1 := buddy.PipelinePermissionRunOnly
+	othersPerm2 := buddy.PipelinePermissionRunOnly
+	userPerm2 := buddy.PipelinePermissionDenied
+	groupPerm1 := buddy.PipelinePermissionReadWrite
+	othersPerm3 := buddy.PipelinePermissionReadWrite
+	groupPerm2 := buddy.PipelinePermissionDefault
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:      testAccPipelineCheckDestroy,
+		Steps: []resource.TestStep{
+			// create pipeline
+			{
+				Config: testAccPipelinePermissionsEmpty(domain, projectName, name, ref),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                      name,
+						On:                        buddy.PipelineOnClick,
+						AlwaysFromScratch:         false,
+						AutoClearCache:            false,
+						NoSkipToMostRecent:        false,
+						DoNotCreateCommitStatus:   false,
+						IgnoreFailOnProjectStatus: false,
+						FetchAllRefs:              false,
+						FailOnPrepareEnvWarning:   false,
+						Priority:                  buddy.PipelinePriorityNormal,
+						TargetSiteUrl:             "",
+						ExecutionMessageTemplate:  "",
+						Project:                   &project,
+						Creator:                   &profile,
+						Ref:                       ref,
+						Permissions: &buddy.PipelinePermissions{
+							Others: buddy.PipelinePermissionDefault,
+						},
+					}),
+				),
+			},
+			// update pipeline permission to user
+			{
+				Config: testAccPipelinePermissionsUser(domain, projectName, name, ref, email, othersPerm1, userPerm1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccMemberGet("buddy_member.a", &member),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                      name,
+						On:                        buddy.PipelineOnClick,
+						AlwaysFromScratch:         false,
+						AutoClearCache:            false,
+						NoSkipToMostRecent:        false,
+						DoNotCreateCommitStatus:   false,
+						IgnoreFailOnProjectStatus: false,
+						FetchAllRefs:              false,
+						FailOnPrepareEnvWarning:   false,
+						Priority:                  buddy.PipelinePriorityNormal,
+						TargetSiteUrl:             "",
+						ExecutionMessageTemplate:  "",
+						Project:                   &project,
+						Creator:                   &profile,
+						Ref:                       ref,
+						Permissions: &buddy.PipelinePermissions{
+							Others: othersPerm1,
+							Users: []*buddy.PipelineResourcePermission{
+								{
+									AccessLevel: userPerm1,
+								},
+							},
+						},
+						PermissionUser: &member,
+					}),
+				),
+			},
+			// update pipeline permission to group & user
+			{
+				Config: testAccPipelinePermissionsUserGroup(domain, projectName, name, ref, email, groupName, othersPerm2, userPerm2, groupPerm1),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccMemberGet("buddy_member.a", &member),
+					testAccGroupGet("buddy_group.g", &group),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                      name,
+						On:                        buddy.PipelineOnClick,
+						AlwaysFromScratch:         false,
+						AutoClearCache:            false,
+						NoSkipToMostRecent:        false,
+						DoNotCreateCommitStatus:   false,
+						IgnoreFailOnProjectStatus: false,
+						FetchAllRefs:              false,
+						FailOnPrepareEnvWarning:   false,
+						Priority:                  buddy.PipelinePriorityNormal,
+						TargetSiteUrl:             "",
+						ExecutionMessageTemplate:  "",
+						Project:                   &project,
+						Creator:                   &profile,
+						Ref:                       ref,
+						Permissions: &buddy.PipelinePermissions{
+							Others: othersPerm2,
+							Users: []*buddy.PipelineResourcePermission{
+								{
+									AccessLevel: userPerm2,
+								},
+							},
+							Groups: []*buddy.PipelineResourcePermission{
+								{
+									AccessLevel: groupPerm1,
+								},
+							},
+						},
+						PermissionUser:  &member,
+						PermissionGroup: &group,
+					}),
+				),
+			},
+			// update pipeline permission to group
+			{
+				Config: testAccPipelinePermissionsGroup(domain, projectName, name, ref, email, groupName, othersPerm3, groupPerm2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccGroupGet("buddy_group.g", &group),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                      name,
+						On:                        buddy.PipelineOnClick,
+						AlwaysFromScratch:         false,
+						AutoClearCache:            false,
+						NoSkipToMostRecent:        false,
+						DoNotCreateCommitStatus:   false,
+						IgnoreFailOnProjectStatus: false,
+						FetchAllRefs:              false,
+						FailOnPrepareEnvWarning:   false,
+						Priority:                  buddy.PipelinePriorityNormal,
+						TargetSiteUrl:             "",
+						ExecutionMessageTemplate:  "",
+						Project:                   &project,
+						Creator:                   &profile,
+						Ref:                       ref,
+						Permissions: &buddy.PipelinePermissions{
+							Others: othersPerm3,
+							Groups: []*buddy.PipelineResourcePermission{
+								{
+									AccessLevel: groupPerm2,
+								},
+							},
+						},
+						PermissionGroup: &group,
+					}),
+				),
+			},
+			// back to empty
+			{
+				Config: testAccPipelinePermissionsBackToEmpty(domain, projectName, name, ref, email, groupName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                      name,
+						On:                        buddy.PipelineOnClick,
+						AlwaysFromScratch:         false,
+						AutoClearCache:            false,
+						NoSkipToMostRecent:        false,
+						DoNotCreateCommitStatus:   false,
+						IgnoreFailOnProjectStatus: false,
+						FetchAllRefs:              false,
+						FailOnPrepareEnvWarning:   false,
+						Priority:                  buddy.PipelinePriorityNormal,
+						TargetSiteUrl:             "",
+						ExecutionMessageTemplate:  "",
+						Project:                   &project,
+						Creator:                   &profile,
+						Ref:                       ref,
+						Permissions: &buddy.PipelinePermissions{
+							Others: buddy.PipelinePermissionDefault,
+						},
+					}),
+				),
+			},
+			// import pipeline
+			{
+				ResourceName:            "buddy_pipeline.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"create_date"},
+			},
+		},
+	})
 }
 
 func TestAccPipeline_remote(t *testing.T) {
@@ -1131,6 +1344,52 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				return err
 			}
 		}
+		if want.Permissions != nil {
+			if err := util.CheckFieldEqualAndSet("Permissions.Others", pipeline.Permissions.Others, want.Permissions.Others); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("permissions.0.others", attrs["permissions.0.others"], want.Permissions.Others); err != nil {
+				return err
+			}
+			if err := util.CheckIntFieldEqual("Permissions.Users", len(pipeline.Permissions.Users), len(want.Permissions.Users)); err != nil {
+				return err
+			}
+			if err := util.CheckIntFieldEqual("Permissions.Groups", len(pipeline.Permissions.Groups), len(want.Permissions.Groups)); err != nil {
+				return err
+			}
+			if len(want.Permissions.Users) > 0 {
+				attrsPermUserId, _ := strconv.Atoi(attrs["permissions.0.user.0.id"])
+				wantPermUserId := want.PermissionUser.Id
+				if err := util.CheckFieldEqualAndSet("Permissions.Users[0].AccessLevel", pipeline.Permissions.Users[0].AccessLevel, want.Permissions.Users[0].AccessLevel); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("permissions.0.user.0.access_level", attrs["permissions.0.user.0.access_level"], want.Permissions.Users[0].AccessLevel); err != nil {
+					return err
+				}
+				if err := util.CheckIntFieldEqual("Permissions.Users[0].Id", pipeline.Permissions.Users[0].Id, wantPermUserId); err != nil {
+					return err
+				}
+				if err := util.CheckIntFieldEqual("permissions.0.user.0.id", attrsPermUserId, wantPermUserId); err != nil {
+					return err
+				}
+			}
+			if len(want.Permissions.Groups) > 0 {
+				attrsPermGroupId, _ := strconv.Atoi(attrs["permissions.0.group.0.id"])
+				wantPermGroupId := want.PermissionGroup.Id
+				if err := util.CheckIntFieldEqual("Permissions.Groups[0].Id", pipeline.Permissions.Groups[0].Id, wantPermGroupId); err != nil {
+					return err
+				}
+				if err := util.CheckIntFieldEqual("permissions.0.group.0.id", attrsPermGroupId, wantPermGroupId); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("Permissions.Groups[0].AccessLevel", pipeline.Permissions.Groups[0].AccessLevel, want.Permissions.Groups[0].AccessLevel); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("permissions.0.group.0.access_level", attrs["permissions.0.group.0.access_level"], want.Permissions.Groups[0].AccessLevel); err != nil {
+					return err
+				}
+			}
+		}
 		if want.Event != nil {
 			if err := util.CheckFieldEqualAndSet("Events[0].Type", pipeline.Events[0].Type, want.Event.Type); err != nil {
 				return err
@@ -1298,6 +1557,253 @@ resource "buddy_pipeline" "bar" {
     }
 }
 `, domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
+}
+
+func testAccPipelinePermissionsEmpty(domain string, projectName string, name string, ref string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "CLICK"
+	refs = ["%s"]
+}
+`, domain, projectName, name, ref)
+}
+
+func testAccPipelinePermissionsUser(domain string, projectName string, name string, ref string, email string, othersPerm string, userPerm string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_member" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    email = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_permission" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "perm"
+    pipeline_access_level = "READ_WRITE"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
+}
+
+resource "buddy_project_member" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	member_id = "${buddy_member.a.member_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "CLICK"
+	refs = ["%s"]
+	permissions {
+		others = "%s"
+      	user {
+			id = "${buddy_project_member.bar.member_id}"
+            access_level = "%s"
+		}
+	}
+}
+`, domain, email, projectName, name, ref, othersPerm, userPerm)
+}
+
+func testAccPipelinePermissionsUserGroup(domain string, projectName string, name string, ref string, email string, groupName string, othersPerm string, userPerm string, groupPerm string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_member" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    email = "%s"
+}
+
+resource "buddy_group" "g" {
+	domain = "${buddy_workspace.foo.domain}"
+	name = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_permission" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "perm"
+    pipeline_access_level = "READ_WRITE"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
+}
+
+resource "buddy_project_member" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	member_id = "${buddy_member.a.member_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_project_group" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	group_id = "${buddy_group.g.group_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "CLICK"
+	refs = ["%s"]
+	permissions {
+		others = "%s"
+      	user {
+			id = "${buddy_project_member.bar.member_id}"
+            access_level = "%s"
+		}
+		group {
+			id = "${buddy_project_group.bar.group_id}"
+			access_level = "%s"
+		}
+	}
+}
+`, domain, email, groupName, projectName, name, ref, othersPerm, userPerm, groupPerm)
+}
+
+func testAccPipelinePermissionsGroup(domain string, projectName string, name string, ref string, email string, groupName string, othersPerm string, groupPerm string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_member" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    email = "%s"
+}
+
+resource "buddy_group" "g" {
+	domain = "${buddy_workspace.foo.domain}"
+	name = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_permission" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "perm"
+    pipeline_access_level = "READ_WRITE"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
+}
+
+resource "buddy_project_member" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	member_id = "${buddy_member.a.member_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_project_group" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	group_id = "${buddy_group.g.group_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "CLICK"
+	refs = ["%s"]
+	permissions {
+		others = "%s"
+		group {
+			id = "${buddy_project_group.bar.group_id}"
+			access_level = "%s"
+		}
+	}
+}
+`, domain, email, groupName, projectName, name, ref, othersPerm, groupPerm)
+}
+
+func testAccPipelinePermissionsBackToEmpty(domain string, projectName string, name string, ref string, email string, groupName string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_member" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    email = "%s"
+}
+
+resource "buddy_group" "g" {
+	domain = "${buddy_workspace.foo.domain}"
+	name = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_permission" "a" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "perm"
+    pipeline_access_level = "READ_WRITE"
+    repository_access_level = "READ_ONLY"
+	sandbox_access_level = "READ_ONLY"
+}
+
+resource "buddy_project_member" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	member_id = "${buddy_member.a.member_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_project_group" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	group_id = "${buddy_group.g.group_id}"
+	permission_id = "${buddy_permission.a.permission_id}"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "CLICK"
+	refs = ["%s"]
+	permissions {}
+}
+`, domain, email, groupName, projectName, name, ref)
 }
 
 func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int) string {

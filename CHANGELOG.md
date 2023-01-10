@@ -1,3 +1,6 @@
+# Release v1.10.0 (2023-01-10)
+* Adds `permissions` to `buddy_pipeline`
+
 # Release v1.9.0 (2022-12-13)
 * Remove `display_name` from `buddy_variable_ssh_key`
 * Adds `without_repository` to `buddy_project`
