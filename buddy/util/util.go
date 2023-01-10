@@ -269,6 +269,46 @@ func ValidateEmail(v interface{}, _ string) (we []string, err []error) {
 	return
 }
 
+func InterfacePipelinePermissionToPointer(i interface{}) *buddy.PipelinePermissions {
+	var result *buddy.PipelinePermissions
+	if i != nil {
+		l := i.([]interface{})
+		if len(l) != 1 {
+			return result
+		}
+		result = &buddy.PipelinePermissions{}
+		m := l[0].(map[string]interface{})
+		if m["others"] != nil && m["others"] != "" {
+			result.Others = m["others"].(string)
+		} else {
+			result.Others = buddy.PipelinePermissionDefault
+		}
+		result.Users = []*buddy.PipelineResourcePermission{}
+		result.Groups = []*buddy.PipelineResourcePermission{}
+		if m["user"] != nil {
+			for _, v := range m["user"].([]interface{}) {
+				u := v.(map[string]interface{})
+				ua := buddy.PipelineResourcePermission{
+					Id:          u["id"].(int),
+					AccessLevel: u["access_level"].(string),
+				}
+				result.Users = append(result.Users, &ua)
+			}
+		}
+		if m["group"] != nil {
+			for _, v := range m["group"].([]interface{}) {
+				g := v.(map[string]interface{})
+				ga := buddy.PipelineResourcePermission{
+					Id:          g["id"].(int),
+					AccessLevel: g["access_level"].(string),
+				}
+				result.Groups = append(result.Groups, &ga)
+			}
+		}
+	}
+	return result
+}
+
 func MapTriggerConditionsToApi(l interface{}) *[]*buddy.PipelineTriggerCondition {
 	var expanded []*buddy.PipelineTriggerCondition
 	for _, v := range l.([]interface{}) {
@@ -358,6 +398,38 @@ func ApiTriggerConditionToMap(c *buddy.PipelineTriggerCondition) map[string]inte
 	condition["project_name"] = c.TriggerProjectName
 	condition["pipeline_name"] = c.TriggerPipelineName
 	return condition
+}
+
+func ApiPipelineResourcePermissionToMap(p *buddy.PipelineResourcePermission) map[string]interface{} {
+	if p == nil {
+		return nil
+	}
+	permission := map[string]interface{}{}
+	permission["id"] = p.Id
+	permission["access_level"] = p.AccessLevel
+	return permission
+}
+
+func ApiPipelineResourcePermissionsToMap(p []*buddy.PipelineResourcePermission) []interface{} {
+	var list []interface{}
+	for _, v := range p {
+		list = append(list, ApiPipelineResourcePermissionToMap(v))
+	}
+	return list
+}
+
+func ApiPipelinePermissionsToMap(p *buddy.PipelinePermissions) []interface{} {
+	if p == nil {
+		return nil
+	}
+	permissions := map[string]interface{}{}
+	permissions["others"] = p.Others
+	permissions["user"] = ApiPipelineResourcePermissionsToMap(p.Users)
+	permissions["group"] = ApiPipelineResourcePermissionsToMap(p.Groups)
+	list := []interface{}{
+		permissions,
+	}
+	return list
 }
 
 func ApiPipelineTriggerConditionsToMap(l []*buddy.PipelineTriggerCondition) []interface{} {
@@ -497,6 +569,10 @@ func ApiPipelineToResourceData(domain string, projectName string, pipeline *budd
 			return err
 		}
 		err = d.Set("trigger_condition", ApiPipelineTriggerConditionsToMap(pipeline.TriggerConditions))
+		if err != nil {
+			return err
+		}
+		err = d.Set("permissions", ApiPipelinePermissionsToMap(pipeline.Permissions))
 		if err != nil {
 			return err
 		}

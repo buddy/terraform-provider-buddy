@@ -56,6 +56,75 @@ func Pipeline() *schema.Resource {
 				Type:        schema.TypeString,
 				Required:    true,
 			},
+			"permissions": {
+				Description: "The pipeline's permissions",
+				Type:        schema.TypeList,
+				MaxItems:    1,
+				Optional:    true,
+				Computed:    true,
+				Elem: &schema.Resource{
+					Schema: map[string]*schema.Schema{
+						"others": {
+							Type:     schema.TypeString,
+							Optional: true,
+							Computed: true,
+							ValidateFunc: validation.StringInSlice([]string{
+								buddy.PipelinePermissionDefault,
+								buddy.PipelinePermissionDenied,
+								buddy.PipelinePermissionReadOnly,
+								buddy.PipelinePermissionRunOnly,
+								buddy.PipelinePermissionReadWrite,
+							}, false),
+						},
+						"user": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeInt,
+										Required: true,
+									},
+									"access_level": {
+										Type:     schema.TypeString,
+										Required: true,
+										ValidateFunc: validation.StringInSlice([]string{
+											buddy.PipelinePermissionDefault,
+											buddy.PipelinePermissionDenied,
+											buddy.PipelinePermissionReadOnly,
+											buddy.PipelinePermissionRunOnly,
+											buddy.PipelinePermissionReadWrite,
+										}, false),
+									},
+								},
+							},
+						},
+						"group": {
+							Type:     schema.TypeList,
+							Optional: true,
+							Elem: &schema.Resource{
+								Schema: map[string]*schema.Schema{
+									"id": {
+										Type:     schema.TypeInt,
+										Required: true,
+									},
+									"access_level": {
+										Type:     schema.TypeString,
+										Required: true,
+										ValidateFunc: validation.StringInSlice([]string{
+											buddy.PipelinePermissionDefault,
+											buddy.PipelinePermissionDenied,
+											buddy.PipelinePermissionReadOnly,
+											buddy.PipelinePermissionRunOnly,
+											buddy.PipelinePermissionReadWrite,
+										}, false),
+									},
+								},
+							},
+						},
+					},
+				},
+			},
 			"definition_source": {
 				Description: "The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`",
 				Type:        schema.TypeString,
@@ -474,7 +543,8 @@ func updateContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 		return diag.FromErr(err)
 	}
 	opt := buddy.PipelineOps{
-		Name: util.InterfaceStringToPointer(d.Get("name")),
+		Name:        util.InterfaceStringToPointer(d.Get("name")),
+		Permissions: util.InterfacePipelinePermissionToPointer(d.Get("permissions")),
 	}
 	if d.HasChange("on") {
 		opt.On = util.InterfaceStringToPointer(d.Get("on"))
@@ -600,6 +670,7 @@ func createContextPipeline(ctx context.Context, d *schema.ResourceData, meta int
 		Name:                    util.InterfaceStringToPointer(d.Get("name")),
 		FailOnPrepareEnvWarning: util.InterfaceBoolToPointer(d.Get("fail_on_prepare_env_warning")),
 		FetchAllRefs:            util.InterfaceBoolToPointer(d.Get("fetch_all_refs")),
+		Permissions:             util.InterfacePipelinePermissionToPointer(d.Get("permissions")),
 	}
 	if on, ok := d.GetOk("on"); ok {
 		opt.On = util.InterfaceStringToPointer(on)
