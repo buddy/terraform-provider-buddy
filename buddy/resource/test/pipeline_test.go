@@ -249,7 +249,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Creator:                   &profile,
 						Ref:                       ref,
 						Permissions: &buddy.PipelinePermissions{
-							Others: buddy.PipelinePermissionDefault,
+							Others: buddy.PipelinePermissionReadWrite,
 						},
 					}),
 				),
