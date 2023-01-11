@@ -260,6 +260,7 @@ resource "buddy_integration" "google_service_account" {
 - `app_id` (String) The integration's application's ID. Provide for: `AZURE_CLOUD`
 - `email` (String) The integration's email. Provide for: `CLOUDFLARE`
 - `group_id` (Number) The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`
+- `partner_token` (String, Sensitive) The integration's partner token. Provide for: `SHOPIFY`
 - `password` (String, Sensitive) The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`
 - `project_name` (String) The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`, `PRIVATE_IN_PROJECT`
 - `role_assumption` (Block List) The integration's AWS role to assume. Provide for: `AMAZON` (see [below for nested schema](#nestedblock--role_assumption))
