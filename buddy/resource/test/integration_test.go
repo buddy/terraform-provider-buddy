@@ -23,6 +23,7 @@ var ignoreImportVerify = []string{
 	"api_key",
 	"email",
 	"role_assumption",
+	"partner_token",
 }
 
 func TestAccIntegration_amazon(t *testing.T) {
@@ -134,6 +135,49 @@ func TestAccIntegration_shopify(t *testing.T) {
 			// update integration
 			{
 				Config: testAccIntegrationShopify(domain, newName, projectNameA, projectNameB, newScope, projectNameB),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, newScope, true, false),
+				),
+			},
+			// import integration
+			{
+				ResourceName:            "buddy_integration.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: ignoreImportVerify,
+			},
+		},
+	})
+}
+
+func TestAccIntegration_shopify_partner(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	projectNameA := util.RandString(10)
+	projectNameB := util.RandString(10)
+	scope := buddy.IntegrationScopeProject
+	newScope := buddy.IntegrationScopePrivateInProject
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:      testAccIntegrationCheckDestroy,
+		Steps: []resource.TestStep{
+			// create integration
+			{
+				Config: testAccIntegrationShopifyPartner(domain, name, projectNameA, projectNameB, scope, projectNameA),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, scope, true, false),
+				),
+			},
+			// update integration
+			{
+				Config: testAccIntegrationShopifyPartner(domain, newName, projectNameA, projectNameB, newScope, projectNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
 					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, newScope, true, false),
@@ -643,6 +687,34 @@ resource "buddy_integration" "bar" {
     project_name = "${buddy_project.%s.name}"
     shop = "ABC"
     token = "ABC"
+}
+`, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, scope, scopeProjectName)
+}
+
+func testAccIntegrationShopifyPartner(domain string, name string, projectNameA string, projectNameB string, scope string, scopeProjectName string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "%s" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "%s" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_integration" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    name = "%s"
+    type = "%s"
+    scope = "%s"
+    project_name = "${buddy_project.%s.name}"
+    token = "ABC"
+	partner_token = "EFG"
 }
 `, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, scope, scopeProjectName)
 }

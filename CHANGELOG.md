@@ -1,3 +1,6 @@
+# Release v1.11.0 (2023-01-17)
+* Adds `partner_token` to `buddy_integration`
+
 # Release v1.10.0 (2023-01-10)
 * Adds `permissions` to `buddy_pipeline`
 

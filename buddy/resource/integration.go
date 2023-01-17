@@ -123,6 +123,12 @@ func Integration() *schema.Resource {
 				Optional:  true,
 				Sensitive: true,
 			},
+			"partner_token": {
+				Description: "The integration's partner token. Provide for: `SHOPIFY`",
+				Type:        schema.TypeString,
+				Optional:    true,
+				Sensitive:   true,
+			},
 			"access_key": {
 				Description: "The integration's access key. Provide for: `DO_SPACES`, `AMAZON`, `PUSHOVER`",
 				Type:        schema.TypeString,
@@ -237,6 +243,11 @@ func updateContextIntegration(ctx context.Context, d *schema.ResourceData, meta 
 	if token, ok := d.GetOk("token"); ok {
 		opt.Token = util.InterfaceStringToPointer(token)
 	}
+	if partnerToken, ok := d.GetOk("partner_token"); ok {
+		authType := buddy.IntegrationAuthTypeTokenAppExtension
+		opt.PartnerToken = util.InterfaceStringToPointer(partnerToken)
+		opt.AuthType = &authType
+	}
 	if accessKey, ok := d.GetOk("access_key"); ok {
 		opt.AccessKey = util.InterfaceStringToPointer(accessKey)
 	}
@@ -312,6 +323,11 @@ func createContextIntegration(ctx context.Context, d *schema.ResourceData, meta 
 	}
 	if token, ok := d.GetOk("token"); ok {
 		opt.Token = util.InterfaceStringToPointer(token)
+	}
+	if partnerToken, ok := d.GetOk("partner_token"); ok {
+		authType := buddy.IntegrationAuthTypeTokenAppExtension
+		opt.PartnerToken = util.InterfaceStringToPointer(partnerToken)
+		opt.AuthType = &authType
 	}
 	if accessKey, ok := d.GetOk("access_key"); ok {
 		opt.AccessKey = util.InterfaceStringToPointer(accessKey)
