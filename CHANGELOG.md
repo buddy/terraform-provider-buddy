@@ -1,3 +1,6 @@
+# Release v1.11.1 (2023-01-23)
+* Fix `auto_assign_permission_set_id` when `auto_assign_to_new_projects` == `false`
+
 # Release v1.11.0 (2023-01-17)
 * Adds `partner_token` to `buddy_integration`
 

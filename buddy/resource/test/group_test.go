@@ -28,7 +28,7 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupConfig(domain, name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, name, "", nil),
+					testAccGroupAttributes("buddy_group.bar", &group, name, "", false, nil),
 				),
 			},
 			// update group
@@ -36,16 +36,25 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupUpdateConfig(domain, newName, newDescription),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, false, nil),
 				),
 			},
 			// update group assign
 			{
-				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newDescription),
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newDescription, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
 					testAccPermissionGet("buddy_permission.perm", &permission),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, false, &permission),
+				),
+			},
+			// update group assign
+			{
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newDescription, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupGet("buddy_group.bar", &group),
+					testAccPermissionGet("buddy_permission.perm", &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, true, &permission),
 				),
 			},
 			// null desc
@@ -53,20 +62,21 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupConfig(domain, newName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, "", nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, "", false, nil),
 				),
 			},
 			// import group
 			{
-				ResourceName:      "buddy_group.bar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "buddy_group.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"auto_assign_permission_set_id"},
 			},
 		},
 	})
 }
 
-func testAccGroupAttributes(n string, group *buddy.Group, name string, description string, defPerm *buddy.Permission) resource.TestCheckFunc {
+func testAccGroupAttributes(n string, group *buddy.Group, name string, description string, autoAssign bool, defPerm *buddy.Permission) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -93,17 +103,19 @@ func testAccGroupAttributes(n string, group *buddy.Group, name string, descripti
 		if err := util.CheckFieldEqual("description", attrs["description"], group.Description); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("auto_assign_to_new_projects", attrsAutoAssignToProjects, group.AutoAssignToNewProjects); err != nil {
+		if err := util.CheckBoolFieldEqual("auto_assign_to_new_projects", attrsAutoAssignToProjects, autoAssign); err != nil {
 			return err
 		}
-		if err := util.CheckIntFieldEqual("auto_assign_permission_set_id", attrsAutoAssignToProjectsPermissionId, group.AutoAssignPermissionSetId); err != nil {
+		if err := util.CheckBoolFieldEqual("AutoAssignToNewProjects", group.AutoAssignToNewProjects, autoAssign); err != nil {
 			return err
 		}
 		if defPerm != nil {
-			if err := util.CheckBoolFieldEqual("AutoAssignToNewProjects", group.AutoAssignToNewProjects, true); err != nil {
-				return err
+			if autoAssign {
+				if err := util.CheckIntFieldEqual("AutoAssignPermissionSetId", group.AutoAssignPermissionSetId, defPerm.Id); err != nil {
+					return err
+				}
 			}
-			if err := util.CheckIntFieldEqual("AutoAssignPermissionSetId", group.AutoAssignPermissionSetId, defPerm.Id); err != nil {
+			if err := util.CheckIntFieldEqual("auto_assign_permission_set_id", attrsAutoAssignToProjectsPermissionId, defPerm.Id); err != nil {
 				return err
 			}
 		}
@@ -156,7 +168,7 @@ resource "buddy_group" "bar" {
 `, domain, name, description)
 }
 
-func testAccGroupUpdateProjectAssignConfig(domain string, name string, description string) string {
+func testAccGroupUpdateProjectAssignConfig(domain string, name string, description string, autoAssign bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -174,10 +186,10 @@ resource "buddy_group" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     name = "%s"
     description = "%s"
-	auto_assign_to_new_projects = true
+	auto_assign_to_new_projects = %t
 	auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
 }
-`, domain, name, description)
+`, domain, name, description, autoAssign)
 }
 
 func testAccGroupConfig(domain string, name string) string {
