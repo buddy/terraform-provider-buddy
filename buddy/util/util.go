@@ -1259,9 +1259,11 @@ func ApiMemberToResourceData(domain string, m *buddy.Member, d *schema.ResourceD
 		if err != nil {
 			return err
 		}
-		err = d.Set("auto_assign_permission_set_id", m.AutoAssignPermissionSetId)
-		if err != nil {
-			return err
+		if m.AutoAssignToNewProjects {
+			err = d.Set("auto_assign_permission_set_id", m.AutoAssignPermissionSetId)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return d.Set("workspace_owner", m.WorkspaceOwner)
@@ -1290,9 +1292,11 @@ func ApiGroupToResourceData(domain string, g *buddy.Group, d *schema.ResourceDat
 		if err != nil {
 			return err
 		}
-		err = d.Set("auto_assign_permission_set_id", g.AutoAssignPermissionSetId)
-		if err != nil {
-			return err
+		if g.AutoAssignToNewProjects {
+			err = d.Set("auto_assign_permission_set_id", g.AutoAssignPermissionSetId)
+			if err != nil {
+				return err
+			}
 		}
 	}
 	return d.Set("description", g.Description)
