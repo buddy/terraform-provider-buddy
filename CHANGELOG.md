@@ -1,3 +1,6 @@
+# Release v1.12.0 (2023-03-28)
+* Adds `buddy_sso` resource to manage SSO in workspace
+
 # Release v1.11.1 (2023-01-23)
 * Fix `auto_assign_permission_set_id` when `auto_assign_to_new_projects` == `false`
 
