@@ -1,9 +1,11 @@
 package util
 
 import (
+	"bytes"
 	crand "crypto/rand"
 	"crypto/rsa"
 	"crypto/x509"
+	"crypto/x509/pkix"
 	"encoding/pem"
 	"errors"
 	"fmt"
@@ -12,6 +14,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
 	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
 	"golang.org/x/crypto/ssh"
+	"math/big"
 	"math/rand"
 	"net/http"
 	"regexp"
@@ -33,6 +36,38 @@ func CheckFieldEqual(field string, got string, want string) error {
 		return ErrorFieldFormatted(field, got, want)
 	}
 	return nil
+}
+
+func GenerateCertificate() (error, string) {
+	cert := &x509.Certificate{
+		SerialNumber: big.NewInt(1658),
+		Subject: pkix.Name{
+			Organization: []string{"Company, INC."},
+			Country:      []string{"US"},
+		},
+		NotBefore:    time.Now(),
+		NotAfter:     time.Now().AddDate(10, 0, 0),
+		SubjectKeyId: []byte{1, 2, 3, 4, 6},
+		ExtKeyUsage:  []x509.ExtKeyUsage{x509.ExtKeyUsageClientAuth, x509.ExtKeyUsageServerAuth},
+		KeyUsage:     x509.KeyUsageDigitalSignature,
+	}
+	certPrivKey, err := rsa.GenerateKey(crand.Reader, 4096)
+	if err != nil {
+		return err, ""
+	}
+	certBytes, err := x509.CreateCertificate(crand.Reader, cert, cert, &certPrivKey.PublicKey, certPrivKey)
+	if err != nil {
+		return err, ""
+	}
+	certPEM := new(bytes.Buffer)
+	err = pem.Encode(certPEM, &pem.Block{
+		Type:  "CERTIFICATE",
+		Bytes: certBytes,
+	})
+	if err != nil {
+		return err, ""
+	}
+	return nil, certPEM.String()
 }
 
 func GenerateRsaKeyPair() (error, string, string) {
@@ -1151,6 +1186,43 @@ func ApiPermissionToResourceData(domain string, p *buddy.Permission, d *schema.R
 		return err
 	}
 	return d.Set("type", p.Type)
+}
+
+func ApiSsoToResourceData(domain string, sso *buddy.Sso, d *schema.ResourceData) error {
+	d.SetId(domain)
+	err := d.Set("domain", domain)
+	if err != nil {
+		return err
+	}
+	err = d.Set("sso_url", sso.SsoUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("issuer", sso.Issuer)
+	if err != nil {
+		return err
+	}
+	err = d.Set("certificate", sso.Certificate)
+	if err != nil {
+		return err
+	}
+	err = d.Set("signature", sso.SignatureMethod)
+	if err != nil {
+		return err
+	}
+	err = d.Set("digest", sso.DigestMethod)
+	if err != nil {
+		return err
+	}
+	err = d.Set("html_url", sso.HtmlUrl)
+	if err != nil {
+		return err
+	}
+	err = d.Set("require_for_all", sso.RequireSsoForAllMembers)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 func ApiWorkspaceToResourceData(workspace *buddy.Workspace, d *schema.ResourceData, short bool) error {

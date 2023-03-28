@@ -44,6 +44,7 @@ func Provider() *schema.Provider {
 			"buddy_profile_email":      resource.ProfileEmail(),
 			"buddy_profile_public_key": resource.ProfilePublicKey(),
 			"buddy_workspace":          resource.Workspace(),
+			"buddy_sso":                resource.Sso(),
 			"buddy_group":              resource.Group(),
 			"buddy_group_member":       resource.GroupMember(),
 			"buddy_member":             resource.Member(),
