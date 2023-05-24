@@ -5,11 +5,13 @@ import (
 	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"testing"
 )
+
+// todo upgrade public key test
 
 func TestAccProfilePublicKey(t *testing.T) {
 	var key buddy.PublicKey
@@ -29,8 +31,8 @@ func TestAccProfilePublicKey(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProfilePublicKeyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProfilePublicKeyCheckDestroy,
 		Steps: []resource.TestStep{
 			// create key
 			{
@@ -106,8 +108,8 @@ func testAccProfilePublicKeyGet(n string, key *buddy.PublicKey) resource.TestChe
 func testAccProfilePublicKeyConfig(content string, title string) string {
 	return fmt.Sprintf(`
 resource "buddy_profile_public_key" "foo" {
-    content = "%s"
-    title = "%s"
+   content = "%s"
+   title = "%s"
 }
 `, content, title)
 }

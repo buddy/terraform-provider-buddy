@@ -4,371 +4,452 @@ import (
 	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/boolvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
-func Project() *schema.Resource {
-	return &schema.Resource{
-		Description: "Create and manage a workspace project\n\n" +
+var (
+	_ resource.Resource                = &projectResource{}
+	_ resource.ResourceWithConfigure   = &projectResource{}
+	_ resource.ResourceWithImportState = &projectResource{}
+)
+
+func NewProjectResource() resource.Resource {
+	return &projectResource{}
+}
+
+type projectResource struct {
+	client *buddy.Client
+}
+
+type projectResourceModel struct {
+	ID                              types.String `tfsdk:"id"`
+	Domain                          types.String `tfsdk:"domain"`
+	DisplayName                     types.String `tfsdk:"display_name"`
+	WithoutRepository               types.Bool   `tfsdk:"without_repository"`
+	IntegrationId                   types.String `tfsdk:"integration_id"`
+	ExternalProjectId               types.String `tfsdk:"external_project_id"`
+	UpdateDefaultBranchFromExternal types.Bool   `tfsdk:"update_default_branch_from_external"`
+	FetchSubmodules                 types.Bool   `tfsdk:"fetch_submodules"`
+	FetchSubmodulesEnvKey           types.String `tfsdk:"fetch_submodules_env_key"`
+	Access                          types.String `tfsdk:"access"`
+	AllowPullRequests               types.Bool   `tfsdk:"allow_pull_requests"`
+	GitLabProjectId                 types.String `tfsdk:"git_lab_project_id"`
+	CustomRepoUrl                   types.String `tfsdk:"custom_repo_url"`
+	CustomRepoSshKeyId              types.Int64  `tfsdk:"custom_repo_ssh_key_id"`
+	CustomRepoUser                  types.String `tfsdk:"custom_repo_user"`
+	CustomRepoPass                  types.String `tfsdk:"custom_repo_pass"`
+	Name                            types.String `tfsdk:"name"`
+	HtmlUrl                         types.String `tfsdk:"html_url"`
+	Status                          types.String `tfsdk:"status"`
+	CreateDate                      types.String `tfsdk:"create_date"`
+	CreatedBy                       types.Object `tfsdk:"created_by"`
+	HttpRepository                  types.String `tfsdk:"http_repository"`
+	SshRepository                   types.String `tfsdk:"ssh_repository"`
+	DefaultBranch                   types.String `tfsdk:"default_branch"`
+}
+
+func (r *projectResourceModel) decomposeId() (string, string, error) {
+	domain, name, err := util.DecomposeDoubleId(r.ID.ValueString())
+	if err != nil {
+		return "", "", err
+	}
+	return domain, name, nil
+}
+
+func (r *projectResourceModel) loadAPI(ctx context.Context, domain string, project *buddy.Project) diag.Diagnostics {
+	r.ID = types.StringValue(util.ComposeDoubleId(domain, project.Name))
+	r.Domain = types.StringValue(domain)
+	r.DisplayName = types.StringValue(project.DisplayName)
+	r.WithoutRepository = types.BoolValue(project.WithoutRepository)
+	r.UpdateDefaultBranchFromExternal = types.BoolValue(project.UpdateDefaultBranchFromExternal)
+	r.FetchSubmodules = types.BoolValue(project.FetchSubmodules)
+	r.FetchSubmodulesEnvKey = types.StringValue(project.FetchSubmodulesEnvKey)
+	r.Access = types.StringValue(project.Access)
+	r.AllowPullRequests = types.BoolValue(project.AllowPullRequests)
+	r.Name = types.StringValue(project.Name)
+	r.HtmlUrl = types.StringValue(project.HtmlUrl)
+	r.Status = types.StringValue(project.Status)
+	r.CreateDate = types.StringValue(project.CreateDate)
+	r.HttpRepository = types.StringValue(project.HttpRepository)
+	r.SshRepository = types.StringValue(project.SshRepository)
+	r.DefaultBranch = types.StringValue(project.DefaultBranch)
+	createdBy, diags := util.MemberTypeValueFrom(ctx, project.CreatedBy)
+	r.CreatedBy = createdBy
+	return diags
+}
+
+func (r *projectResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_project"
+}
+
+func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Create and manage a workspace project\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scopes required: `WORKSPACE`, `PROJECT_DELETE`",
-		CreateContext: createContextProject,
-		ReadContext:   readContextProject,
-		UpdateContext: updateContextProject,
-		DeleteContext: deleteContextProject,
-		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
-		},
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: util.ValidateDomain,
-			},
-			"display_name": {
-				Description: "The project's display name",
-				Type:        schema.TypeString,
-				Required:    true,
-			},
-			"without_repository": {
-				Description: "Defines wheter or not create GIT repository",
-				Type:        schema.TypeBool,
-				Optional:    true,
-			},
-			"integration_id": {
-				Description: "The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ConflictsWith: []string{
-					"custom_repo_url",
-					"custom_repo_user",
-					"custom_repo_ssh_key_id",
-					"custom_repo_pass",
-				},
-				RequiredWith: []string{
-					"external_project_id",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 				},
 			},
-			"external_project_id": {
-				Description: "The project's external project ID. Needed when cloning from GitHub, GitLab or BitBucket",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ConflictsWith: []string{
-					"custom_repo_url",
-					"custom_repo_user",
-					"custom_repo_ssh_key_id",
-					"custom_repo_pass",
-				},
-				RequiredWith: []string{
-					"integration_id",
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
 				},
 			},
-			"update_default_branch_from_external": {
-				Description: "Defines whether or not update default branch from external repository (GitHub, GitLab, BitBucket)",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
+			"display_name": schema.StringAttribute{
+				MarkdownDescription: "The project's display name",
+				Required:            true,
 			},
-			"fetch_submodules": {
-				Description: "Defines wheter or not fetch submodules in repository",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-				RequiredWith: []string{
-					"fetch_submodules_env_key",
+			"without_repository": schema.BoolAttribute{
+				MarkdownDescription: "Defines wheter or not create GIT repository",
+				Optional:            true,
+				Computed:            true,
+			},
+			"integration_id": schema.StringAttribute{
+				MarkdownDescription: "The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("custom_repo_url"),
+						path.MatchRoot("custom_repo_user"),
+						path.MatchRoot("custom_repo_ssh_key_id"),
+						path.MatchRoot("custom_repo_pass"),
+					}...),
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("external_project_id"),
+					}...),
 				},
 			},
-			"fetch_submodules_env_key": {
-				Description: "The project's environmental key name for fetching submodules",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				RequiredWith: []string{
-					"fetch_submodules",
+			"external_project_id": schema.StringAttribute{
+				MarkdownDescription: "The project's external project ID. Needed when cloning from GitHub, GitLab or BitBucket",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("custom_repo_url"),
+						path.MatchRoot("custom_repo_user"),
+						path.MatchRoot("custom_repo_ssh_key_id"),
+						path.MatchRoot("custom_repo_pass"),
+					}...),
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("integration_id"),
+					}...),
 				},
 			},
-			"access": {
-				Description: "The project's access. Possible values: `PRIVATE`, `PUBLIC`",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+			"update_default_branch_from_external": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not update default branch from external repository (GitHub, GitLab, BitBucket)",
+				Optional:            true,
+				Computed:            true,
 			},
-			"allow_pull_requests": {
-				Description: "Defines whether or not pull requests are enabled (GitHub)",
-				Type:        schema.TypeBool,
-				Optional:    true,
-				Computed:    true,
-			},
-			"git_lab_project_id": {
-				Description: "The project's GitLab project ID. Needed when cloning from a GitLab",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ConflictsWith: []string{
-					"custom_repo_url",
-					"custom_repo_user",
-					"custom_repo_ssh_key_id",
-					"custom_repo_pass",
-				},
-				RequiredWith: []string{
-					"integration_id",
-					"external_project_id",
+			"fetch_submodules": schema.BoolAttribute{
+				MarkdownDescription: "Defines wheter or not fetch submodules in repository",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.Bool{
+					boolvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("fetch_submodules_env_key"),
+					}...),
 				},
 			},
-			"custom_repo_url": {
-				Description: "The project's custom repository URL. Needed when cloning from a custom repository",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ConflictsWith: []string{
-					"integration_id",
-					"external_project_id",
-					"git_lab_project_id",
+			"fetch_submodules_env_key": schema.StringAttribute{
+				MarkdownDescription: "The project's environmental key name for fetching submodules",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("fetch_submodules"),
+					}...),
 				},
 			},
-			"custom_repo_ssh_key_id": {
-				Description: "The project's custom repository SSH key ID. Needed when cloning from a custom repository",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ConflictsWith: []string{
-					"integration_id",
-					"external_project_id",
-					"git_lab_project_id",
-				},
-				RequiredWith: []string{
-					"custom_repo_url",
-				},
+			"access": schema.StringAttribute{
+				MarkdownDescription: "The project's access. Possible values: `PRIVATE`, `PUBLIC`",
+				Optional:            true,
+				Computed:            true,
 			},
-			"custom_repo_user": {
-				Description: "The project's custom repository user. Needed when cloning from a custom repository",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ConflictsWith: []string{
-					"integration_id",
-					"external_project_id",
-					"git_lab_project_id",
-				},
-				RequiredWith: []string{
-					"custom_repo_url",
-					"custom_repo_pass",
-				},
+			"allow_pull_requests": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not pull requests are enabled (GitHub)",
+				Optional:            true,
+				Computed:            true,
 			},
-			"custom_repo_pass": {
-				Description: "The project's custom repository password. Needed when cloning from a custom repository",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ConflictsWith: []string{
-					"integration_id",
-					"external_project_id",
-					"git_lab_project_id",
-				},
-				RequiredWith: []string{
-					"custom_repo_url",
-					"custom_repo_user",
+			"git_lab_project_id": schema.StringAttribute{
+				MarkdownDescription: "The project's GitLab project ID. Needed when cloning from a GitLab",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("custom_repo_url"),
+						path.MatchRoot("custom_repo_user"),
+						path.MatchRoot("custom_repo_ssh_key_id"),
+						path.MatchRoot("custom_repo_pass"),
+					}...),
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("integration_id"),
+						path.MatchRoot("external_project_id"),
+					}...),
 				},
 			},
-			"name": {
-				Description: "The project's unique name ID",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"html_url": {
-				Description: "The project's URL",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"status": {
-				Description: "The project's status. Possible values: `CLOSED`, `ACTIVE`",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"create_date": {
-				Description: "The project's date of creation",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"created_by": {
-				Description: "The project's creator",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"html_url": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"member_id": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"email": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"admin": {
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
-						"workspace_owner": {
-							Type:     schema.TypeBool,
-							Computed: true,
-						},
-						"avatar_url": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+			"custom_repo_url": schema.StringAttribute{
+				MarkdownDescription: "The project's custom repository URL. Needed when cloning from a custom repository",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("integration_id"),
+						path.MatchRoot("external_project_id"),
+						path.MatchRoot("git_lab_project_id"),
+					}...),
 				},
 			},
-			"http_repository": {
-				Description: "The project's Git HTTP endpoint",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"custom_repo_ssh_key_id": schema.Int64Attribute{
+				MarkdownDescription: "The project's custom repository SSH key ID. Needed when cloning from a custom repository",
+				Optional:            true,
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.Expressions{
+						path.MatchRoot("integration_id"),
+						path.MatchRoot("external_project_id"),
+						path.MatchRoot("git_lab_project_id"),
+					}...),
+					int64validator.AlsoRequires(path.Expressions{
+						path.MatchRoot("custom_repo_url"),
+					}...),
+				},
 			},
-			"ssh_repository": {
-				Description: "The project's Git SSH endpoint",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"custom_repo_user": schema.StringAttribute{
+				MarkdownDescription: "The project's custom repository user. Needed when cloning from a custom repository",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("integration_id"),
+						path.MatchRoot("external_project_id"),
+						path.MatchRoot("git_lab_project_id"),
+					}...),
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("custom_repo_url"),
+						path.MatchRoot("custom_repo_pass"),
+					}...),
+				},
 			},
-			"default_branch": {
-				Description: "The project's Git default branch",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"custom_repo_pass": schema.StringAttribute{
+				MarkdownDescription: "The project's custom repository password. Needed when cloning from a custom repository",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("integration_id"),
+						path.MatchRoot("external_project_id"),
+						path.MatchRoot("git_lab_project_id"),
+					}...),
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("custom_repo_url"),
+						path.MatchRoot("custom_repo_user"),
+					}...),
+				},
+			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The project's unique name ID",
+				Computed:            true,
+			},
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The project's URL",
+				Computed:            true,
+			},
+			"status": schema.StringAttribute{
+				MarkdownDescription: "The project's status. Possible values: `CLOSED`, `ACTIVE`",
+				Computed:            true,
+			},
+			"create_date": schema.StringAttribute{
+				MarkdownDescription: "The project's date of creation",
+				Computed:            true,
+			},
+			"http_repository": schema.StringAttribute{
+				MarkdownDescription: "The project's Git HTTP endpoint",
+				Computed:            true,
+			},
+			"ssh_repository": schema.StringAttribute{
+				MarkdownDescription: "The project's Git SSH endpoint",
+				Computed:            true,
+			},
+			"default_branch": schema.StringAttribute{
+				MarkdownDescription: "The project's Git default branch",
+				Computed:            true,
+			},
+			"created_by": schema.SingleNestedAttribute{
+				MarkdownDescription: "The project's creator",
+				Computed:            true,
+				Attributes:          util.MemberTypeComputedAttributes(),
 			},
 		},
 	}
 }
 
-func deleteContextProject(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	domain, name, err := util.DecomposeDoubleId(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+func (r *projectResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
-	_, err = c.ProjectService.Delete(domain, name)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
+	r.client = req.ProviderData.(*buddy.Client)
 }
 
-func updateContextProject(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	domain, name, err := util.DecomposeDoubleId(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+func (r *projectResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *projectResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	u := buddy.ProjectUpdateOps{
-		DisplayName: util.InterfaceStringToPointer(d.Get("display_name")),
+	domain := data.Domain.ValueString()
+	ops := buddy.ProjectCreateOps{
+		DisplayName: data.DisplayName.ValueStringPointer(),
 	}
-	if d.HasChange("update_default_branch_from_external") {
-		u.UpdateDefaultBranchFromExternal = util.InterfaceBoolToPointer(d.Get("update_default_branch_from_external"))
-	}
-	if d.HasChange("allow_pull_requests") {
-		u.AllowPullRequests = util.InterfaceBoolToPointer(d.Get("allow_pull_requests"))
-	}
-	if d.HasChange("access") {
-		u.Access = util.InterfaceStringToPointer(d.Get("access"))
-	}
-	if d.HasChanges("fetch_submodules", "fetch_submodules_env_key") {
-		u.FetchSubmodules = util.InterfaceBoolToPointer(d.Get("fetch_submodules"))
-		u.FetchSubmodulesEnvKey = util.InterfaceStringToPointer(d.Get("fetch_submodules_env_key"))
-	}
-	p, _, err := c.ProjectService.Update(domain, name, &u)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	d.SetId(util.ComposeDoubleId(domain, p.Name))
-	return readContextProject(ctx, d, meta)
-}
-
-func readContextProject(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	domain, name, err := util.DecomposeDoubleId(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	p, resp, err := c.ProjectService.Get(domain, name)
-	if err != nil {
-		if util.IsResourceNotFound(resp, err) {
-			d.SetId("")
-			return diags
-		}
-		return diag.FromErr(err)
-	}
-	err = util.ApiProjectToResourceData(domain, p, d, false)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
-}
-
-func createContextProject(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	domain := d.Get("domain").(string)
-	opt := buddy.ProjectCreateOps{
-		DisplayName: util.InterfaceStringToPointer(d.Get("display_name")),
-	}
-	if integrationId, ok := d.GetOk("integration_id"); ok {
-		opt.Integration = &buddy.ProjectIntegration{
-			HashId: integrationId.(string),
+	if !data.IntegrationId.IsNull() && !data.IntegrationId.IsUnknown() {
+		ops.Integration = &buddy.ProjectIntegration{
+			HashId: data.IntegrationId.ValueString(),
 		}
 	}
-	if externalProjectId, ok := d.GetOk("external_project_id"); ok {
-		opt.ExternalProjectId = util.InterfaceStringToPointer(externalProjectId)
+	if !data.ExternalProjectId.IsNull() && !data.ExternalProjectId.IsUnknown() {
+		ops.ExternalProjectId = data.ExternalProjectId.ValueStringPointer()
 	}
-	if gitLabProjectId, ok := d.GetOk("git_lab_project_id"); ok {
-		opt.GitLabProjectId = util.InterfaceStringToPointer(gitLabProjectId)
+	if !data.GitLabProjectId.IsNull() && !data.GitLabProjectId.IsUnknown() {
+		ops.GitLabProjectId = data.GitLabProjectId.ValueStringPointer()
 	}
-	if customRepoUrl, ok := d.GetOk("custom_repo_url"); ok {
-		opt.CustomRepoUrl = util.InterfaceStringToPointer(customRepoUrl)
+	if !data.CustomRepoUrl.IsNull() && !data.CustomRepoUrl.IsUnknown() {
+		ops.CustomRepoUrl = data.CustomRepoUrl.ValueStringPointer()
 	}
-	if customRepoUser, ok := d.GetOk("custom_repo_user"); ok {
-		opt.CustomRepoUser = util.InterfaceStringToPointer(customRepoUser)
+	if !data.CustomRepoUser.IsNull() && !data.CustomRepoUser.IsUnknown() {
+		ops.CustomRepoUser = data.CustomRepoUser.ValueStringPointer()
 	}
-	if customRepoPass, ok := d.GetOk("custom_repo_pass"); ok {
-		opt.CustomRepoPass = util.InterfaceStringToPointer(customRepoPass)
+	if !data.CustomRepoPass.IsNull() && !data.CustomRepoPass.IsUnknown() {
+		ops.CustomRepoPass = data.CustomRepoPass.ValueStringPointer()
 	}
-	if customRepoSshKeyId, ok := d.GetOk("custom_repo_ssh_key_id"); ok {
-		opt.CustomRepoSshKeyId = util.InterfaceIntToPointer(customRepoSshKeyId)
+	if !data.CustomRepoSshKeyId.IsNull() && !data.CustomRepoSshKeyId.IsUnknown() {
+		ops.CustomRepoSshKeyId = util.PointerInt(data.CustomRepoSshKeyId.ValueInt64())
 	}
-	if access, ok := d.GetOk("access"); ok {
-		opt.Access = util.InterfaceStringToPointer(access)
+	if !data.Access.IsNull() && !data.Access.IsUnknown() {
+		ops.Access = data.Access.ValueStringPointer()
 	}
-	if fetchSubmodulesEnv, ok := d.GetOk("fetch_submodules_env_key"); ok {
-		opt.FetchSubmodulesEnvKey = util.InterfaceStringToPointer(fetchSubmodulesEnv)
+	if !data.FetchSubmodulesEnvKey.IsNull() && !data.FetchSubmodulesEnvKey.IsUnknown() {
+		ops.FetchSubmodulesEnvKey = data.FetchSubmodulesEnvKey.ValueStringPointer()
 	}
-	if withoutRepository, ok := d.GetOk("without_repository"); ok {
-		opt.WithoutRepository = util.InterfaceBoolToPointer(withoutRepository)
+	if !data.WithoutRepository.IsNull() && !data.WithoutRepository.IsUnknown() {
+		ops.WithoutRepository = data.WithoutRepository.ValueBoolPointer()
 	}
-	updateDefaultBranch := d.Get("update_default_branch_from_external")
-	if util.IsBoolPointerSet(updateDefaultBranch) {
-		opt.UpdateDefaultBranchFromExternal = util.InterfaceBoolToPointer(updateDefaultBranch)
+	if !data.UpdateDefaultBranchFromExternal.IsNull() && !data.UpdateDefaultBranchFromExternal.IsUnknown() {
+		ops.UpdateDefaultBranchFromExternal = data.UpdateDefaultBranchFromExternal.ValueBoolPointer()
 	}
-	allowPullRequests := d.Get("allow_pull_requests")
-	if util.IsBoolPointerSet(allowPullRequests) {
-		opt.AllowPullRequests = util.InterfaceBoolToPointer(allowPullRequests)
+	if !data.AllowPullRequests.IsNull() && !data.AllowPullRequests.IsUnknown() {
+		ops.AllowPullRequests = data.AllowPullRequests.ValueBoolPointer()
 	}
-	fetchSubmodules := d.Get("fetch_submodules")
-	if util.IsBoolPointerSet(fetchSubmodules) {
-		opt.FetchSubmodules = util.InterfaceBoolToPointer(fetchSubmodules)
+	if !data.FetchSubmodules.IsNull() && !data.FetchSubmodules.IsUnknown() {
+		ops.FetchSubmodules = data.FetchSubmodules.ValueBoolPointer()
 	}
-	project, _, err := c.ProjectService.Create(domain, &opt)
+	project, _, err := r.client.ProjectService.Create(domain, &ops)
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("create project", err))
+		return
 	}
-	d.SetId(util.ComposeDoubleId(domain, project.Name))
-	return readContextProject(ctx, d, meta)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, project)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *projectResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *projectResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, projectName, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("project", err))
+		return
+	}
+	project, httpResp, err := r.client.ProjectService.Get(domain, projectName)
+	if err != nil {
+		if util.IsResourceNotFound(httpResp, err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get project", err))
+		return
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, project)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *projectResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *projectResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, projectName, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("project", err))
+		return
+	}
+	ops := buddy.ProjectUpdateOps{
+		DisplayName: data.DisplayName.ValueStringPointer(),
+	}
+	if !data.UpdateDefaultBranchFromExternal.IsNull() && !data.UpdateDefaultBranchFromExternal.IsUnknown() {
+		ops.UpdateDefaultBranchFromExternal = data.UpdateDefaultBranchFromExternal.ValueBoolPointer()
+	}
+	if !data.AllowPullRequests.IsNull() && !data.AllowPullRequests.IsUnknown() {
+		ops.AllowPullRequests = data.AllowPullRequests.ValueBoolPointer()
+	}
+	if !data.Access.IsNull() && !data.Access.IsUnknown() {
+		ops.Access = data.Access.ValueStringPointer()
+	}
+	if !data.FetchSubmodules.IsNull() && !data.FetchSubmodules.IsUnknown() {
+		ops.FetchSubmodules = data.FetchSubmodules.ValueBoolPointer()
+	}
+	if !data.FetchSubmodulesEnvKey.IsNull() && !data.FetchSubmodulesEnvKey.IsUnknown() {
+		ops.FetchSubmodulesEnvKey = data.FetchSubmodulesEnvKey.ValueStringPointer()
+	}
+	project, _, err := r.client.ProjectService.Update(domain, projectName, &ops)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("update project", err))
+		return
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, project)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *projectResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *projectResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, projectName, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("project", err))
+		return
+	}
+	_, err = r.client.ProjectService.Delete(domain, projectName)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete project", err))
+	}
+}
+
+func (r *projectResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

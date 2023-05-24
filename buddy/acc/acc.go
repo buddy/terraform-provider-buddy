@@ -3,19 +3,20 @@ package acc
 import (
 	"buddy-terraform/buddy/provider"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-framework/providerserver"
+	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"os"
 	"testing"
 )
 
+var ProviderFactories map[string]func() (tfprotov6.ProviderServer, error)
 var ApiClient *buddy.Client
-var ProviderFactories map[string]func() (*schema.Provider, error)
 
 func init() {
 	ApiClient, _ = buddy.NewClient(os.Getenv("BUDDY_TOKEN"), os.Getenv("BUDDY_BASE_URL"), os.Getenv("BUDDY_INSECURE") == "true")
-	ProviderFactories = map[string]func() (*schema.Provider, error){
-		"buddy": func() (*schema.Provider, error) { return provider.Provider(), nil },
+	ProviderFactories = map[string]func() (tfprotov6.ProviderServer, error){
+		"buddy": providerserver.NewProtocol6WithError(provider.New("test")()),
 	}
 }
 

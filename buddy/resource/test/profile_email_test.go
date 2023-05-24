@@ -5,11 +5,13 @@ import (
 	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"testing"
 )
+
+// todo upgrade profile email test
 
 func TestAccProfileEmail(t *testing.T) {
 	var pe buddy.ProfileEmail
@@ -19,8 +21,8 @@ func TestAccProfileEmail(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProfileEmailCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProfileEmailCheckDestroy,
 		Steps: []resource.TestStep{
 			// create email
 			{
@@ -96,7 +98,7 @@ func testAccProfileEmailGet(n string, pe *buddy.ProfileEmail) resource.TestCheck
 func testAccProfileEmailConfig(email string) string {
 	return fmt.Sprintf(`
 resource "buddy_profile_email" "foo" {
-    email = "%s"
+   email = "%s"
 }
 `, email)
 }

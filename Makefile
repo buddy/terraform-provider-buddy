@@ -32,6 +32,7 @@ lint: fmt tfprovider golangci
 
 docs:
 	go run github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs
+	terraform fmt -recursive ./examples/
 
 golangci:
 	go run github.com/golangci/golangci-lint/cmd/golangci-lint run ./...

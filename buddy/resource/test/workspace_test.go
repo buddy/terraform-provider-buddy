@@ -5,13 +5,31 @@ import (
 	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"testing"
 )
 
-func TestAccWorkspace(t *testing.T) {
+// todo workspace upgrade test
+
+func testAccWorkspaceCheckDestroy(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "buddy_workspace" {
+			continue
+		}
+		workspace, resp, err := acc.ApiClient.WorkspaceService.Get(rs.Primary.ID)
+		if err == nil && workspace != nil {
+			return util.ErrorResourceExists()
+		}
+		if !util.IsResourceNotFound(resp, err) {
+			return err
+		}
+	}
+	return nil
+}
+
+func TestAcc_Workspace(t *testing.T) {
 	var workspace buddy.Workspace
 	domain := util.UniqueString()
 	salt := util.RandString(10)
@@ -20,8 +38,8 @@ func TestAccWorkspace(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccWorkspaceCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccWorkspaceCheckDestroy,
 		Steps: []resource.TestStep{
 			// create
 			{
@@ -47,22 +65,6 @@ func TestAccWorkspace(t *testing.T) {
 			},
 		},
 	})
-}
-
-func testAccWorkspaceCheckDestroy(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "buddy_workspace" {
-			continue
-		}
-		workspace, resp, err := acc.ApiClient.WorkspaceService.Get(rs.Primary.ID)
-		if err == nil && workspace != nil {
-			return util.ErrorResourceExists()
-		}
-		if !util.IsResourceNotFound(resp, err) {
-			return err
-		}
-	}
-	return nil
 }
 
 func testAccWorkspaceAttributes(n string, workspace *buddy.Workspace, domain string, name string) resource.TestCheckFunc {
@@ -122,16 +124,16 @@ func testAccWorkspaceGet(n string, workspace *buddy.Workspace) resource.TestChec
 
 func testAccWorkspaceConfig(domain string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}`, domain)
+        resource "buddy_workspace" "foo" {
+            domain = "%s"
+        }`, domain)
 }
 
 func testAccWorkspaceConfigFull(domain string, salt string, name string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-	name = "%s"
-	encryption_salt = "%s"
-}`, domain, name, salt)
+		resource "buddy_workspace" "foo" {
+   			domain = "%s"
+			name = "%s"
+			encryption_salt = "%s"
+		}`, domain, name, salt)
 }

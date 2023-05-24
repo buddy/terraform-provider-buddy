@@ -5,19 +5,21 @@ import (
 	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"testing"
 )
+
+// todo profile upgrade test
 
 func TestAccProfile(t *testing.T) {
 	var profile buddy.Profile
 	r := util.RandInt()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acc.PreCheck(t) },
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      acc.DummyCheckDestroy,
+		PreCheck:                 func() { acc.PreCheck(t) },
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
 		Steps: []resource.TestStep{
 			// update
 			{
@@ -84,6 +86,6 @@ func testAccProfileGet(profile *buddy.Profile) resource.TestCheckFunc {
 func testAccProfileUpdateConfig(r int) string {
 	return fmt.Sprintf(`
 resource "buddy_profile" "me" {
-    name	= "aaaa %d"
+   name	= "aaaa %d"
 }`, r)
 }

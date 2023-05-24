@@ -1,17 +1,37 @@
 package test
 
 import (
-	"buddy-terraform/buddy/provider"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"buddy-terraform/buddy/acc"
+	"buddy-terraform/buddy/util"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"testing"
 )
 
-func TestAccProvider(t *testing.T) {
-	if err := provider.Provider().InternalValidate(); err != nil {
-		t.Fatalf("err: %s", err)
-	}
-}
-
-func TestAccProvider_imp(t *testing.T) {
-	var _ *schema.Provider = provider.Provider()
+// todo move to workspace test
+func TestAcc_Provider_UpgradeLatestMajor(t *testing.T) {
+	config := fmt.Sprintf(`
+		resource "buddy_workspace" "test" {
+         domain = "%s"
+       }
+	`, util.UniqueString())
+	//lintignore:AT001
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			// test migrating
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+			},
+		},
+	})
 }
