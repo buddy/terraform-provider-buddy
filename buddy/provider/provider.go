@@ -116,10 +116,12 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewProfilePublicKeyResource,
 		buddyresource.NewIntegrationResource,
 		buddyresource.NewProjectResource,
+		buddyresource.NewProjectGroupResource,
+		buddyresource.NewProjectMemberResource,
 	}
 }
 
-func (p *BuddyProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
+func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{}
 }
 

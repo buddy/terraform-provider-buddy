@@ -317,6 +317,8 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	if !data.PartnerToken.IsNull() && !data.PartnerToken.IsUnknown() {
 		ops.PartnerToken = data.PartnerToken.ValueStringPointer()
+		authType := buddy.IntegrationAuthTypeTokenAppExtension
+		ops.AuthType = &authType
 	}
 	if !data.AccessKey.IsNull() && !data.AccessKey.IsUnknown() {
 		ops.AccessKey = data.AccessKey.ValueStringPointer()
@@ -413,6 +415,8 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	if !data.PartnerToken.IsNull() && !data.PartnerToken.IsUnknown() {
 		ops.PartnerToken = data.PartnerToken.ValueStringPointer()
+		authType := buddy.IntegrationAuthTypeTokenAppExtension
+		ops.AuthType = &authType
 	}
 	if !data.AccessKey.IsNull() && !data.AccessKey.IsUnknown() {
 		ops.AccessKey = data.AccessKey.ValueStringPointer()

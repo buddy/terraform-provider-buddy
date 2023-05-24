@@ -1450,6 +1450,41 @@ func IsResourceNotFound(resp *http.Response, err error) bool {
 	return false
 }
 
+type PermissionType struct {
+	HtmlUrl                types.String `tfsdk:"html_url"`
+	PermissionId           types.Int64  `tfsdk:"permission_id"`
+	Name                   types.String `tfsdk:"name"`
+	Type                   types.String `tfsdk:"type"`
+	PipelineAccessLevel    types.String `tfsdk:"pipeline_access_level"`
+	ProjectTeamAccessLevel types.String `tfsdk:"project_team_access_level"`
+	RepositoryAccessLevel  types.String `tfsdk:"repository_access_level"`
+	SandboxAccessLevel     types.String `tfsdk:"sandbox_access_level"`
+}
+
+func (r *PermissionType) AttrTypes() map[string]attr.Type {
+	return map[string]attr.Type{
+		"html_url":                  types.StringType,
+		"permission_id":             types.Int64Type,
+		"name":                      types.StringType,
+		"type":                      types.StringType,
+		"pipeline_access_level":     types.StringType,
+		"project_team_access_level": types.StringType,
+		"repository_access_level":   types.StringType,
+		"sandbox_access_level":      types.StringType,
+	}
+}
+
+func (r *PermissionType) LoadAPI(permission *buddy.Permission) {
+	r.HtmlUrl = types.StringValue(permission.HtmlUrl)
+	r.PermissionId = types.Int64Value(int64(permission.Id))
+	r.Name = types.StringValue(permission.Name)
+	r.Type = types.StringValue(permission.Type)
+	r.PipelineAccessLevel = types.StringValue(permission.PipelineAccessLevel)
+	r.ProjectTeamAccessLevel = types.StringValue(permission.ProjectTeamAccessLevel)
+	r.RepositoryAccessLevel = types.StringValue(permission.RepositoryAccessLevel)
+	r.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
+}
+
 type MemberType struct {
 	HtmlUrl        types.String `tfsdk:"html_url"`
 	MemberId       types.Int64  `tfsdk:"member_id"`
@@ -1482,6 +1517,35 @@ func (r *MemberType) LoadAPI(member *buddy.Member) {
 	r.AvatarUrl = types.StringValue(member.AvatarUrl)
 }
 
+func PermissionTypeComputedAttributes() map[string]schema.Attribute {
+	return map[string]schema.Attribute{
+		"html_url": schema.StringAttribute{
+			Computed: true,
+		},
+		"permission_id": schema.Int64Attribute{
+			Computed: true,
+		},
+		"name": schema.StringAttribute{
+			Computed: true,
+		},
+		"type": schema.StringAttribute{
+			Computed: true,
+		},
+		"pipeline_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"project_team_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"repository_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"sandbox_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+	}
+}
+
 func MemberTypeComputedAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"html_url": schema.StringAttribute{
@@ -1506,6 +1570,12 @@ func MemberTypeComputedAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 	}
+}
+
+func PermissionTypeValueFrom(ctx context.Context, permission *buddy.Permission) (basetypes.ObjectValue, diag.Diagnostics) {
+	m := PermissionType{}
+	m.LoadAPI(permission)
+	return types.ObjectValueFrom(ctx, m.AttrTypes(), &m)
 }
 
 func MemberTypeValueFrom(ctx context.Context, member *buddy.Member) (basetypes.ObjectValue, diag.Diagnostics) {
