@@ -1,122 +1,274 @@
 package resource
 
-// todo webhook
+import (
+	"buddy-terraform/buddy/util"
+	"context"
+	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strconv"
+)
 
-//
-//import (
-//	"buddy-terraform/buddy/util"
-//	"context"
-//	"github.com/buddy/api-go-sdk/buddy"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-//	"strconv"
-//)
-//
-//func Webhook() *schema.Resource {
-//	return &schema.Resource{
-//		Description: "Create and manage a workspace webhook\n\n" +
-//			"Workspace administrator rights are required\n\n" +
-//			"Token scopes required: `WORKSPACE`, `WEBHOOK_ADD`, `WEBHOOK_MANAGE`, `WEBHOOK_INFO`",
-//		CreateContext: createContextWebhook,
-//		ReadContext:   readContextWebhook,
-//		DeleteContext: deleteContextWebhook,
-//		UpdateContext: updateContextWebhook,
-//		Importer: &schema.ResourceImporter{
-//			StateContext: schema.ImportStatePassthroughContext,
-//		},
-//		Schema: map[string]*schema.Schema{
-//			"id": {
-//				Description: "The Terraform resource identifier for this item",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"domain": {
-//				Description:  "The workspace's URL handle",
-//				Type:         schema.TypeString,
-//				Required:     true,
-//				ForceNew:     true,
-//				ValidateFunc: util.ValidateDomain,
-//			},
-//			"events": {
-//				Description: "The webhook's event's list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`",
-//				Type:        schema.TypeSet,
-//				Required:    true,
-//				MinItems:    1,
-//				Elem: &schema.Schema{
-//					Type: schema.TypeString,
-//					ValidateFunc: validation.StringInSlice([]string{
-//						buddy.WebhookEventPush,
-//						buddy.WebhookEventExecutionStarted,
-//						buddy.WebhookEventExecutionSuccessful,
-//						buddy.WebhookEventExecutionFailed,
-//						buddy.WebhookEventExecutionFinished,
-//					}, false),
-//				},
-//			},
-//			"projects": {
-//				Description: "To which projects the webhook should be assigned. If left empty all projects will be used",
-//				Type:        schema.TypeSet,
-//				Required:    true,
-//				MinItems:    0,
-//				Elem: &schema.Schema{
-//					Type: schema.TypeString,
-//				},
-//			},
-//			"target_url": {
-//				Description: "The webhook's target URL",
-//				Type:        schema.TypeString,
-//				Required:    true,
-//			},
-//			"secret_key": {
-//				Description: "The webhook's secret value sent in the payload",
-//				Type:        schema.TypeString,
-//				Optional:    true,
-//			},
-//			"webhook_id": {
-//				Description: "The webhook's ID",
-//				Type:        schema.TypeInt,
-//				Computed:    true,
-//			},
-//			"html_url": {
-//				Description: "The webhook's URL",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//		},
-//	}
-//}
-//
-//func updateContextWebhook(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	domain, wid, err := util.DecomposeDoubleId(d.Id())
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	webhookId, err := strconv.Atoi(wid)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	opt := buddy.WebhookOps{}
-//	if d.HasChange("target_url") {
-//		opt.TargetUrl = util.InterfaceStringToPointer(d.Get("target_url"))
-//	}
-//	if d.HasChange("events") {
-//		opt.Events = util.InterfaceStringSetToPointer(d.Get("events"))
-//	}
-//	if d.HasChange("secret_key") {
-//		opt.SecretKey = util.InterfaceStringToPointer(d.Get("secret_key"))
-//	}
-//	if d.HasChange("target_url") {
-//		opt.TargetUrl = util.InterfaceStringToPointer(d.Get("target_url"))
-//	}
-//	_, _, err = c.WebhookService.Update(domain, webhookId, &opt)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return readContextWebhook(ctx, d, meta)
-//}
-//
+var (
+	_ resource.Resource                = &webhookResource{}
+	_ resource.ResourceWithConfigure   = &webhookResource{}
+	_ resource.ResourceWithImportState = &webhookResource{}
+)
+
+func NewWebhookResource() resource.Resource {
+	return &webhookResource{}
+}
+
+type webhookResource struct {
+	client *buddy.Client
+}
+
+type webhookResourceModel struct {
+	ID        types.String `tfsdk:"id"`
+	Domain    types.String `tfsdk:"domain"`
+	TargetUrl types.String `tfsdk:"target_url"`
+	SecretKey types.String `tfsdk:"secret_key"`
+	Events    types.Set    `tfsdk:"events"`
+	Projects  types.Set    `tfsdk:"projects"`
+	WebhookId types.Int64  `tfsdk:"webhook_id"`
+	HtmlUrl   types.String `tfsdk:"html_url"`
+}
+
+func (r *webhookResourceModel) decomposeId() (string, int, error) {
+	domain, wid, err := util.DecomposeDoubleId(r.ID.ValueString())
+	if err != nil {
+		return "", 0, err
+	}
+	webhookId, err := strconv.Atoi(wid)
+	if err != nil {
+		return "", 0, err
+	}
+	return domain, webhookId, nil
+}
+
+func (r *webhookResourceModel) loadAPI(ctx context.Context, domain string, webhook *buddy.Webhook) diag.Diagnostics {
+	r.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(webhook.Id)))
+	r.Domain = types.StringValue(domain)
+	r.TargetUrl = types.StringValue(webhook.TargetUrl)
+	r.SecretKey = types.StringValue(webhook.SecretKey)
+	r.HtmlUrl = types.StringValue(webhook.HtmlUrl)
+	r.WebhookId = types.Int64Value(int64(webhook.Id))
+	events, eventsDiags := types.SetValueFrom(ctx, types.StringType, &webhook.Events)
+	r.Events = events
+	projects, projectsDiags := types.SetValueFrom(ctx, types.StringType, &webhook.Projects)
+	r.Projects = projects
+	eventsDiags.Append(projectsDiags...)
+	return eventsDiags
+}
+
+func (r *webhookResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_webhook"
+}
+
+func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Create and manage a workspace webhook\n\n" +
+			"Workspace administrator rights are required\n\n" +
+			"Token scopes required: `WORKSPACE`, `WEBHOOK_ADD`, `WEBHOOK_MANAGE`, `WEBHOOK_INFO`",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"target_url": schema.StringAttribute{
+				MarkdownDescription: "The webhook's target URL",
+				Required:            true,
+			},
+			"secret_key": schema.StringAttribute{
+				MarkdownDescription: "The webhook's secret value sent in the payload",
+				Optional:            true,
+				Computed:            true,
+				Sensitive:           true,
+			},
+			"events": schema.SetAttribute{
+				MarkdownDescription: "The webhook's event's list. Allowed: `PUSH`, `EXECUTION_STARTED`, `EXECUTION_SUCCESSFUL`, `EXECUTION_FAILED`, `EXECUTION_FINISHED`",
+				Required:            true,
+				ElementType:         types.StringType,
+				Validators: []validator.Set{
+					setvalidator.SizeAtLeast(1),
+					setvalidator.ValueStringsAre(stringvalidator.OneOf(
+						buddy.WebhookEventPush,
+						buddy.WebhookEventExecutionStarted,
+						buddy.WebhookEventExecutionSuccessful,
+						buddy.WebhookEventExecutionFailed,
+						buddy.WebhookEventExecutionFinished,
+					)),
+				},
+			},
+			"projects": schema.SetAttribute{
+				MarkdownDescription: "To which projects the webhook should be assigned. If left empty all projects will be used",
+				Required:            true,
+				ElementType:         types.StringType,
+			},
+			"webhook_id": schema.Int64Attribute{
+				MarkdownDescription: "The webhook's ID",
+				Computed:            true,
+			},
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The webhook's URL",
+				Computed:            true,
+			},
+		},
+	}
+}
+
+func (r *webhookResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	r.client = req.ProviderData.(*buddy.Client)
+}
+
+func (r *webhookResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *webhookResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
+	var events []string
+	resp.Diagnostics.Append(data.Events.ElementsAs(ctx, &events, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	var projects []string
+	resp.Diagnostics.Append(data.Projects.ElementsAs(ctx, &projects, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ops := buddy.WebhookOps{
+		TargetUrl: data.TargetUrl.ValueStringPointer(),
+		Events:    &events,
+		Projects:  &projects,
+	}
+	if !data.SecretKey.IsNull() && !data.SecretKey.IsUnknown() {
+		ops.SecretKey = data.SecretKey.ValueStringPointer()
+	}
+	webhook, _, err := r.client.WebhookService.Create(domain, &ops)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("create webhook", err))
+		return
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, webhook)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *webhookResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *webhookResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, webhookId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("webhook", err))
+		return
+	}
+	webhook, httpResp, err := r.client.WebhookService.Get(domain, webhookId)
+	if err != nil {
+		if util.IsResourceNotFound(httpResp, err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get webhook", err))
+		return
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, webhook)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *webhookResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, webhookId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("webhook", err))
+		return
+	}
+	var events []string
+	resp.Diagnostics.Append(data.Events.ElementsAs(ctx, &events, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	var projects []string
+	resp.Diagnostics.Append(data.Projects.ElementsAs(ctx, &projects, false)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ops := buddy.WebhookOps{
+		TargetUrl: data.TargetUrl.ValueStringPointer(),
+		Events:    &events,
+		Projects:  &projects,
+	}
+	if !data.SecretKey.IsNull() && !data.SecretKey.IsUnknown() {
+		ops.SecretKey = data.SecretKey.ValueStringPointer()
+	}
+	webhook, _, err := r.client.WebhookService.Update(domain, webhookId, &ops)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("update webhook", err))
+		return
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, webhook)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *webhookResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *webhookResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, webhookId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("webhook", err))
+		return
+	}
+	_, err = r.client.WebhookService.Delete(domain, webhookId)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete webhook", err))
+	}
+}
+
+func (r *webhookResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
 //func deleteContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
 //	c := meta.(*buddy.Client)
 //	var diags diag.Diagnostics
@@ -133,51 +285,4 @@ package resource
 //		return diag.FromErr(err)
 //	}
 //	return diags
-//}
-//
-//func readContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	var diags diag.Diagnostics
-//	domain, wid, err := util.DecomposeDoubleId(d.Id())
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	webhookId, err := strconv.Atoi(wid)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	w, resp, err := c.WebhookService.Get(domain, webhookId)
-//	if err != nil {
-//		if util.IsResourceNotFound(resp, err) {
-//			d.SetId("")
-//			return diags
-//		}
-//		return diag.FromErr(err)
-//	}
-//	err = util.ApiWebhookToResourceData(domain, w, d, false)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return diags
-//}
-//
-//func createContextWebhook(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	domain := d.Get("domain").(string)
-//	opt := buddy.WebhookOps{
-//		TargetUrl: util.InterfaceStringToPointer(d.Get("target_url")),
-//		Events:    util.InterfaceStringSetToPointer(d.Get("events")),
-//	}
-//	if secretKey, ok := d.GetOk("secret_key"); ok {
-//		opt.SecretKey = util.InterfaceStringToPointer(secretKey)
-//	}
-//	if projects, ok := d.GetOk("projects"); ok {
-//		opt.Projects = util.InterfaceStringSetToPointer(projects)
-//	}
-//	webhook, _, err := c.WebhookService.Create(domain, &opt)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	d.SetId(util.ComposeDoubleId(domain, strconv.Itoa(webhook.Id)))
-//	return readContextWebhook(ctx, d, meta)
 //}
