@@ -150,20 +150,20 @@ func (r *webhookResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 	domain := data.Domain.ValueString()
-	var events []string
-	resp.Diagnostics.Append(data.Events.ElementsAs(ctx, &events, false)...)
+	events, d := util.StringSetToApi(ctx, &data.Events)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var projects []string
-	resp.Diagnostics.Append(data.Projects.ElementsAs(ctx, &projects, false)...)
+	projects, d := util.StringSetToApi(ctx, &data.Projects)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	ops := buddy.WebhookOps{
 		TargetUrl: data.TargetUrl.ValueStringPointer(),
-		Events:    &events,
-		Projects:  &projects,
+		Events:    events,
+		Projects:  projects,
 	}
 	if !data.SecretKey.IsNull() && !data.SecretKey.IsUnknown() {
 		ops.SecretKey = data.SecretKey.ValueStringPointer()
@@ -218,20 +218,20 @@ func (r *webhookResource) Update(ctx context.Context, req resource.UpdateRequest
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("webhook", err))
 		return
 	}
-	var events []string
-	resp.Diagnostics.Append(data.Events.ElementsAs(ctx, &events, false)...)
+	events, d := util.StringSetToApi(ctx, &data.Events)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	var projects []string
-	resp.Diagnostics.Append(data.Projects.ElementsAs(ctx, &projects, false)...)
+	projects, d := util.StringSetToApi(ctx, &data.Projects)
+	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	ops := buddy.WebhookOps{
 		TargetUrl: data.TargetUrl.ValueStringPointer(),
-		Events:    &events,
-		Projects:  &projects,
+		Events:    events,
+		Projects:  projects,
 	}
 	if !data.SecretKey.IsNull() && !data.SecretKey.IsUnknown() {
 		ops.SecretKey = data.SecretKey.ValueStringPointer()
@@ -268,21 +268,3 @@ func (r *webhookResource) Delete(ctx context.Context, req resource.DeleteRequest
 func (r *webhookResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
 	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
-
-//func deleteContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	var diags diag.Diagnostics
-//	domain, wid, err := util.DecomposeDoubleId(d.Id())
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	webhookId, err := strconv.Atoi(wid)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	_, err = c.WebhookService.Delete(domain, webhookId)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return diags
-//}

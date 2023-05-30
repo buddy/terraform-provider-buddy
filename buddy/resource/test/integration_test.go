@@ -527,7 +527,7 @@ resource "buddy_integration" "bar" {
        arn = "arn1"
    }
 
-	role_assumption {
+   role_assumption {
        arn = "arn2"
        external_id = "3"
        duration = 100

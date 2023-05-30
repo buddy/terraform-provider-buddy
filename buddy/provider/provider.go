@@ -122,6 +122,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewVariableResource,
 		buddyresource.NewVariableSshResource,
 		buddyresource.NewWebhookResource,
+		buddyresource.NewPipelineResource,
 	}
 }
 

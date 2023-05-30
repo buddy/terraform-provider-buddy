@@ -80,10 +80,9 @@ func TestAccProject_withoutRepository(t *testing.T) {
 			},
 			// import project
 			{
-				ResourceName:            "buddy_project.bar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"without_repository"},
+				ResourceName:      "buddy_project.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -178,7 +177,7 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 			return fmt.Errorf("not found: %s", n)
 		}
 		attrs := rs.Primary.Attributes
-		attrsCreatedByMemberId, _ := strconv.Atoi(attrs["created_by.member_id"])
+		attrsCreatedByMemberId, _ := strconv.Atoi(attrs["created_by.0.member_id"])
 		attrsUpdateDefaultBranch, _ := strconv.ParseBool(attrs["update_default_branch_from_external"])
 		attrsAllowPullRequests, _ := strconv.ParseBool(attrs["allow_pull_requests"])
 		attrsFetchSubmodules, _ := strconv.ParseBool(attrs["fetch_submodules"])
@@ -241,16 +240,16 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		if err := util.CheckFieldSet("default_branch", attrs["default_branch"]); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("created_by.html_url", attrs["created_by.html_url"], project.CreatedBy.HtmlUrl); err != nil {
+		if err := util.CheckFieldEqualAndSet("created_by.0.html_url", attrs["created_by.0.html_url"], project.CreatedBy.HtmlUrl); err != nil {
 			return err
 		}
-		if err := util.CheckIntFieldEqualAndSet("created_by.member_id", attrsCreatedByMemberId, project.CreatedBy.Id); err != nil {
+		if err := util.CheckIntFieldEqualAndSet("created_by.0.member_id", attrsCreatedByMemberId, project.CreatedBy.Id); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("created_by.name", attrs["created_by.name"], project.CreatedBy.Name); err != nil {
+		if err := util.CheckFieldEqualAndSet("created_by.0.name", attrs["created_by.0.name"], project.CreatedBy.Name); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("created_by.avatar_url", attrs["created_by.avatar_url"], project.CreatedBy.AvatarUrl); err != nil {
+		if err := util.CheckFieldEqualAndSet("created_by.0.avatar_url", attrs["created_by.0.avatar_url"], project.CreatedBy.AvatarUrl); err != nil {
 			return err
 		}
 		return nil

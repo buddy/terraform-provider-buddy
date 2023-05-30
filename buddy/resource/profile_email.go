@@ -93,7 +93,7 @@ func (r *profileEmailResource) Create(ctx context.Context, req resource.CreateRe
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *profileEmailResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+func (r *profileEmailResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {
 	// do nothing
 }
 
@@ -130,7 +130,7 @@ func (r *profileEmailResource) Read(ctx context.Context, req resource.ReadReques
 
 func (r *profileEmailResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
 	var data *profileEmailResourceModel
-	resp.Diagnostics.Append(resp.State.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

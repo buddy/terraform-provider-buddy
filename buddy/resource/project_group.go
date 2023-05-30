@@ -37,7 +37,7 @@ type projectGroupResourceModel struct {
 	PermissionId types.Int64  `tfsdk:"permission_id"`
 	HtmlUrl      types.String `tfsdk:"html_url"`
 	Name         types.String `tfsdk:"name"`
-	Permission   types.Object `tfsdk:"permission"`
+	Permission   types.Set    `tfsdk:"permission"`
 }
 
 func (r *projectGroupResourceModel) loadAPI(ctx context.Context, domain string, projectName string, projectGroup *buddy.ProjectGroup) diag.Diagnostics {
@@ -48,7 +48,8 @@ func (r *projectGroupResourceModel) loadAPI(ctx context.Context, domain string, 
 	r.PermissionId = types.Int64Value(int64(projectGroup.PermissionSet.Id))
 	r.HtmlUrl = types.StringValue(projectGroup.HtmlUrl)
 	r.Name = types.StringValue(projectGroup.Name)
-	permission, diags := util.PermissionTypeValueFrom(ctx, projectGroup.PermissionSet)
+	permissionSet := []*buddy.Permission{projectGroup.PermissionSet}
+	permission, diags := util.PermissionsModelFromApi(ctx, &permissionSet)
 	r.Permission = permission
 	return diags
 }
@@ -116,10 +117,13 @@ func (r *projectGroupResource) Schema(_ context.Context, _ resource.SchemaReques
 				MarkdownDescription: "The group's name",
 				Computed:            true,
 			},
-			"permission": schema.SingleNestedAttribute{
+			// for compatybility it's a set
+			"permission": schema.SetNestedAttribute{
 				MarkdownDescription: "The group's permission in the project",
 				Computed:            true,
-				Attributes:          util.PermissionTypeComputedAttributes(),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.PermissionModelAttributes(),
+				},
 			},
 		},
 	}

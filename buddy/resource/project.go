@@ -52,7 +52,7 @@ type projectResourceModel struct {
 	HtmlUrl                         types.String `tfsdk:"html_url"`
 	Status                          types.String `tfsdk:"status"`
 	CreateDate                      types.String `tfsdk:"create_date"`
-	CreatedBy                       types.Object `tfsdk:"created_by"`
+	CreatedBy                       types.Set    `tfsdk:"created_by"`
 	HttpRepository                  types.String `tfsdk:"http_repository"`
 	SshRepository                   types.String `tfsdk:"ssh_repository"`
 	DefaultBranch                   types.String `tfsdk:"default_branch"`
@@ -83,7 +83,8 @@ func (r *projectResourceModel) loadAPI(ctx context.Context, domain string, proje
 	r.HttpRepository = types.StringValue(project.HttpRepository)
 	r.SshRepository = types.StringValue(project.SshRepository)
 	r.DefaultBranch = types.StringValue(project.DefaultBranch)
-	createdBy, diags := util.MemberTypeValueFrom(ctx, project.CreatedBy)
+	creatorSet := []*buddy.Member{project.CreatedBy}
+	createdBy, diags := util.MembersModelFromApi(ctx, &creatorSet)
 	r.CreatedBy = createdBy
 	return diags
 }
@@ -286,10 +287,13 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				MarkdownDescription: "The project's Git default branch",
 				Computed:            true,
 			},
-			"created_by": schema.SingleNestedAttribute{
+			// for compatybility it's a set
+			"created_by": schema.SetNestedAttribute{
 				MarkdownDescription: "The project's creator",
 				Computed:            true,
-				Attributes:          util.MemberTypeComputedAttributes(),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.MemberModelAttributes(),
+				},
 			},
 		},
 	}

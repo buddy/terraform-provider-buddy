@@ -80,7 +80,7 @@ func testAccProjectGroupAttributes(n string, group *buddy.ProjectGroup, permissi
 		attrs := rs.Primary.Attributes
 		attrsGroupId, _ := strconv.Atoi(attrs["group_id"])
 		attrsPermissionId, _ := strconv.Atoi(attrs["permission_id"])
-		attrsPermissionPermissionId, _ := strconv.Atoi(attrs["permission.permission_id"])
+		attrsPermissionPermissionId, _ := strconv.Atoi(attrs["permission.0.permission_id"])
 		if err := util.CheckIntFieldEqualAndSet("group_id", attrsGroupId, group.Id); err != nil {
 			return err
 		}
@@ -93,28 +93,28 @@ func testAccProjectGroupAttributes(n string, group *buddy.ProjectGroup, permissi
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], group.Name); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.html_url", attrs["permission.html_url"], group.PermissionSet.HtmlUrl); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.html_url", attrs["permission.0.html_url"], group.PermissionSet.HtmlUrl); err != nil {
 			return err
 		}
-		if err := util.CheckIntFieldEqualAndSet("permission.permission_id", attrsPermissionPermissionId, group.PermissionSet.Id); err != nil {
+		if err := util.CheckIntFieldEqualAndSet("permission.0.permission_id", attrsPermissionPermissionId, group.PermissionSet.Id); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.name", attrs["permission.name"], group.PermissionSet.Name); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.name", attrs["permission.0.name"], group.PermissionSet.Name); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.name", attrs["permission.name"], permissionName); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.name", attrs["permission.0.name"], permissionName); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.type", attrs["permission.type"], group.PermissionSet.Type); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.type", attrs["permission.0.type"], group.PermissionSet.Type); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.pipeline_access_level", attrs["permission.pipeline_access_level"], group.PermissionSet.PipelineAccessLevel); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.pipeline_access_level", attrs["permission.0.pipeline_access_level"], group.PermissionSet.PipelineAccessLevel); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.repository_access_level", attrs["permission.repository_access_level"], group.PermissionSet.RepositoryAccessLevel); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.repository_access_level", attrs["permission.0.repository_access_level"], group.PermissionSet.RepositoryAccessLevel); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("permission.sandbox_access_level", attrs["permission.sandbox_access_level"], group.PermissionSet.SandboxAccessLevel); err != nil {
+		if err := util.CheckFieldEqualAndSet("permission.0.sandbox_access_level", attrs["permission.0.sandbox_access_level"], group.PermissionSet.SandboxAccessLevel); err != nil {
 			return err
 		}
 		return nil

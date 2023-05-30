@@ -5,7 +5,6 @@ import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -30,53 +29,27 @@ type integrationResource struct {
 }
 
 type integrationResourceModel struct {
-	ID             types.String `tfsdk:"id"`
-	Domain         types.String `tfsdk:"domain"`
-	Name           types.String `tfsdk:"name"`
-	Type           types.String `tfsdk:"type"`
-	Scope          types.String `tfsdk:"scope"`
-	ProjectName    types.String `tfsdk:"project_name"`
-	GroupId        types.Int64  `tfsdk:"group_id"`
-	Username       types.String `tfsdk:"username"`
-	Shop           types.String `tfsdk:"shop"`
-	Token          types.String `tfsdk:"token"`
-	PartnerToken   types.String `tfsdk:"partner_token"`
-	AccessKey      types.String `tfsdk:"access_key"`
-	SecretKey      types.String `tfsdk:"secret_key"`
-	AppId          types.String `tfsdk:"app_id"`
-	TenantId       types.String `tfsdk:"tenant_id"`
-	Password       types.String `tfsdk:"password"`
-	ApiKey         types.String `tfsdk:"api_key"`
-	Email          types.String `tfsdk:"email"`
-	RoleAssumption types.List   `tfsdk:"role_assumption"`
-	IntegrationId  types.String `tfsdk:"integration_id"`
-	HtmlUrl        types.String `tfsdk:"html_url"`
-}
-
-type roleAssumptionModel struct {
-	Arn        types.String `tfsdk:"arn"`
-	ExternalId types.String `tfsdk:"external_id"`
-	Duration   types.Int64  `tfsdk:"duration"`
-}
-
-func (r *integrationResourceModel) roleAssumptionToAPI(ctx context.Context) (*[]*buddy.RoleAssumption, diag.Diagnostics) {
-	var ram []roleAssumptionModel
-	diags := r.RoleAssumption.ElementsAs(ctx, &ram, false)
-	roleAssumptions := make([]*buddy.RoleAssumption, len(ram))
-	for i, v := range ram {
-		ra := &buddy.RoleAssumption{}
-		if !v.Arn.IsNull() && !v.Arn.IsUnknown() {
-			ra.Arn = v.Arn.ValueString()
-		}
-		if !v.ExternalId.IsNull() && !v.ExternalId.IsUnknown() {
-			ra.ExternalId = v.ExternalId.ValueString()
-		}
-		if !v.Duration.IsNull() && !v.Duration.IsUnknown() {
-			ra.Duration = int(v.Duration.ValueInt64())
-		}
-		roleAssumptions[i] = ra
-	}
-	return &roleAssumptions, diags
+	ID              types.String `tfsdk:"id"`
+	Domain          types.String `tfsdk:"domain"`
+	Name            types.String `tfsdk:"name"`
+	Type            types.String `tfsdk:"type"`
+	Scope           types.String `tfsdk:"scope"`
+	ProjectName     types.String `tfsdk:"project_name"`
+	GroupId         types.Int64  `tfsdk:"group_id"`
+	Username        types.String `tfsdk:"username"`
+	Shop            types.String `tfsdk:"shop"`
+	Token           types.String `tfsdk:"token"`
+	PartnerToken    types.String `tfsdk:"partner_token"`
+	AccessKey       types.String `tfsdk:"access_key"`
+	SecretKey       types.String `tfsdk:"secret_key"`
+	AppId           types.String `tfsdk:"app_id"`
+	TenantId        types.String `tfsdk:"tenant_id"`
+	Password        types.String `tfsdk:"password"`
+	ApiKey          types.String `tfsdk:"api_key"`
+	Email           types.String `tfsdk:"email"`
+	RoleAssumptions types.List   `tfsdk:"role_assumption"`
+	IntegrationId   types.String `tfsdk:"integration_id"`
+	HtmlUrl         types.String `tfsdk:"html_url"`
 }
 
 func (r *integrationResourceModel) decomposeId() (string, string, error) {
@@ -341,8 +314,8 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		ops.Email = data.Email.ValueStringPointer()
 	}
-	if !data.RoleAssumption.IsNull() && !data.RoleAssumption.IsUnknown() {
-		roles, diags := data.roleAssumptionToAPI(ctx)
+	if !data.RoleAssumptions.IsNull() && !data.RoleAssumptions.IsUnknown() {
+		roles, diags := util.RoleAssumptionsModelToAPI(ctx, &data.RoleAssumptions)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return
@@ -439,8 +412,8 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		ops.Email = data.Email.ValueStringPointer()
 	}
-	if !data.RoleAssumption.IsNull() && !data.RoleAssumption.IsUnknown() {
-		roles, diags := data.roleAssumptionToAPI(ctx)
+	if !data.RoleAssumptions.IsNull() && !data.RoleAssumptions.IsUnknown() {
+		roles, diags := util.RoleAssumptionsModelToAPI(ctx, &data.RoleAssumptions)
 		resp.Diagnostics.Append(diags...)
 		if resp.Diagnostics.HasError() {
 			return

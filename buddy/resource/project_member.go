@@ -41,7 +41,7 @@ type projectMemberResourceModel struct {
 	AvatarUrl      types.String `tfsdk:"avatar_url"`
 	Admin          types.Bool   `tfsdk:"admin"`
 	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
-	Permission     types.Object `tfsdk:"permission"`
+	Permission     types.Set    `tfsdk:"permission"`
 }
 
 func (r *projectMemberResourceModel) loadAPI(ctx context.Context, domain string, projectName string, projectMember *buddy.ProjectMember) diag.Diagnostics {
@@ -56,7 +56,8 @@ func (r *projectMemberResourceModel) loadAPI(ctx context.Context, domain string,
 	r.AvatarUrl = types.StringValue(projectMember.AvatarUrl)
 	r.Admin = types.BoolValue(projectMember.Admin)
 	r.WorkspaceOwner = types.BoolValue(projectMember.WorkspaceOwner)
-	permission, diags := util.PermissionTypeValueFrom(ctx, projectMember.PermissionSet)
+	permissionSet := []*buddy.Permission{projectMember.PermissionSet}
+	permission, diags := util.PermissionsModelFromApi(ctx, &permissionSet)
 	r.Permission = permission
 	return diags
 }
@@ -140,10 +141,13 @@ func (r *projectMemberResource) Schema(_ context.Context, _ resource.SchemaReque
 				MarkdownDescription: "Is the member the workspace owner",
 				Computed:            true,
 			},
-			"permission": schema.SingleNestedAttribute{
+			// set for compatybility
+			"permission": schema.SetNestedAttribute{
 				MarkdownDescription: "The member's permission in the project",
 				Computed:            true,
-				Attributes:          util.PermissionTypeComputedAttributes(),
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.PermissionModelAttributes(),
+				},
 			},
 		},
 	}
