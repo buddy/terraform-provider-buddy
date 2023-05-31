@@ -1,95 +1,147 @@
 package source
 
-//
-//import (
-//	"buddy-terraform/buddy/util"
-//	"context"
-//	"github.com/buddy/api-go-sdk/buddy"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-//)
-//
-//func Integration() *schema.Resource {
-//	return &schema.Resource{
-//		Description: "Get integration by name or integration ID\n\n" +
-//			"Token scope required: `INTEGRATION_INFO`",
-//		ReadContext: readContextIntegration,
-//		Schema: map[string]*schema.Schema{
-//			"id": {
-//				Description: "The Terraform resource identifier for this item",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"domain": {
-//				Description:  "The workspace's URL handle",
-//				Type:         schema.TypeString,
-//				Required:     true,
-//				ValidateFunc: util.ValidateDomain,
-//			},
-//			"name": {
-//				Description: "The integration's name",
-//				Type:        schema.TypeString,
-//				Optional:    true,
-//				Computed:    true,
-//				ExactlyOneOf: []string{
-//					"name",
-//					"integration_id",
-//				},
-//			},
-//			"type": {
-//				Description: "The integration's type",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"integration_id": {
-//				Description: "The integration's ID",
-//				Type:        schema.TypeString,
-//				Optional:    true,
-//				Computed:    true,
-//				ExactlyOneOf: []string{
-//					"name",
-//					"integration_id",
-//				},
-//			},
-//			"html_url": {
-//				Description: "The integration's URL",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//		},
-//	}
-//}
-//
-//func readContextIntegration(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	var diags diag.Diagnostics
-//	var integration *buddy.Integration
-//	var err error
-//	domain := d.Get("domain").(string)
-//	if integrationId, ok := d.GetOk("integration_id"); ok {
-//		integration, _, err = c.IntegrationService.Get(domain, integrationId.(string))
-//		if err != nil {
-//			return diag.FromErr(err)
-//		}
-//	} else {
-//		name := d.Get("name").(string)
-//		integrations, _, err := c.IntegrationService.GetList(domain)
-//		if err != nil {
-//			return diag.FromErr(err)
-//		}
-//		for _, i := range integrations.Integrations {
-//			if i.Name == name {
-//				integration = i
-//				break
-//			}
-//		}
-//		if integration == nil {
-//			return diag.Errorf("Integration not found")
-//		}
-//	}
-//	err = util.ApiIntegrationToResourceData(domain, integration, d, true)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return diags
-//}
+import (
+	"buddy-terraform/buddy/util"
+	"context"
+	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"net/http"
+)
+
+var (
+	_ datasource.DataSource              = &integrationSource{}
+	_ datasource.DataSourceWithConfigure = &integrationSource{}
+)
+
+func NewIntegrationSource() datasource.DataSource {
+	return &integrationSource{}
+}
+
+type integrationSource struct {
+	client *buddy.Client
+}
+
+type integrationSourceModel struct {
+	ID            types.String `tfsdk:"id"`
+	Domain        types.String `tfsdk:"domain"`
+	Name          types.String `tfsdk:"name"`
+	IntegrationId types.String `tfsdk:"integration_id"`
+	Type          types.String `tfsdk:"type"`
+	HtmlUrl       types.String `tfsdk:"html_url"`
+}
+
+func (s *integrationSourceModel) loadAPI(domain string, integration *buddy.Integration) {
+	s.ID = types.StringValue(util.ComposeDoubleId(domain, integration.HashId))
+	s.Domain = types.StringValue(domain)
+	s.Name = types.StringValue(integration.Name)
+	s.IntegrationId = types.StringValue(integration.HashId)
+	s.Type = types.StringValue(integration.Type)
+	s.HtmlUrl = types.StringValue(integration.HtmlUrl)
+}
+
+func (s *integrationSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_integration"
+}
+
+func (s *integrationSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *integrationSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get integration by name or integration ID\n\n" +
+			"Token scope required: `INTEGRATION_INFO`",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+			},
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+			},
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The integration's name",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("name"),
+						path.MatchRoot("integration_id"),
+					}...),
+				},
+			},
+			"integration_id": schema.StringAttribute{
+				MarkdownDescription: "The integration's ID",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("name"),
+						path.MatchRoot("integration_id"),
+					}...),
+				},
+			},
+			"type": schema.StringAttribute{
+				MarkdownDescription: "The integration's type",
+				Computed:            true,
+			},
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The integration's URL",
+				Computed:            true,
+			},
+		},
+	}
+}
+
+func (s *integrationSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *integrationSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	var integration *buddy.Integration
+	domain := data.Domain.ValueString()
+	if !data.IntegrationId.IsNull() && !data.IntegrationId.IsUnknown() {
+		var httpResp *http.Response
+		var err error
+		integration, httpResp, err = s.client.IntegrationService.Get(domain, data.IntegrationId.ValueString())
+		if err != nil {
+			if util.IsResourceNotFound(httpResp, err) {
+				resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("integration"))
+				return
+			}
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get integration", err))
+			return
+		}
+	} else {
+		name := data.Name.ValueString()
+		integrations, _, err := s.client.IntegrationService.GetList(domain)
+		if err != nil {
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get integrations", err))
+			return
+		}
+		for _, i := range integrations.Integrations {
+			if i.Name == name {
+				integration = i
+				break
+			}
+		}
+		if integration == nil {
+			resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("integration"))
+			return
+		}
+	}
+	data.loadAPI(domain, integration)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+
+}
