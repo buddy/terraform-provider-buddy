@@ -1,3 +1,7 @@
+# Release v1.13.0 (xxxx-xx-xx)
+* Bumps min Go version to 1.19
+* Migrates from sdk v2 to terraform plugin framework (no breaking changes)
+
 # Release v1.12.0 (2023-03-28)
 * Adds `buddy_sso` resource to manage SSO in workspace
 
