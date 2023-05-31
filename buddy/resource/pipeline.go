@@ -359,7 +359,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				MarkdownDescription: "The pipeline's creator",
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: util.MemberModelAttributes(),
+					Attributes: util.ResourceMemberModelAttributes(),
 				},
 			},
 			// set for compatybility

@@ -292,7 +292,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				MarkdownDescription: "The project's creator",
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
-					Attributes: util.MemberModelAttributes(),
+					Attributes: util.ResourceMemberModelAttributes(),
 				},
 			},
 		},

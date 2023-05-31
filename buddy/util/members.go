@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	sourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -18,6 +19,7 @@ type memberModel struct {
 	Admin          types.Bool   `tfsdk:"admin"`
 	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
 	AvatarUrl      types.String `tfsdk:"avatar_url"`
+	Status         types.String `tfsdk:"status"`
 }
 
 func memberModelAttrs() map[string]attr.Type {
@@ -29,6 +31,7 @@ func memberModelAttrs() map[string]attr.Type {
 		"admin":           types.BoolType,
 		"workspace_owner": types.BoolType,
 		"avatar_url":      types.StringType,
+		"status":          types.StringType,
 	}
 }
 
@@ -40,9 +43,39 @@ func (r *memberModel) loadAPI(member *buddy.Member) {
 	r.Admin = types.BoolValue(member.Admin)
 	r.WorkspaceOwner = types.BoolValue(member.WorkspaceOwner)
 	r.AvatarUrl = types.StringValue(member.AvatarUrl)
+	r.Status = types.StringValue(member.Status)
 }
 
-func MemberModelAttributes() map[string]schema.Attribute {
+func SourceMemberModelAttributes() map[string]sourceschema.Attribute {
+	return map[string]sourceschema.Attribute{
+		"html_url": schema.StringAttribute{
+			Computed: true,
+		},
+		"member_id": sourceschema.Int64Attribute{
+			Computed: true,
+		},
+		"name": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"email": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"admin": sourceschema.BoolAttribute{
+			Computed: true,
+		},
+		"status": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"workspace_owner": sourceschema.BoolAttribute{
+			Computed: true,
+		},
+		"avatar_url": sourceschema.StringAttribute{
+			Computed: true,
+		},
+	}
+}
+
+func ResourceMemberModelAttributes() map[string]schema.Attribute {
 	return map[string]schema.Attribute{
 		"html_url": schema.StringAttribute{
 			Computed: true,
@@ -57,6 +90,9 @@ func MemberModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"admin": schema.BoolAttribute{
+			Computed: true,
+		},
+		"status": schema.StringAttribute{
 			Computed: true,
 		},
 		"workspace_owner": schema.BoolAttribute{

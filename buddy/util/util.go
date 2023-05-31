@@ -39,6 +39,10 @@ func NewDiagnosticApiError(method string, err error) diag.Diagnostic {
 	return diag.NewErrorDiagnostic("Buddy API error occured", fmt.Sprintf("Unable to %s:\n%s", method, err.Error()))
 }
 
+func NewDiagnosticApiNotFound(resource string) diag.Diagnostic {
+	return diag.NewErrorDiagnostic("Buddy API error - not found", fmt.Sprintf("%s not found", resource))
+}
+
 func NewDiagnosticDecomposeError(resource string, err error) diag.Diagnostic {
 	return diag.NewAttributeErrorDiagnostic(
 		path.Root("id"),

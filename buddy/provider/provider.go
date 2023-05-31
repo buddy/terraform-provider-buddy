@@ -2,6 +2,7 @@ package provider
 
 import (
 	buddyresource "buddy-terraform/buddy/resource"
+	buddysource "buddy-terraform/buddy/source"
 	"context"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
@@ -127,7 +128,11 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 }
 
 func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataSource {
-	return []func() datasource.DataSource{}
+	return []func() datasource.DataSource{
+		buddysource.NewGroupSource,
+		buddysource.NewGroupMembersSource,
+		buddysource.NewGroupsSource,
+	}
 }
 
 func New(version string) func() provider.Provider {
