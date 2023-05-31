@@ -134,6 +134,7 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewGroupsSource,
 		buddysource.NewIntegrationSource,
 		buddysource.NewIntegrationsSource,
+		buddysource.NewMemberSource,
 	}
 }
 
