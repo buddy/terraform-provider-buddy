@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	sourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -43,6 +44,35 @@ func (r *permissionModel) loadAPI(permission *buddy.Permission) {
 	r.ProjectTeamAccessLevel = types.StringValue(permission.ProjectTeamAccessLevel)
 	r.RepositoryAccessLevel = types.StringValue(permission.RepositoryAccessLevel)
 	r.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
+}
+
+func SourcePermissionModelAttributes() map[string]sourceschema.Attribute {
+	return map[string]sourceschema.Attribute{
+		"html_url": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"permission_id": sourceschema.Int64Attribute{
+			Computed: true,
+		},
+		"name": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"type": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"pipeline_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"project_team_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"repository_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"sandbox_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+	}
 }
 
 func PermissionModelAttributes() map[string]schema.Attribute {
