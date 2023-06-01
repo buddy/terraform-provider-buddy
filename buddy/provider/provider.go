@@ -152,6 +152,7 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewWebhookSource,
 		buddysource.NewWebhooksSource,
 		buddysource.NewWorkspaceSource,
+		buddysource.NewWorkspacesSource,
 	}
 }
 
