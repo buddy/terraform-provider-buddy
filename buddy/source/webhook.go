@@ -20,7 +20,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &webhookSource{}
 )
 
-func NewWebhookSourceModel() datasource.DataSource {
+func NewWebhookSource() datasource.DataSource {
 	return &webhookSource{}
 }
 
