@@ -1,146 +1,206 @@
 package source
 
-// todo variable
-//import (
-//	"buddy-terraform/buddy/util"
-//	"context"
-//	"github.com/buddy/api-go-sdk/buddy"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-//)
-//
-//func Variable() *schema.Resource {
-//	return &schema.Resource{
-//		Description: "Get variable by key or variable ID\n\n" +
-//			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
-//		ReadContext: readContextVariable,
-//		Schema: map[string]*schema.Schema{
-//			"id": {
-//				Description: "The Terraform resource identifier for this item",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"domain": {
-//				Description:  "The workspace's URL handle",
-//				Type:         schema.TypeString,
-//				Required:     true,
-//				ValidateFunc: util.ValidateDomain,
-//			},
-//			"key": {
-//				Description: "The variable's name",
-//				Type:        schema.TypeString,
-//				Optional:    true,
-//				Computed:    true,
-//				ExactlyOneOf: []string{
-//					"variable_id",
-//					"key",
-//				},
-//			},
-//			"project_name": {
-//				Description: "The variable's project name",
-//				Type:        schema.TypeString,
-//				Optional:    true,
-//				RequiredWith: []string{
-//					"key",
-//				},
-//			},
-//			"pipeline_id": {
-//				Description: "The variable's pipeline ID",
-//				Type:        schema.TypeInt,
-//				Optional:    true,
-//				RequiredWith: []string{
-//					"key",
-//				},
-//			},
-//			"action_id": {
-//				Description: "The variable's action ID",
-//				Type:        schema.TypeInt,
-//				Optional:    true,
-//				RequiredWith: []string{
-//					"key",
-//				},
-//			},
-//			"encrypted": {
-//				Description: "Is the variable's value encrypted",
-//				Type:        schema.TypeBool,
-//				Computed:    true,
-//			},
-//			"settable": {
-//				Description: "Is the variable's value changeable",
-//				Type:        schema.TypeBool,
-//				Computed:    true,
-//			},
-//			"description": {
-//				Description: "The variable's description",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"value": {
-//				Description: "The variable's value. Encrypted if **encrypted** == true",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//				Sensitive:   true,
-//			},
-//			"variable_id": {
-//				Description: "The variable's ID",
-//				Type:        schema.TypeInt,
-//				Optional:    true,
-//				Computed:    true,
-//				ExactlyOneOf: []string{
-//					"variable_id",
-//					"key",
-//				},
-//			},
-//		},
-//	}
-//}
-//
-//func readContextVariable(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	var diags diag.Diagnostics
-//	var variable *buddy.Variable
-//	var err error
-//	domain := d.Get("domain").(string)
-//	if variableId, ok := d.GetOk("variable_id"); ok {
-//		variable, _, err = c.VariableService.Get(domain, variableId.(int))
-//		if err != nil {
-//			return diag.FromErr(err)
-//		}
-//		if variable.Type != buddy.VariableTypeVar {
-//			return diag.Errorf("Variable not found")
-//		}
-//	} else {
-//		key := d.Get("key").(string)
-//		opt := buddy.VariableGetListQuery{}
-//		if projectName, ok := d.GetOk("project_name"); ok {
-//			opt.ProjectName = projectName.(string)
-//		}
-//		if pipelineId, ok := d.GetOk("pipeline_id"); ok {
-//			opt.PipelineId = pipelineId.(int)
-//		}
-//		if actionId, ok := d.GetOk("action_id"); ok {
-//			opt.ActionId = actionId.(int)
-//		}
-//		variables, _, err := c.VariableService.GetList(domain, &opt)
-//		if err != nil {
-//			return diag.FromErr(err)
-//		}
-//		for _, v := range variables.Variables {
-//			if v.Type != buddy.VariableTypeVar {
-//				continue
-//			}
-//			if v.Key == key {
-//				variable = v
-//				break
-//			}
-//		}
-//		if variable == nil {
-//			return diag.Errorf("Variable not found")
-//		}
-//	}
-//	err = util.ApiVariableToResourceData(domain, variable, d, false)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return diags
-//}
+import (
+	"buddy-terraform/buddy/util"
+	"context"
+	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"net/http"
+	"strconv"
+)
+
+var (
+	_ datasource.DataSource              = &variableSource{}
+	_ datasource.DataSourceWithConfigure = &variableSource{}
+)
+
+func NewVariableSource() datasource.DataSource {
+	return &variableSource{}
+}
+
+type variableSource struct {
+	client *buddy.Client
+}
+
+type variableSourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	Domain      types.String `tfsdk:"domain"`
+	Key         types.String `tfsdk:"key"`
+	VariableId  types.Int64  `tfsdk:"variable_id"`
+	ProjectName types.String `tfsdk:"project_name"`
+	PipelineId  types.Int64  `tfsdk:"pipeline_id"`
+	ActionId    types.Int64  `tfsdk:"action_id"`
+	Encrypted   types.Bool   `tfsdk:"encrypted"`
+	Settable    types.Bool   `tfsdk:"settable"`
+	Description types.String `tfsdk:"description"`
+	Value       types.String `tfsdk:"value"`
+}
+
+func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable) {
+	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
+	s.Domain = types.StringValue(domain)
+	s.Key = types.StringValue(variable.Key)
+	s.VariableId = types.Int64Value(int64(variable.Id))
+	s.Encrypted = types.BoolValue(variable.Encrypted)
+	s.Settable = types.BoolValue(variable.Settable)
+	s.Description = types.StringValue(variable.Description)
+	s.Value = types.StringValue(variable.Value)
+}
+
+func (s *variableSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_variable"
+}
+
+func (s *variableSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get variable by key or variable ID\n\n" +
+			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+			},
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+			},
+			"key": schema.StringAttribute{
+				MarkdownDescription: "The variable's name",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("variable_id"),
+						path.MatchRoot("key"),
+					}...),
+				},
+			},
+			"variable_id": schema.Int64Attribute{
+				MarkdownDescription: "The variable's ID",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.Int64{
+					int64validator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("variable_id"),
+						path.MatchRoot("key"),
+					}...),
+				},
+			},
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "The variable's project name",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("key"),
+					}...),
+				},
+			},
+			"pipeline_id": schema.Int64Attribute{
+				MarkdownDescription: "The variable's pipeline ID",
+				Optional:            true,
+				Validators: []validator.Int64{
+					int64validator.AlsoRequires(path.Expressions{
+						path.MatchRoot("key"),
+					}...),
+				},
+			},
+			"action_id": schema.Int64Attribute{
+				MarkdownDescription: "The variable's action ID",
+				Optional:            true,
+				Validators: []validator.Int64{
+					int64validator.AlsoRequires(path.Expressions{
+						path.MatchRoot("key"),
+					}...),
+				},
+			},
+			"encrypted": schema.BoolAttribute{
+				MarkdownDescription: "Is the variable's value encrypted",
+				Computed:            true,
+			},
+			"settable": schema.BoolAttribute{
+				MarkdownDescription: "Is the variable's value changeable",
+				Computed:            true,
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "The variable's description",
+				Computed:            true,
+			},
+			"value": schema.StringAttribute{
+				MarkdownDescription: "The variable's value. Encrypted if **encrypted** == true",
+				Computed:            true,
+				Sensitive:           true,
+			},
+		},
+	}
+}
+
+func (s *variableSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *variableSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
+	var variable *buddy.Variable
+	var err error
+	if !data.VariableId.IsNull() && !data.VariableId.IsUnknown() {
+		var httpRes *http.Response
+		varId := int(data.VariableId.ValueInt64())
+		variable, httpRes, err = s.client.VariableService.Get(domain, varId)
+		if err != nil {
+			if util.IsResourceNotFound(httpRes, err) {
+				resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("variable"))
+				return
+			}
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get variable", err))
+			return
+		}
+	} else {
+		key := data.Key.ValueString()
+		ops := buddy.VariableGetListQuery{}
+		if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+			ops.ProjectName = data.ProjectName.ValueString()
+		}
+		if !data.PipelineId.IsNull() && !data.PipelineId.IsUnknown() {
+			ops.PipelineId = int(data.PipelineId.ValueInt64())
+		}
+		if !data.ActionId.IsNull() && !data.ActionId.IsUnknown() {
+			ops.ActionId = int(data.ActionId.ValueInt64())
+		}
+		var variables *buddy.Variables
+		variables, _, err = s.client.VariableService.GetList(domain, &ops)
+		if err != nil {
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get variables", err))
+			return
+		}
+		for _, v := range variables.Variables {
+			if v.Type != buddy.VariableTypeVar {
+				continue
+			}
+			if v.Key == key {
+				variable = v
+				break
+			}
+		}
+		if variable == nil {
+			resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("variable"))
+			return
+		}
+	}
+	data.loadAPI(domain, variable)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
