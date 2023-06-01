@@ -4,7 +4,9 @@ import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
+	sourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
@@ -30,6 +32,23 @@ func (r *projectModel) loadAPI(project *buddy.Project) {
 	r.Name = types.StringValue(project.Name)
 	r.DisplayName = types.StringValue(project.DisplayName)
 	r.Status = types.StringValue(project.Status)
+}
+
+func SourceProjectsModelAttributes() map[string]sourceschema.Attribute {
+	return map[string]sourceschema.Attribute{
+		"html_url": schema.StringAttribute{
+			Computed: true,
+		},
+		"name": schema.StringAttribute{
+			Computed: true,
+		},
+		"display_name": schema.StringAttribute{
+			Computed: true,
+		},
+		"status": schema.StringAttribute{
+			Computed: true,
+		},
+	}
 }
 
 func ProjectsModelFromApi(ctx context.Context, projects *[]*buddy.Project) (basetypes.SetValue, diag.Diagnostics) {
