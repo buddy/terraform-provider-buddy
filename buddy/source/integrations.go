@@ -35,7 +35,7 @@ type integrationsSourceModel struct {
 }
 
 func (s *integrationsSourceModel) loadAPI(ctx context.Context, domain string, integrations *[]*buddy.Integration) diag.Diagnostics {
-	s.Id = types.StringValue(domain)
+	s.Id = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
 	i, d := util.IntegrationsModelFromApi(ctx, integrations)
 	s.Integrations = i

@@ -35,7 +35,7 @@ type permissionsSourceModel struct {
 }
 
 func (s *permissionsSourceModel) loadAPI(ctx context.Context, domain string, permissions *[]*buddy.Permission) diag.Diagnostics {
-	s.ID = types.StringValue(domain)
+	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
 	p, d := util.PermissionsModelFromApi(ctx, permissions)
 	s.Permissions = p

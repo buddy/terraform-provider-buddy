@@ -33,7 +33,7 @@ type membersSourceModel struct {
 }
 
 func (s *membersSourceModel) loadAPI(ctx context.Context, domain string, members *[]*buddy.Member) diag.Diagnostics {
-	s.ID = types.StringValue(domain)
+	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
 	m, d := util.MembersModelFromApi(ctx, members)
 	s.Members = m

@@ -34,7 +34,7 @@ type projectGroupsSourceModel struct {
 }
 
 func (s *projectGroupsSourceModel) loadAPI(ctx context.Context, domain string, projectName string, groups *[]*buddy.Group) diag.Diagnostics {
-	s.ID = types.StringValue(domain)
+	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
 	s.ProjectName = types.StringValue(projectName)
 	g, d := util.GroupsModelFromApi(ctx, groups)

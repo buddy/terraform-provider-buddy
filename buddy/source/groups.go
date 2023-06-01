@@ -33,7 +33,7 @@ type groupsSourceModel struct {
 }
 
 func (s *groupsSourceModel) loadAPI(ctx context.Context, domain string, groups *[]*buddy.Group) diag.Diagnostics {
-	s.ID = types.StringValue(domain)
+	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
 	g, d := util.GroupsModelFromApi(ctx, groups)
 	s.Groups = g

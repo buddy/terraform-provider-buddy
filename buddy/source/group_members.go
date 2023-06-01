@@ -10,7 +10,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"regexp"
-	"strconv"
 )
 
 var (
@@ -35,7 +34,7 @@ type groupMembersSourceModel struct {
 }
 
 func (s *groupMembersSourceModel) loadAPI(ctx context.Context, domain string, groupId int, members *[]*buddy.Member) diag.Diagnostics {
-	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(groupId)))
+	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
 	s.GroupId = types.Int64Value(int64(groupId))
 	list, d := util.MembersModelFromApi(ctx, members)
