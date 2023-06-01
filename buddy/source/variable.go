@@ -169,6 +169,10 @@ func (s *variableSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			resp.Diagnostics.Append(util.NewDiagnosticApiError("get variable", err))
 			return
 		}
+		if variable.Type != buddy.VariableTypeVar {
+			resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("variable"))
+			return
+		}
 	} else {
 		key := data.Key.ValueString()
 		ops := buddy.VariableGetListQuery{}
