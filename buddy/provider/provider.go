@@ -148,6 +148,7 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewVariableSource,
 		buddysource.NewVariableSshKeySource,
 		buddysource.NewVariablesSource,
+		buddysource.NewVariablesSshKeysSource,
 	}
 }
 

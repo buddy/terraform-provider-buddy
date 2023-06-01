@@ -1,153 +1,142 @@
 package source
 
-// todo variables ssh keys
-//import (
-//	"buddy-terraform/buddy/util"
-//	"context"
-//	"github.com/buddy/api-go-sdk/buddy"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-//	"regexp"
-//)
-//
-//func VariablesSshKeys() *schema.Resource {
-//	return &schema.Resource{
-//		Description: "List variables of SSH key type and optionally filter them by key, project name, pipeline or action\n\n" +
-//			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
-//		ReadContext: readContextVariablesSshKeys,
-//		Schema: map[string]*schema.Schema{
-//			"id": {
-//				Description: "The Terraform resource identifier for this item",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"domain": {
-//				Description:  "The workspace's URL handle",
-//				Type:         schema.TypeString,
-//				Required:     true,
-//				ValidateFunc: util.ValidateDomain,
-//			},
-//			"key_regex": {
-//				Description:  "The variable's key regular expression to match",
-//				Type:         schema.TypeString,
-//				Optional:     true,
-//				ValidateFunc: validation.StringIsValidRegExp,
-//			},
-//			"project_name": {
-//				Description: "Get only from provided project",
-//				Type:        schema.TypeString,
-//				Optional:    true,
-//			},
-//			"pipeline_id": {
-//				Description: "Get only from provided pipeline",
-//				Type:        schema.TypeInt,
-//				Optional:    true,
-//			},
-//			"action_id": {
-//				Description: "Get only from provided action",
-//				Type:        schema.TypeInt,
-//				Optional:    true,
-//			},
-//			"variables": {
-//				Description: "List of variables",
-//				Type:        schema.TypeList,
-//				Computed:    true,
-//				Elem: &schema.Resource{
-//					Schema: map[string]*schema.Schema{
-//						"key": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"encrypted": {
-//							Type:     schema.TypeBool,
-//							Computed: true,
-//						},
-//						"settable": {
-//							Type:     schema.TypeBool,
-//							Computed: true,
-//						},
-//						"description": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"value": {
-//							Type:      schema.TypeString,
-//							Computed:  true,
-//							Sensitive: true,
-//						},
-//						"variable_id": {
-//							Description: "The variable's ID",
-//							Type:        schema.TypeInt,
-//							Computed:    true,
-//						},
-//						"file_place": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"file_path": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"file_chmod": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"checksum": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"key_fingerprint": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"public_value": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//					},
-//				},
-//			},
-//		},
-//	}
-//}
-//
-//func readContextVariablesSshKeys(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	var diags diag.Diagnostics
-//	var keyRegex *regexp.Regexp
-//	domain := d.Get("domain").(string)
-//	opt := buddy.VariableGetListQuery{}
-//	if projectName, ok := d.GetOk("project_name"); ok {
-//		opt.ProjectName = projectName.(string)
-//	}
-//	if pipelineId, ok := d.GetOk("pipeline_id"); ok {
-//		opt.PipelineId = pipelineId.(int)
-//	}
-//	if actionId, ok := d.GetOk("action_id"); ok {
-//		opt.ActionId = actionId.(int)
-//	}
-//	variables, _, err := c.VariableService.GetList(domain, &opt)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	if key, ok := d.GetOk("key_regex"); ok {
-//		keyRegex = regexp.MustCompile(key.(string))
-//	}
-//	var result []interface{}
-//	for _, v := range variables.Variables {
-//		if v.Type != buddy.VariableTypeSshKey {
-//			continue
-//		}
-//		if keyRegex != nil && !keyRegex.MatchString(v.Key) {
-//			continue
-//		}
-//		result = append(result, util.ApiShortVariableSshKeyToMap(v))
-//	}
-//	d.SetId(util.UniqueString())
-//	err = d.Set("variables", result)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return diags
-//}
+import (
+	"buddy-terraform/buddy/util"
+	"context"
+	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"regexp"
+)
+
+var (
+	_ datasource.DataSource              = &variablesSshKeysSource{}
+	_ datasource.DataSourceWithConfigure = &variablesSshKeysSource{}
+)
+
+func NewVariablesSshKeysSource() datasource.DataSource {
+	return &variablesSshKeysSource{}
+}
+
+type variablesSshKeysSource struct {
+	client *buddy.Client
+}
+
+type variablesSshKeysSourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	Domain      types.String `tfsdk:"domain"`
+	KeyRegex    types.String `tfsdk:"key_regex"`
+	ProjectName types.String `tfsdk:"project_name"`
+	PipelineId  types.Int64  `tfsdk:"pipeline_id"`
+	ActionId    types.Int64  `tfsdk:"action_id"`
+	Variables   types.Set    `tfsdk:"variables"`
+}
+
+func (s *variablesSshKeysSourceModel) loadAPI(ctx context.Context, domain string, variables *[]*buddy.Variable) diag.Diagnostics {
+	s.ID = types.StringValue(util.UniqueString())
+	s.Domain = types.StringValue(domain)
+	v, d := util.VariablesSshKeysModelFromApi(ctx, variables)
+	s.Variables = v
+	return d
+}
+
+func (s *variablesSshKeysSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_variables_ssh_keys"
+}
+
+func (s *variablesSshKeysSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *variablesSshKeysSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "List variables of SSH key type and optionally filter them by key, project name, pipeline or action\n\n" +
+			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+			},
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+			},
+			"key_regex": schema.StringAttribute{
+				MarkdownDescription: "The variable's key regular expression to match",
+				Optional:            true,
+				Validators: []validator.String{
+					util.RegexpValidator(),
+				},
+			},
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "Get only from provided project",
+				Optional:            true,
+			},
+			"pipeline_id": schema.Int64Attribute{
+				MarkdownDescription: "Get only from provided pipeline",
+				Optional:            true,
+			},
+			"action_id": schema.Int64Attribute{
+				MarkdownDescription: "Get only from provided action",
+				Optional:            true,
+			},
+			"variables": schema.SetNestedAttribute{
+				MarkdownDescription: "List of variables",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceVariableSshKeyModelAttributes(),
+				},
+			},
+		},
+	}
+}
+
+func (s *variablesSshKeysSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *variablesSshKeysSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
+	var keyRegex *regexp.Regexp
+	if !data.KeyRegex.IsNull() && !data.KeyRegex.IsUnknown() {
+		keyRegex = regexp.MustCompile(data.KeyRegex.ValueString())
+	}
+	ops := buddy.VariableGetListQuery{}
+	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+		ops.ProjectName = data.ProjectName.ValueString()
+	}
+	if !data.PipelineId.IsNull() && !data.PipelineId.IsUnknown() {
+		ops.PipelineId = int(data.PipelineId.ValueInt64())
+	}
+	if !data.ActionId.IsNull() && !data.ActionId.IsUnknown() {
+		ops.ActionId = int(data.ActionId.ValueInt64())
+	}
+	variables, _, err := s.client.VariableService.GetList(domain, &ops)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get variables", err))
+		return
+	}
+	var result []*buddy.Variable
+	for _, v := range variables.Variables {
+		if v.Type != buddy.VariableTypeSshKey {
+			continue
+		}
+		if keyRegex != nil && !keyRegex.MatchString(v.Key) {
+			continue
+		}
+		result = append(result, v)
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, &result)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
