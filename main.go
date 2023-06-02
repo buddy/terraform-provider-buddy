@@ -21,9 +21,8 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address:         "registry.terraform.io/buddy/buddy",
-		ProtocolVersion: 6,
-		Debug:           debug,
+		Address: "registry.terraform.io/buddy/buddy",
+		Debug:   debug,
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)

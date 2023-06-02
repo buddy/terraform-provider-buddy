@@ -1,4 +1,4 @@
-# Release v1.13.0 (xxxx-xx-xx)
+# Release v1.13.0 (2023-06-02)
 * Bumps min Go version to 1.19
 * Migrates from sdk v2 to terraform plugin framework (no breaking changes)
 
