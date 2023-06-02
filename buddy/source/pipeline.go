@@ -75,11 +75,7 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	t, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Tags)
 	diags.Append(d...)
 	s.Tags = t
-	ds := pipeline.DefinitionSource
-	if ds == "" {
-		ds = buddy.PipelineDefinitionSourceLocal
-	}
-	s.DefinitionSource = types.StringValue(ds)
+	s.DefinitionSource = types.StringValue(util.GetPipelineDefinitionSource(pipeline))
 	s.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
 	s.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
 	s.RemotePath = types.StringValue(pipeline.RemotePath)

@@ -107,11 +107,7 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.FetchAllRefs = types.BoolValue(pipeline.FetchAllRefs)
 	r.FailOnPrepareEnvWarning = types.BoolValue(pipeline.FailOnPrepareEnvWarning)
 	r.DoNotCreateCommitStatus = types.BoolValue(pipeline.DoNotCreateCommitStatus)
-	ds := pipeline.DefinitionSource
-	if ds == "" {
-		ds = buddy.PipelineDefinitionSourceLocal
-	}
-	r.DefinitionSource = types.StringValue(ds)
+	r.DefinitionSource = types.StringValue(util.GetPipelineDefinitionSource(pipeline))
 	r.RemotePath = types.StringValue(pipeline.RemotePath)
 	r.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
 	r.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)

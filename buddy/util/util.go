@@ -10,6 +10,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -282,4 +283,12 @@ func Int64SetToApi(ctx context.Context, s *types.Set) (*[]int, diag.Diagnostics)
 	var arr []int64
 	d := s.ElementsAs(ctx, &arr, false)
 	return ArrayInt64ToInt(&arr), d
+}
+
+func GetPipelineDefinitionSource(pipeline *buddy.Pipeline) string {
+	ds := pipeline.DefinitionSource
+	if ds == "" {
+		return buddy.PipelineDefinitionSourceLocal
+	}
+	return ds
 }

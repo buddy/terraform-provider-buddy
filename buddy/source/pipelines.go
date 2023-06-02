@@ -1,182 +1,121 @@
 package source
 
-// todo pipelines
-//import (
-//	"buddy-terraform/buddy/util"
-//	"context"
-//	"github.com/buddy/api-go-sdk/buddy"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-//	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
-//	"regexp"
-//)
-//
-//func Pipelines() *schema.Resource {
-//	return &schema.Resource{
-//		Description: "List pipelines and optionally filter them by name\n\n" +
-//			"Token scopes required: `WORKSPACE`, `EXECUTION_INFO`",
-//		ReadContext: readContextPipelines,
-//		Schema: map[string]*schema.Schema{
-//			"id": {
-//				Description: "The Terraform resource identifier for this item",
-//				Type:        schema.TypeString,
-//				Computed:    true,
-//			},
-//			"domain": {
-//				Description:  "The workspace's URL handle",
-//				Type:         schema.TypeString,
-//				Required:     true,
-//				ValidateFunc: util.ValidateDomain,
-//			},
-//			"project_name": {
-//				Description: "The project's name",
-//				Type:        schema.TypeString,
-//				Required:    true,
-//			},
-//			"name_regex": {
-//				Description:  "The pipeline's name regular expression to match",
-//				Type:         schema.TypeString,
-//				Optional:     true,
-//				ValidateFunc: validation.StringIsValidRegExp,
-//			},
-//			"pipelines": {
-//				Description: "List of pipelines",
-//				Type:        schema.TypeList,
-//				Computed:    true,
-//				Elem: &schema.Resource{
-//					Schema: map[string]*schema.Schema{
-//						"name": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"pipeline_id": {
-//							Type:     schema.TypeInt,
-//							Computed: true,
-//						},
-//						"html_url": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"on": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"priority": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"disabled": {
-//							Type:     schema.TypeBool,
-//							Computed: true,
-//						},
-//						"disabling_reason": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"last_execution_status": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"last_execution_revision": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"refs": {
-//							Type:     schema.TypeSet,
-//							Computed: true,
-//							Elem: &schema.Schema{
-//								Type: schema.TypeString,
-//							},
-//						},
-//						"tags": {
-//							Type:     schema.TypeSet,
-//							Computed: true,
-//							Elem: &schema.Schema{
-//								Type: schema.TypeString,
-//							},
-//						},
-//						"event": {
-//							Type:     schema.TypeList,
-//							Computed: true,
-//							Elem: &schema.Resource{
-//								Schema: map[string]*schema.Schema{
-//									"type": {
-//										Type:     schema.TypeString,
-//										Computed: true,
-//									},
-//									"refs": {
-//										Type:     schema.TypeSet,
-//										Computed: true,
-//										Elem: &schema.Schema{
-//											Type: schema.TypeString,
-//										},
-//									},
-//								},
-//							},
-//						},
-//						"definition_source": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"remote_project_name": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"remote_branch": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"remote_path": {
-//							Type:     schema.TypeString,
-//							Computed: true,
-//						},
-//						"remote_parameter": {
-//							Type:     schema.TypeList,
-//							Computed: true,
-//							Elem: &schema.Resource{
-//								Schema: map[string]*schema.Schema{
-//									"key": {
-//										Type:     schema.TypeString,
-//										Computed: true,
-//									},
-//									"value": {
-//										Type:     schema.TypeString,
-//										Computed: true,
-//									},
-//								},
-//							},
-//						},
-//					},
-//				},
-//			},
-//		},
-//	}
-//}
-//
-//func readContextPipelines(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-//	c := meta.(*buddy.Client)
-//	var diags diag.Diagnostics
-//	var nameRegex *regexp.Regexp
-//	domain := d.Get("domain").(string)
-//	projectName := d.Get("project_name").(string)
-//	pipelines, _, err := c.PipelineService.GetListAll(domain, projectName)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	var result []interface{}
-//	if name, ok := d.GetOk("name_regex"); ok {
-//		nameRegex = regexp.MustCompile(name.(string))
-//	}
-//	for _, p := range pipelines.Pipelines {
-//		if nameRegex != nil && !nameRegex.MatchString(p.Name) {
-//			continue
-//		}
-//		result = append(result, util.ApiShortPipelineToMap(p))
-//	}
-//	d.SetId(util.UniqueString())
-//	err = d.Set("pipelines", result)
-//	if err != nil {
-//		return diag.FromErr(err)
-//	}
-//	return diags
-//}
+import (
+	"buddy-terraform/buddy/util"
+	"context"
+	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"regexp"
+)
+
+var (
+	_ datasource.DataSource              = &pipelinesSource{}
+	_ datasource.DataSourceWithConfigure = &pipelinesSource{}
+)
+
+func NewPipelinesSource() datasource.DataSource {
+	return &pipelinesSource{}
+}
+
+type pipelinesSource struct {
+	client *buddy.Client
+}
+
+type pipelinesSourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	Domain      types.String `tfsdk:"domain"`
+	ProjectName types.String `tfsdk:"project_name"`
+	NameRegex   types.String `tfsdk:"name_regex"`
+	Pipelines   types.Set    `tfsdk:"pipelines"`
+}
+
+func (s *pipelinesSourceModel) loadAPI(ctx context.Context, domain string, projectName string, pipelines *[]*buddy.Pipeline) diag.Diagnostics {
+	s.ID = types.StringValue(util.UniqueString())
+	s.Domain = types.StringValue(domain)
+	s.ProjectName = types.StringValue(projectName)
+	p, d := util.PipelinesModelFromApi(ctx, pipelines)
+	s.Pipelines = p
+	return d
+}
+
+func (s *pipelinesSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_pipelines"
+}
+
+func (s *pipelinesSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *pipelinesSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "List pipelines and optionally filter them by name\n\n" +
+			"Token scopes required: `WORKSPACE`, `EXECUTION_INFO`",
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+			},
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+			},
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "The project's name",
+				Required:            true,
+			},
+			"name_regex": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's name regular expression to match",
+				Optional:            true,
+				Validators: []validator.String{
+					util.RegexpValidator(),
+				},
+			},
+			"pipelines": schema.SetNestedAttribute{
+				MarkdownDescription: "List of pipelines",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourcePipelineModelAttributes(),
+				},
+			},
+		},
+	}
+}
+
+func (s *pipelinesSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *pipelinesSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
+	projectName := data.ProjectName.ValueString()
+	var nameRegex *regexp.Regexp
+	if !data.NameRegex.IsNull() && !data.NameRegex.IsUnknown() {
+		nameRegex = regexp.MustCompile(data.NameRegex.ValueString())
+	}
+	pipelines, _, err := s.client.PipelineService.GetListAll(domain, projectName)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get pipelines", err))
+		return
+	}
+	var result []*buddy.Pipeline
+	for _, p := range pipelines.Pipelines {
+		if nameRegex != nil && !nameRegex.MatchString(p.Name) {
+			continue
+		}
+		result = append(result, p)
+	}
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, &result)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}

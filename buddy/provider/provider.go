@@ -154,6 +154,7 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewWorkspaceSource,
 		buddysource.NewWorkspacesSource,
 		buddysource.NewPipelineSource,
+		buddysource.NewPipelinesSource,
 	}
 }
 
