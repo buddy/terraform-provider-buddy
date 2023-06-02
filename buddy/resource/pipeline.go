@@ -1,7 +1,6 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
@@ -17,6 +16,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
+	"terraform-provider-buddy/buddy/util"
 )
 
 var (

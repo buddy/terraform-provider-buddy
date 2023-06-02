@@ -185,19 +185,19 @@ resource "buddy_integration" "docker_hub" {
 }
 
 resource "buddy_integration" "github" {
-  domain   = "mydomain"
-  name     = "github"
-  type     = "GIT_HUB"
-  scope    = "ADMIN"
-  token    = "github token"
+  domain = "mydomain"
+  name   = "github"
+  type   = "GIT_HUB"
+  scope  = "ADMIN"
+  token  = "github token"
 }
 
 resource "buddy_integration" "gitlab" {
-  domain   = "mydomain"
-  name     = "gitlab"
-  type     = "GIT_LAB"
-  scope    = "ADMIN"
-  token    = "gitlab token"
+  domain = "mydomain"
+  name   = "gitlab"
+  type   = "GIT_LAB"
+  scope  = "ADMIN"
+  token  = "gitlab token"
 }
 
 resource "buddy_integration" "google_service_account" {

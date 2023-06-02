@@ -1,11 +1,11 @@
 package main
 
 import (
-	"buddy-terraform/buddy/provider"
 	"context"
 	"flag"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"log"
+	"terraform-provider-buddy/buddy/provider"
 )
 
 var (
@@ -21,8 +21,9 @@ func main() {
 	flag.Parse()
 
 	opts := providerserver.ServeOpts{
-		Address: "registry.terraform.io/providers/buddy/buddy",
-		Debug:   debug,
+		Address:         "registry.terraform.io/buddy/buddy",
+		ProtocolVersion: 6,
+		Debug:           debug,
 	}
 
 	err := providerserver.Serve(context.Background(), provider.New(version), opts)

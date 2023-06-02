@@ -1,14 +1,14 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"strings"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
 

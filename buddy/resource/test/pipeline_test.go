@@ -1,8 +1,6 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"encoding/base64"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
@@ -10,6 +8,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"log"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 	"time"
 )

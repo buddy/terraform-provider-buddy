@@ -1,7 +1,6 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -10,6 +9,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"regexp"
+	"terraform-provider-buddy/buddy/util"
 )
 
 var (

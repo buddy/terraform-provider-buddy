@@ -1,4 +1,4 @@
-module buddy-terraform
+module terraform-provider-buddy
 
 go 1.19
 

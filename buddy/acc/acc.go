@@ -1,12 +1,12 @@
 package acc
 
 import (
-	"buddy-terraform/buddy/provider"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"os"
+	"terraform-provider-buddy/buddy/provider"
 	"testing"
 )
 

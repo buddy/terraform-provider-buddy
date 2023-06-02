@@ -1,8 +1,6 @@
 package provider
 
 import (
-	buddyresource "buddy-terraform/buddy/resource"
-	buddysource "buddy-terraform/buddy/source"
 	"context"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
@@ -13,6 +11,8 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"os"
+	buddyresource "terraform-provider-buddy/buddy/resource"
+	buddysource "terraform-provider-buddy/buddy/source"
 )
 
 var _ provider.Provider = &BuddyProvider{}

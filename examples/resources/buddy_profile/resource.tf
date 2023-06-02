@@ -1,3 +1,3 @@
 resource "buddy_profile" "me" {
-  name  = "my name"
+  name = "my name"
 }

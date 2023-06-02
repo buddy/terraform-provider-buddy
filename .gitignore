@@ -2,7 +2,7 @@
 *.exe
 *.test
 *.log
-buddy-terraform
+terraform-provider-buddy
 .DS_Store
 .run
 ./*.tfstate

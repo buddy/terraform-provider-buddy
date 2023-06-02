@@ -1,13 +1,13 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
+	"terraform-provider-buddy/buddy/util"
 )
 
 var (
