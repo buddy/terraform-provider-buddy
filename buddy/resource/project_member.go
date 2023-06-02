@@ -141,7 +141,7 @@ func (r *projectMemberResource) Schema(_ context.Context, _ resource.SchemaReque
 				MarkdownDescription: "Is the member the workspace owner",
 				Computed:            true,
 			},
-			// set for compatybility
+			// set for compatibility
 			"permission": schema.SetNestedAttribute{
 				MarkdownDescription: "The member's permission in the project",
 				Computed:            true,

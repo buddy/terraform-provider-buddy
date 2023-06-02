@@ -287,7 +287,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				MarkdownDescription: "The project's Git default branch",
 				Computed:            true,
 			},
-			// for compatybility it's a set
+			// for compatibility it's a set
 			"created_by": schema.SetNestedAttribute{
 				MarkdownDescription: "The project's creator",
 				Computed:            true,

@@ -354,7 +354,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				MarkdownDescription: "The pipeline's date of creation",
 				Computed:            true,
 			},
-			// set for compatybility
+			// set for compatibility
 			"creator": schema.SetNestedAttribute{
 				MarkdownDescription: "The pipeline's creator",
 				Computed:            true,
@@ -362,7 +362,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					Attributes: util.ResourceMemberModelAttributes(),
 				},
 			},
-			// set for compatybility
+			// set for compatibility
 			"project": schema.SetNestedAttribute{
 				MarkdownDescription: "The pipeline's project",
 				Computed:            true,
@@ -401,29 +401,11 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 		},
 		Blocks: map[string]schema.Block{
-			// singular form for compatybility
+			// singular form for compatibility
 			"event": schema.SetNestedBlock{
 				MarkdownDescription: "The pipeline's list of events. Set it if `on: EVENT`",
 				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"type": schema.StringAttribute{
-							Required: true,
-							Validators: []validator.String{
-								stringvalidator.OneOf(
-									buddy.PipelineEventTypePush,
-									buddy.PipelineEventTypeCreateRef,
-									buddy.PipelineEventTypeDeleteRef,
-								),
-							},
-						},
-						"refs": schema.SetAttribute{
-							ElementType: types.StringType,
-							Required:    true,
-							Validators: []validator.Set{
-								setvalidator.SizeAtLeast(1),
-							},
-						},
-					},
+					Attributes: util.ResourceEventModelAttributes(),
 				},
 				Validators: []validator.Set{
 					setvalidator.ConflictsWith(path.Expressions{
@@ -465,21 +447,14 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					setvalidator.SizeAtMost(1),
 				},
 			},
-			// singular form for compatybility
+			// singular form for compatibility
 			"remote_parameter": schema.SetNestedBlock{
 				MarkdownDescription: "The pipeline's remote definition parameters. Set it if `definition_source: REMOTE`",
 				NestedObject: schema.NestedBlockObject{
-					Attributes: map[string]schema.Attribute{
-						"key": schema.StringAttribute{
-							Required: true,
-						},
-						"value": schema.StringAttribute{
-							Required: true,
-						},
-					},
+					Attributes: util.ResourceRemoteParameterModelAttributes(),
 				},
 			},
-			// singular form for compatybility
+			// singular form for compatibility
 			"trigger_condition": schema.SetNestedBlock{
 				MarkdownDescription: "The pipeline's list of trigger conditions",
 				NestedObject: schema.NestedBlockObject{
