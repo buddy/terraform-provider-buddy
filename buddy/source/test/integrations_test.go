@@ -11,6 +11,32 @@ import (
 	"testing"
 )
 
+func TestAccSourceIntegrations_upgrade(t *testing.T) {
+	config := testAccSourceIntegrationsConfig()
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.all", 2),
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.name", 1),
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.type", 1),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceIntegrations(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {

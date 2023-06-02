@@ -10,6 +10,37 @@ import (
 	"testing"
 )
 
+func TestAccSourceProjects_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	name1 := "aaa" + util.UniqueString()
+	name2 := util.UniqueString() + "bbb"
+	name3 := util.UniqueString()
+	config := testAccSourceProjectsConfig(domain, name1, name2, name3)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceProjectsAttributes("data.buddy_projects.a", 1, name1),
+					testAccSourceProjectsAttributes("data.buddy_projects.b", 1, name2),
+					testAccSourceProjectsAttributes("data.buddy_projects.c", 0, ""),
+					testAccSourceProjectsAttributes("data.buddy_projects.d", 3, ""),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceProjects(t *testing.T) {
 	domain := util.UniqueString()
 	name1 := "aaa" + util.UniqueString()

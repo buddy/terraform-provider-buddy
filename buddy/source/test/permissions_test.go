@@ -11,6 +11,33 @@ import (
 	"testing"
 )
 
+func TestAccSourcePermissions_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	config := testAccSourcePermissionsConfig(domain)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePermissionsAttributes("data.buddy_permissions.all", 4),
+					testAccSourcePermissionsAttributes("data.buddy_permissions.name", 1),
+					testAccSourcePermissionsAttributes("data.buddy_permissions.type", 1),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourcePermissions(t *testing.T) {
 	domain := util.UniqueString()
 	resource.Test(t, resource.TestCase{

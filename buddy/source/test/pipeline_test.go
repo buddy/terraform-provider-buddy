@@ -11,6 +11,35 @@ import (
 	"testing"
 )
 
+func TestAccSourcePipeline_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	ref := util.RandString(10)
+	config := testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, ""),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourcePipeline(t *testing.T) {
 	domain := util.UniqueString()
 	projectName := util.UniqueString()

@@ -11,7 +11,32 @@ import (
 	"testing"
 )
 
-// todo workspace upgrade test
+func TestAcc_Workspace_upgrade(t *testing.T) {
+	var workspace buddy.Workspace
+	domain := util.UniqueString()
+	config := testAccWorkspaceConfig(domain)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccWorkspaceGet("buddy_workspace.foo", &workspace),
+					testAccWorkspaceAttributes("buddy_workspace.foo", &workspace, domain, ""),
+				),
+			},
+		},
+	})
+}
 
 func testAccWorkspaceCheckDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {

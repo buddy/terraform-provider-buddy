@@ -11,6 +11,41 @@ import (
 	"testing"
 )
 
+func TestAccSourceVariableSshKey_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	key := util.RandString(10)
+	desc := util.RandString(10)
+	filePlace := buddy.VariableSshKeyFilePlaceContainer
+	filePath := "~/.ssh/test2"
+	fileChmod := "660"
+	err, _, privateKey := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	config := testAccSourceVariableSshKeyConfig(domain, key, desc, privateKey, filePlace, filePath, fileChmod)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.id", key, desc, filePlace, filePath, fileChmod),
+					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.key", key, desc, filePlace, filePath, fileChmod),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceVariableSshKey(t *testing.T) {
 	domain := util.UniqueString()
 	key := util.RandString(10)

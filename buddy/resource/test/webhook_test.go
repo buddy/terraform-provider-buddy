@@ -11,7 +11,36 @@ import (
 	"testing"
 )
 
-// todo upgrade webhook test
+func TestAccWebhook_upgrade(t *testing.T) {
+	var webhook buddy.Webhook
+	domain := util.UniqueString()
+	event := buddy.WebhookEventPush
+	projectName := util.UniqueString()
+	targetUrl := "https://127.0.0.1"
+	secretKey := ""
+	config := testAccWebhookConfig(domain, projectName, event, targetUrl, secretKey)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccWebhookGet("buddy_webhook.bar", &webhook),
+					testAccWebhookAttributes("buddy_webhook.bar", &webhook, projectName, event, targetUrl, secretKey),
+				),
+			},
+		},
+	})
+}
 
 func TestAccWebhook(t *testing.T) {
 	var webhook buddy.Webhook

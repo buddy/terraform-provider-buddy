@@ -10,6 +10,33 @@ import (
 	"testing"
 )
 
+func TestAccSourceMember_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	config := testAccSourceMemberConfig(domain, name)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceMemberAttributes("data.buddy_member.id", name),
+					testAccSourceMemberAttributes("data.buddy_member.name", name),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceMember(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)

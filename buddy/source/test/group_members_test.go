@@ -10,6 +10,35 @@ import (
 	"testing"
 )
 
+func TestAccSourceGroupMembers_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	groupName := util.UniqueString()
+	email1 := util.RandEmail()
+	email2 := util.RandEmail()
+	config := testAccSourceGroupMembersConfig(domain, groupName, email1, email2)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceGroupMembersAttributes("data.buddy_group_members.gm", 3),
+					testAccSourceGroupMembersAttributes("data.buddy_group_members.filter", 1),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceGroupMembers(t *testing.T) {
 	domain := util.UniqueString()
 	groupName := util.UniqueString()

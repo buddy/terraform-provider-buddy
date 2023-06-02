@@ -10,6 +10,35 @@ import (
 	"testing"
 )
 
+func TestAccSourceIntegration_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	typ := buddy.IntegrationTypeAmazon
+	scope := buddy.IntegrationScopeAdmin
+	config := testAccSourceIntegrationConfig(domain, name, typ, scope)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceIntegrationAttributes("data.buddy_integration.id", name, typ),
+					testAccSourceIntegrationAttributes("data.buddy_integration.name", name, typ),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceIntegration(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)

@@ -12,7 +12,40 @@ import (
 	"testing"
 )
 
-// todo upgrade variable sshkey test
+func TestAccVariableSshKey_workspace_upgrade(t *testing.T) {
+	var variable buddy.Variable
+	domain := util.UniqueString()
+	key := util.UniqueString()
+	filePlace := buddy.VariableSshKeyFilePlaceContainer
+	filePath := "~/.ssh/test"
+	fileChmod := "600"
+	err, _, privateKey := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	config := testAccVariableSshKeyWorkspaceSimpleConfig(domain, key, filePlace, filePath, fileChmod, privateKey)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, key, privateKey, filePlace, filePath, fileChmod, ""),
+				),
+			},
+		},
+	})
+}
 
 func TestAccVariableSshKey_workspace(t *testing.T) {
 	var variable buddy.Variable

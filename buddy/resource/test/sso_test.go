@@ -11,7 +11,40 @@ import (
 	"testing"
 )
 
-// todo upgrade sso test
+func TestAccSso_upgrade(t *testing.T) {
+	var sso buddy.Sso
+	domain := util.UniqueString()
+	ssoUrl := "https://login.microsoftonline.com/" + util.UniqueString() + "/saml2"
+	issuer := "https://sts.windows.net/" + util.UniqueString()
+	signature := buddy.SignatureMethodSha256
+	digest := buddy.DigestMethodSha256
+	err, cert := util.GenerateCertificate()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	config := testAccSsoConfig(domain, ssoUrl, issuer, cert, signature, digest)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSsoGet("buddy_sso.bar", &sso),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, ssoUrl, issuer, cert, signature, digest, false),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSso(t *testing.T) {
 	var sso buddy.Sso

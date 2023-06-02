@@ -11,8 +11,6 @@ import (
 	"testing"
 )
 
-// todo upgrade integration test
-
 var ignoreImportVerify = []string{
 	"username",
 	"shop",
@@ -26,6 +24,35 @@ var ignoreImportVerify = []string{
 	"email",
 	"role_assumption",
 	"partner_token",
+}
+
+func TestAccIntegration_amazon_upgrade(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	scope := buddy.IntegrationScopeAdmin
+	config := testAccIntegrationAmazon(domain, name, scope)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, scope, false, false),
+				),
+			},
+		},
+	})
 }
 
 func TestAccIntegration_amazon(t *testing.T) {

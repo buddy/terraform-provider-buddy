@@ -11,6 +11,37 @@ import (
 	"testing"
 )
 
+func TestAccSourceProjectMember_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	memberEmail := util.RandEmail()
+	projectName := util.UniqueString()
+	permissionName := util.RandString(10)
+	pipelineAccessLevel := buddy.PermissionAccessLevelRunOnly
+	repoAccessLevel := buddy.PermissionAccessLevelReadWrite
+	sandboxAccessLevel := buddy.PermissionAccessLevelReadWrite
+	config := testAccSourceProjectMemberConfig(domain, memberEmail, projectName, permissionName, pipelineAccessLevel, repoAccessLevel, sandboxAccessLevel)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceProjectMemberAttributes("data.buddy_project_member.bar", memberEmail, permissionName, pipelineAccessLevel, repoAccessLevel, sandboxAccessLevel),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceProjectMember(t *testing.T) {
 	domain := util.UniqueString()
 	memberEmail := util.RandEmail()

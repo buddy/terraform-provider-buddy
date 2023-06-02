@@ -10,6 +10,35 @@ import (
 	"testing"
 )
 
+func TestAccSourceVariable_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	key := util.RandString(10)
+	val := util.RandString(10)
+	desc := util.RandString(10)
+	config := testAccSourceVariableConfig(domain, key, val, desc, false, true)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceVariableAttributes("data.buddy_variable.id", key, val, desc, false, true),
+					testAccSourceVariableAttributes("data.buddy_variable.key", key, val, desc, false, true),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceVariable(t *testing.T) {
 	domain := util.UniqueString()
 	key := util.RandString(10)

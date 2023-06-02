@@ -11,7 +11,34 @@ import (
 	"testing"
 )
 
-// todo profile upgrade test
+func TestAccProfile_upgrade(t *testing.T) {
+	var profile buddy.Profile
+	r := util.RandInt()
+	config := testAccProfileUpdateConfig(r)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccProfileGet(&profile),
+					testAccProfileAttributes("buddy_profile.me", &profile, &testAccProfileExpectedAttributes{
+						Name: fmt.Sprintf("aaaa %d", r),
+					}),
+				),
+			},
+		},
+	})
+}
 
 func TestAccProfile(t *testing.T) {
 	var profile buddy.Profile

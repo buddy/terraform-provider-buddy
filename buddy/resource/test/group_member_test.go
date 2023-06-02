@@ -11,7 +11,36 @@ import (
 	"testing"
 )
 
-// todo test upgrade group member
+func TestAccGroupMember_upgrade(t *testing.T) {
+	var member buddy.Member
+	domain := util.UniqueString()
+	groupNameA := util.RandString(5)
+	groupNameB := util.RandString(5)
+	memberEmailA := util.RandEmail()
+	memberEmailB := util.RandEmail()
+	config := testAccGroupMemberConfig(domain, groupNameA, groupNameB, memberEmailA, memberEmailB, "a", "a")
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupMemberGet("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusMember),
+				),
+			},
+		},
+	})
+}
 
 func TestAccGroupMember(t *testing.T) {
 	var member buddy.Member

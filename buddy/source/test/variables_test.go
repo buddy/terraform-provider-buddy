@@ -10,6 +10,32 @@ import (
 	"testing"
 )
 
+func TestAccSourceVariables_upgrade(t *testing.T) {
+	config := testAccSourceVariablesConfig()
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceVariablesAttributes("data.buddy_variables.all", 2),
+					testAccSourceVariablesAttributes("data.buddy_variables.key", 1),
+					testAccSourceVariablesAttributes("data.buddy_variables.project", 1),
+				),
+			},
+		},
+	})
+}
+
 func TestAccSourceVariables(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {

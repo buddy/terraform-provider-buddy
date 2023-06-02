@@ -10,6 +10,28 @@ import (
 	"testing"
 )
 
+func TestAccSourceProfile_upgrade(t *testing.T) {
+	config := testAccSourceProfileConfig()
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check:                    resource.ComposeTestCheckFunc(testAccSourceProfile("data.buddy_profile.me")),
+			},
+		},
+	})
+}
+
 func TestAccSourceProfile(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acc.PreCheck(t) },
