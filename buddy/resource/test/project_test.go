@@ -1,16 +1,50 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"os"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccProject_github_upgrade(t *testing.T) {
+	ghToken := os.Getenv("BUDDY_GH_TOKEN")
+	ghPoject := os.Getenv("BUDDY_GH_PROJECT")
+	if ghToken == "" || ghPoject == "" {
+		return
+	}
+	var project buddy.Project
+	domain := util.UniqueString()
+	displayName := util.RandString(10)
+	config := testAccProjectGitHubConfig(domain, displayName, ghToken, ghPoject, false, true)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					util.TestSleep(10000),
+					testAccProjectGet("buddy_project.gh", &project),
+					testAccProjectAttributes("buddy_project.gh", &project, displayName, false, buddy.ProjectAccessPrivate, true, false, ""),
+				),
+			},
+		},
+	})
+}
 
 func TestAccProject_github(t *testing.T) {
 	ghToken := os.Getenv("BUDDY_GH_TOKEN")
@@ -26,8 +60,8 @@ func TestAccProject_github(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProjectCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProjectCheckDestroy,
 		Steps: []resource.TestStep{
 			// create project
 			{
@@ -65,23 +99,22 @@ func TestAccProject_withoutRepository(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProjectCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProjectCheckDestroy,
 		Steps: []resource.TestStep{
 			// create project
 			{
 				Config: testAccProjectWithoutRepositoryConfig(domain, displayName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, displayName, false, buddy.ProjectAccessPrivate, false, false, ""),
+					testAccProjectAttributes("buddy_project.bar", &project, displayName, true, buddy.ProjectAccessPrivate, false, false, ""),
 				),
 			},
 			// import project
 			{
-				ResourceName:            "buddy_project.bar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"without_repository"},
+				ResourceName:      "buddy_project.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -98,15 +131,15 @@ func TestAccProject_buddy(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProjectCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProjectCheckDestroy,
 		Steps: []resource.TestStep{
 			// create project
 			{
 				Config: testAccProjectBuddyConfig(domain, displayName, access),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, displayName, false, access, false, false, ""),
+					testAccProjectAttributes("buddy_project.bar", &project, displayName, true, access, false, false, ""),
 				),
 			},
 			// update project
@@ -114,7 +147,7 @@ func TestAccProject_buddy(t *testing.T) {
 				Config: testAccProjectBuddyConfig(domain, newDisplayName, newAccess),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, false, newAccess, false, false, ""),
+					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, true, newAccess, false, false, ""),
 				),
 			},
 			// import project
@@ -138,8 +171,8 @@ func TestAccProject_custom(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProjectCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProjectCheckDestroy,
 		Steps: []resource.TestStep{
 			// create project
 			{
@@ -147,7 +180,7 @@ func TestAccProject_custom(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					util.TestSleep(10000),
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, displayName, false, buddy.ProjectAccessPrivate, false, true, fetchSubmodulesEnv),
+					testAccProjectAttributes("buddy_project.bar", &project, displayName, true, buddy.ProjectAccessPrivate, false, true, fetchSubmodulesEnv),
 				),
 			},
 			// update project
@@ -155,7 +188,7 @@ func TestAccProject_custom(t *testing.T) {
 				Config: testAccProjectCustomConfig(domain, repoUrl, newDisplayName, false, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccProjectGet("buddy_project.bar", &project),
-					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, false, buddy.ProjectAccessPrivate, false, false, ""),
+					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, true, buddy.ProjectAccessPrivate, false, false, ""),
 				),
 			},
 			// import project
@@ -277,15 +310,15 @@ func testAccProjectGet(n string, project *buddy.Project) resource.TestCheckFunc 
 func testAccProjectCustomConfig(domain string, repoUrl string, displayName string, fetchSubmodules bool, fetchSubmodulesEnv string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 	custom_repo_url = "%s"
 	fetch_submodules = "%t"
-    fetch_submodules_env_key = "%s"
+   fetch_submodules_env_key = "%s"
 }
 `, domain, displayName, repoUrl, fetchSubmodules, fetchSubmodulesEnv)
 }
@@ -293,12 +326,12 @@ resource "buddy_project" "bar" {
 func testAccProjectBuddyConfig(domain string, name string, access string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s" 
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 	access = "%s"
 }
 `, domain, name, access)
@@ -307,12 +340,12 @@ resource "buddy_project" "bar" {
 func testAccProjectWithoutRepositoryConfig(domain string, name string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s" 
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 	without_repository = true
 }
 `, domain, name)
@@ -321,23 +354,23 @@ resource "buddy_project" "bar" {
 func testAccProjectGitHubConfig(domain string, name string, ghToken string, ghProject string, updateBranch bool, allowPullRequests bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "gh" {
 	domain = "${buddy_workspace.foo.domain}"
 	name = "gh"
-    type = "GIT_HUB"
-    scope = "WORKSPACE"
-    token = "%s"
+   type = "GIT_HUB"
+   scope = "WORKSPACE"
+   token = "%s"
 }
 
 resource "buddy_project" "gh" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
-    integration_id = "${buddy_integration.gh.integration_id}"
-    external_project_id = "%s"
-    update_default_branch_from_external = "%t"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+   integration_id = "${buddy_integration.gh.integration_id}"
+   external_project_id = "%s"
+   update_default_branch_from_external = "%t"
 	allow_pull_requests = "%t"
 }
 `, domain, ghToken, name, ghProject, updateBranch, allowPullRequests)

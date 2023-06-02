@@ -1,15 +1,43 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccGroup_upgrade(t *testing.T) {
+	var group buddy.Group
+	domain := util.UniqueString()
+	name := util.RandString(5)
+	config := testAccGroupConfig(domain, name)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupGet("buddy_group.bar", &group),
+					testAccGroupAttributes("buddy_group.bar", &group, name, "", false, nil),
+				),
+			},
+		},
+	})
+}
 
 func TestAccGroup(t *testing.T) {
 	var group buddy.Group
@@ -19,9 +47,9 @@ func TestAccGroup(t *testing.T) {
 	newName := util.RandString(5)
 	newDescription := util.RandString(5)
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acc.PreCheck(t) },
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccGroupCheckDestroy,
+		PreCheck:                 func() { acc.PreCheck(t) },
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccGroupCheckDestroy,
 		Steps: []resource.TestStep{
 			// create group
 			{
@@ -57,9 +85,18 @@ func TestAccGroup(t *testing.T) {
 					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, true, &permission),
 				),
 			},
+			// null group assign
+			{
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newDescription, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupGet("buddy_group.bar", &group),
+					testAccPermissionGet("buddy_permission.perm", &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newDescription, false, &permission),
+				),
+			},
 			// null desc
 			{
-				Config: testAccGroupConfig(domain, newName),
+				Config: testAccGroupUpdateConfig(domain, newName, ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
 					testAccGroupAttributes("buddy_group.bar", &group, newName, "", false, nil),
@@ -109,11 +146,9 @@ func testAccGroupAttributes(n string, group *buddy.Group, name string, descripti
 		if err := util.CheckBoolFieldEqual("AutoAssignToNewProjects", group.AutoAssignToNewProjects, autoAssign); err != nil {
 			return err
 		}
-		if defPerm != nil {
-			if autoAssign {
-				if err := util.CheckIntFieldEqual("AutoAssignPermissionSetId", group.AutoAssignPermissionSetId, defPerm.Id); err != nil {
-					return err
-				}
+		if defPerm != nil && autoAssign {
+			if err := util.CheckIntFieldEqual("AutoAssignPermissionSetId", group.AutoAssignPermissionSetId, defPerm.Id); err != nil {
+				return err
 			}
 			if err := util.CheckIntFieldEqual("auto_assign_permission_set_id", attrsAutoAssignToProjectsPermissionId, defPerm.Id); err != nil {
 				return err
@@ -148,68 +183,73 @@ func testAccGroupGet(n string, group *buddy.Group) resource.TestCheckFunc {
 
 func testAccGroupUpdateConfig(domain string, name string, description string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "test"
-    pipeline_access_level = "READ_ONLY"
-    repository_access_level = "READ_ONLY"
-	sandbox_access_level = "READ_ONLY"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_group" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    description = "%s"
-}
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+		sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_group" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "%s"
+	   description = "%s"
+	}
+
 `, domain, name, description)
 }
 
 func testAccGroupUpdateProjectAssignConfig(domain string, name string, description string, autoAssign bool) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "test"
-    pipeline_access_level = "READ_ONLY"
-    repository_access_level = "READ_ONLY"
-	sandbox_access_level = "READ_ONLY"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_group" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    description = "%s"
-	auto_assign_to_new_projects = %t
-	auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
-}
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+		sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_group" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "%s"
+	   description = "%s"
+		auto_assign_to_new_projects = %t
+		auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
+	}
+
 `, domain, name, description, autoAssign)
 }
-
 func testAccGroupConfig(domain string, name string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-   domain = "%s"
-}
 
-resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "test"
-    pipeline_access_level = "READ_ONLY"
-    repository_access_level = "READ_ONLY"
-	sandbox_access_level = "READ_ONLY"
-}
+	resource "buddy_workspace" "foo" {
+	  domain = "%s"
+	}
 
-resource "buddy_group" "bar" {
-   domain = "${buddy_workspace.foo.domain}"
-   name = "%s"
-}
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+		sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_group" "bar" {
+	  domain = "${buddy_workspace.foo.domain}"
+	  name = "%s"
+	}
+
 `, domain, name)
 }
 

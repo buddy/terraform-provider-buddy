@@ -1,15 +1,42 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccProfileEmail_upgrade(t *testing.T) {
+	var pe buddy.ProfileEmail
+	email := util.RandEmail()
+	config := testAccProfileEmailConfig(email)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccProfileEmailGet("buddy_profile_email.foo", &pe),
+					testAccProfileEmailAttributes("buddy_profile_email.foo", &pe, email),
+				),
+			},
+		},
+	})
+}
 
 func TestAccProfileEmail(t *testing.T) {
 	var pe buddy.ProfileEmail
@@ -19,8 +46,8 @@ func TestAccProfileEmail(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProfileEmailCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProfileEmailCheckDestroy,
 		Steps: []resource.TestStep{
 			// create email
 			{
@@ -96,7 +123,7 @@ func testAccProfileEmailGet(n string, pe *buddy.ProfileEmail) resource.TestCheck
 func testAccProfileEmailConfig(email string) string {
 	return fmt.Sprintf(`
 resource "buddy_profile_email" "foo" {
-    email = "%s"
+   email = "%s"
 }
 `, email)
 }

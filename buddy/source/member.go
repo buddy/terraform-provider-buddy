@@ -1,121 +1,189 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"net/http"
+	"strconv"
+	"terraform-provider-buddy/buddy/util"
 )
 
-func Member() *schema.Resource {
-	return &schema.Resource{
-		Description: "Get member by name, email or member ID\n\n" +
+var (
+	_ datasource.DataSource              = &memberSource{}
+	_ datasource.DataSourceWithConfigure = &memberSource{}
+)
+
+func NewMemberSource() datasource.DataSource {
+	return &memberSource{}
+}
+
+type memberSource struct {
+	client *buddy.Client
+}
+
+type memberSourceModel struct {
+	ID             types.String `tfsdk:"id"`
+	Domain         types.String `tfsdk:"domain"`
+	Email          types.String `tfsdk:"email"`
+	Name           types.String `tfsdk:"name"`
+	MemberId       types.Int64  `tfsdk:"member_id"`
+	Admin          types.Bool   `tfsdk:"admin"`
+	HtmlUrl        types.String `tfsdk:"html_url"`
+	AvatarUrl      types.String `tfsdk:"avatar_url"`
+	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
+}
+
+func (s *memberSourceModel) loadAPI(domain string, member *buddy.Member) {
+	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(member.Id)))
+	s.Domain = types.StringValue(domain)
+	s.Email = types.StringValue(member.Email)
+	s.Name = types.StringValue(member.Name)
+	s.MemberId = types.Int64Value(int64(member.Id))
+	s.Admin = types.BoolValue(member.Admin)
+	s.HtmlUrl = types.StringValue(member.HtmlUrl)
+	s.AvatarUrl = types.StringValue(member.AvatarUrl)
+	s.WorkspaceOwner = types.BoolValue(member.WorkspaceOwner)
+}
+
+func (s *memberSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_member"
+}
+
+func (s *memberSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *memberSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get member by name, email or member ID\n\n" +
 			"Token scope required: `WORKSPACE`",
-		ReadContext: readContextMember,
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
 			},
-			"email": {
-				Description: "The member's email",
-				Type:        schema.TypeString,
-				Computed:    true,
-				Optional:    true,
-				ExactlyOneOf: []string{
-					"email",
-					"name",
-					"member_id",
+			"email": schema.StringAttribute{
+				MarkdownDescription: "The member's email",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("email"),
+						path.MatchRoot("name"),
+						path.MatchRoot("member_id"),
+					}...),
 				},
 			},
-			"admin": {
-				Description: "Is the member a workspace administrator",
-				Type:        schema.TypeBool,
-				Computed:    true,
-			},
-			"name": {
-				Description: "The member's name",
-				Type:        schema.TypeString,
-				Computed:    true,
-				Optional:    true,
-				ExactlyOneOf: []string{
-					"email",
-					"name",
-					"member_id",
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The member's name",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("email"),
+						path.MatchRoot("name"),
+						path.MatchRoot("member_id"),
+					}...),
 				},
 			},
-			"member_id": {
-				Description: "The member's ID",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				ExactlyOneOf: []string{
-					"email",
-					"name",
-					"member_id",
+			"member_id": schema.Int64Attribute{
+				MarkdownDescription: "The member's ID",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.Int64{
+					int64validator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("email"),
+						path.MatchRoot("name"),
+						path.MatchRoot("member_id"),
+					}...),
 				},
 			},
-			"html_url": {
-				Description: "The member's URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"admin": schema.BoolAttribute{
+				MarkdownDescription: "Is the member a workspace administrator",
+				Computed:            true,
 			},
-			"avatar_url": {
-				Description: "The member's avatar URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The member's URL",
+				Computed:            true,
 			},
-			"workspace_owner": {
-				Description: "Is the member the workspace owner",
-				Type:        schema.TypeBool,
-				Computed:    true,
+			"avatar_url": schema.StringAttribute{
+				MarkdownDescription: "The member's avatar URL",
+				Computed:            true,
+			},
+			"workspace_owner": schema.BoolAttribute{
+				MarkdownDescription: "Is the member the workspace owner",
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func readContextMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
+func (s *memberSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *memberSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
 	var member *buddy.Member
 	var err error
-	domain := d.Get("domain").(string)
-	if memberId, ok := d.GetOk("member_id"); ok {
-		member, _, err = c.MemberService.Get(domain, memberId.(int))
+	if !data.MemberId.IsNull() && !data.MemberId.IsUnknown() {
+		var httpResp *http.Response
+		memberId := int(data.MemberId.ValueInt64())
+		member, httpResp, err = s.client.MemberService.Get(domain, memberId)
 		if err != nil {
-			return diag.FromErr(err)
+			if util.IsResourceNotFound(httpResp, err) {
+				resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("member"))
+				return
+			}
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get member", err))
+			return
 		}
 	} else {
-		name, nameOk := d.GetOk("name")
-		email, emailOk := d.GetOk("email")
-		list, _, err := c.MemberService.GetListAll(domain)
-		if err != nil {
-			return diag.FromErr(err)
+		var name *string
+		var email *string
+		var members *buddy.Members
+		if !data.Name.IsNull() && !data.Name.IsUnknown() {
+			name = data.Name.ValueStringPointer()
 		}
-		for _, m := range list.Members {
-			if nameOk && m.Name == name.(string) {
+		if !data.Email.IsNull() && !data.Email.IsUnknown() {
+			email = data.Email.ValueStringPointer()
+		}
+		members, _, err = s.client.MemberService.GetListAll(domain)
+		if err != nil {
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get membmers", err))
+			return
+		}
+		for _, m := range members.Members {
+			if name != nil && *name == m.Name {
 				member = m
 				break
 			}
-			if emailOk && m.Email == email.(string) {
+			if email != nil && *email == m.Email {
 				member = m
 				break
 			}
 		}
 		if member == nil {
-			return diag.Errorf("Member not found %d", len(list.Members))
+			resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("member"))
+			return
 		}
 	}
-	err = util.ApiMemberToResourceData(domain, member, d, true)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
+	data.loadAPI(domain, member)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -1,14 +1,48 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceVariablesSshKeys_upgrade(t *testing.T) {
+	err, _, privateKey := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	err, _, privateKey2 := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	config := testAccSourceVariablesSshKeysConfig(privateKey, privateKey2)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 3),
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.key", 1),
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.project", 1),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceVariablesSshKeys(t *testing.T) {
 	err, _, privateKey := util.GenerateRsaKeyPair()
@@ -23,8 +57,8 @@ func TestAccSourceVariablesSshKeys(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceVariablesSshKeysConfig(privateKey, privateKey2),
@@ -95,67 +129,67 @@ func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestC
 func testAccSourceVariablesSshKeysConfig(privateKey string, privateKey2 string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "p" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "abcdef"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "abcdef"
 }
 
 resource "buddy_variable_ssh_key" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "abcdef"
-    description = "abcdef"
-    file_place = "CONTAINER"
-    file_path = "~/abcdef"
-    file_chmod = "600"
-    value = <<EOT
+   domain = "${buddy_workspace.foo.domain}"
+   key = "abcdef"
+   description = "abcdef"
+   file_place = "CONTAINER"
+   file_path = "~/abcdef"
+   file_chmod = "600"
+   value = <<EOT
 %s
 EOT
 }
 
 resource "buddy_variable_ssh_key" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "test"
-    description = "test"
-    file_place = "CONTAINER"
-    file_path = "~/test"
-    file_chmod = "600"
-    value = <<EOT
+   domain = "${buddy_workspace.foo.domain}"
+   key = "test"
+   description = "test"
+   file_place = "CONTAINER"
+   file_path = "~/test"
+   file_chmod = "600"
+   value = <<EOT
 %s
 EOT
 }
 
 resource "buddy_variable_ssh_key" "c" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.p.name}"
-    key = "test"
-    description = "test"
-    file_place = "CONTAINER"
-    file_path = "~/test"
-    file_chmod = "600"
-    value = <<EOT
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.p.name}"
+   key = "test"
+   description = "test"
+   file_place = "CONTAINER"
+   file_path = "~/test"
+   file_chmod = "600"
+   value = <<EOT
 %s
 EOT
 }
 
 data "buddy_variables_ssh_keys" "all" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_variable_ssh_key.a, buddy_variable_ssh_key.b, buddy_variable_ssh_key.c]
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_variable_ssh_key.a, buddy_variable_ssh_key.b, buddy_variable_ssh_key.c]
 }
 
 data "buddy_variables_ssh_keys" "key" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_variable_ssh_key.a, buddy_variable_ssh_key.b, buddy_variable_ssh_key.c]
-    key_regex = "^abc" 
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_variable_ssh_key.a, buddy_variable_ssh_key.b, buddy_variable_ssh_key.c]
+   key_regex = "^abc"
 }
 
 data "buddy_variables_ssh_keys" "project" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_variable_ssh_key.a, buddy_variable_ssh_key.b, buddy_variable_ssh_key.c]
-    project_name = "${buddy_project.p.name}"
-    key_regex = "^te" 
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_variable_ssh_key.a, buddy_variable_ssh_key.b, buddy_variable_ssh_key.c]
+   project_name = "${buddy_project.p.name}"
+   key_regex = "^te"
 }
 
 `, util.UniqueString(), privateKey, privateKey2, privateKey)

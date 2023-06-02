@@ -1,22 +1,47 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceGroups_upgrade(t *testing.T) {
+	config := testAccSourceGroupsConfig()
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceGroupsAttributes("data.buddy_groups.all", 2),
+					testAccSourceGroupsAttributes("data.buddy_groups.name", 1),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceGroups(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceGroupsConfig(),
@@ -57,28 +82,28 @@ func testAccSourceGroupsAttributes(n string, count int) resource.TestCheckFunc {
 func testAccSourceGroupsConfig() string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "w" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_group" "a" {
-    domain = "${buddy_workspace.w.domain}"
-    name = "abcdef"
+   domain = "${buddy_workspace.w.domain}"
+   name = "abcdef"
 }
 
 resource "buddy_group" "b" {
-    domain = "${buddy_workspace.w.domain}"
-    name = "test"
+   domain = "${buddy_workspace.w.domain}"
+   name = "test"
 }
 
 data "buddy_groups" "all" {
-    domain = "${buddy_workspace.w.domain}"
-    depends_on = [buddy_group.a, buddy_group.b]
+   domain = "${buddy_workspace.w.domain}"
+   depends_on = [buddy_group.a, buddy_group.b]
 }
 
 data "buddy_groups" "name" {
-    domain = "${buddy_workspace.w.domain}"
-    depends_on = [buddy_group.a, buddy_group.b]
-    name_regex = "^abc"
+   domain = "${buddy_workspace.w.domain}"
+   depends_on = [buddy_group.a, buddy_group.b]
+   name_regex = "^abc"
 }
 `, util.UniqueString())
 }

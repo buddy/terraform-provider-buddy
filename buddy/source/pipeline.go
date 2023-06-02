@@ -1,184 +1,243 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"net/http"
+	"strconv"
+	"terraform-provider-buddy/buddy/util"
 )
 
-func Pipeline() *schema.Resource {
-	return &schema.Resource{
-		Description: "Get pipeline by name or pipeline ID\n\n" +
+var (
+	_ datasource.DataSource              = &pipelineSource{}
+	_ datasource.DataSourceWithConfigure = &pipelineSource{}
+)
+
+func NewPipelineSource() datasource.DataSource {
+	return &pipelineSource{}
+}
+
+type pipelineSource struct {
+	client *buddy.Client
+}
+
+type pipelineSourceModel struct {
+	ID                    types.String `tfsdk:"id"`
+	Domain                types.String `tfsdk:"domain"`
+	ProjectName           types.String `tfsdk:"project_name"`
+	Name                  types.String `tfsdk:"name"`
+	PipelineId            types.Int64  `tfsdk:"pipeline_id"`
+	Priority              types.String `tfsdk:"priority"`
+	HtmlUrl               types.String `tfsdk:"html_url"`
+	On                    types.String `tfsdk:"on"`
+	LastExecutionStatus   types.String `tfsdk:"last_execution_status"`
+	LastExecutionRevision types.String `tfsdk:"last_execution_revision"`
+	Disabled              types.Bool   `tfsdk:"disabled"`
+	DisablingReason       types.String `tfsdk:"disabling_reason"`
+	Refs                  types.Set    `tfsdk:"refs"`
+	Event                 types.Set    `tfsdk:"event"`
+	Tags                  types.Set    `tfsdk:"tags"`
+	DefinitionSource      types.String `tfsdk:"definition_source"`
+	RemoteProjectName     types.String `tfsdk:"remote_project_name"`
+	RemoteBranch          types.String `tfsdk:"remote_branch"`
+	RemotePath            types.String `tfsdk:"remote_path"`
+	RemoteParameter       types.Set    `tfsdk:"remote_parameter"`
+}
+
+func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projectName string, pipeline *buddy.Pipeline) diag.Diagnostics {
+	var diags diag.Diagnostics
+	s.ID = types.StringValue(util.ComposeTripleId(domain, projectName, strconv.Itoa(pipeline.Id)))
+	s.Domain = types.StringValue(domain)
+	s.ProjectName = types.StringValue(projectName)
+	s.Name = types.StringValue(pipeline.Name)
+	s.PipelineId = types.Int64Value(int64(pipeline.Id))
+	s.Priority = types.StringValue(pipeline.Priority)
+	s.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
+	s.On = types.StringValue(pipeline.On)
+	s.LastExecutionRevision = types.StringValue(pipeline.LastExecutionRevision)
+	s.LastExecutionStatus = types.StringValue(pipeline.LastExecutionStatus)
+	s.Disabled = types.BoolValue(pipeline.Disabled)
+	s.DisablingReason = types.StringValue(pipeline.DisabledReason)
+	r, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
+	diags.Append(d...)
+	s.Refs = r
+	e, d := util.EventsModelFromApi(ctx, &pipeline.Events)
+	diags.Append(d...)
+	s.Event = e
+	t, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Tags)
+	diags.Append(d...)
+	s.Tags = t
+	s.DefinitionSource = types.StringValue(util.GetPipelineDefinitionSource(pipeline))
+	s.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
+	s.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
+	s.RemotePath = types.StringValue(pipeline.RemotePath)
+	rp, d := util.RemoteParametersModelFromApi(ctx, &pipeline.RemoteParameters)
+	diags.Append(d...)
+	s.RemoteParameter = rp
+	return diags
+}
+
+func (s *pipelineSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_pipeline"
+}
+
+func (s *pipelineSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get pipeline by name or pipeline ID\n\n" +
 			"Token scopes required: `WORKSPACE`, `EXECUTION_INFO`",
-		ReadContext: readContextPipeline,
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
 			},
-			"project_name": {
-				Description: "The project's name",
-				Type:        schema.TypeString,
-				Required:    true,
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "The project's name",
+				Required:            true,
 			},
-			"name": {
-				Description: "The pipeline's name",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
-				ExactlyOneOf: []string{
-					"pipeline_id",
-					"name",
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's name",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("name"),
+					}...),
 				},
 			},
-			"priority": {
-				Description: "The pipeline's priority",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"pipeline_id": {
-				Description: "The pipeline's ID",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				ExactlyOneOf: []string{
-					"pipeline_id",
-					"name",
+			"pipeline_id": schema.Int64Attribute{
+				MarkdownDescription: "The pipeline's ID",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.Int64{
+					int64validator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("name"),
+					}...),
 				},
 			},
-			"html_url": {
-				Description: "The pipeline's URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"priority": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's priority",
+				Computed:            true,
 			},
-			"on": {
-				Description: "The pipeline's trigger mode",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's URL",
+				Computed:            true,
 			},
-			"last_execution_status": {
-				Description: "The pipeline's last run status",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"on": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's trigger mode",
+				Computed:            true,
 			},
-			"last_execution_revision": {
-				Description: "The pipeline's last run revision",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"last_execution_status": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's last run status",
+				Computed:            true,
 			},
-			"disabled": {
-				Description: "Defines wheter or not the pipeline can be run",
-				Type:        schema.TypeBool,
-				Computed:    true,
+			"last_execution_revision": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's last run revision",
+				Computed:            true,
 			},
-			"disabling_reason": {
-				Description: "The pipeline's disabling reason",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"disabled": schema.BoolAttribute{
+				MarkdownDescription: "Defines wheter or not the pipeline can be run",
+				Computed:            true,
 			},
-			"refs": {
-				Description: "The pipeline's list of refs",
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
+			"disabling_reason": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's disabling reason",
+				Computed:            true,
+			},
+			"refs": schema.SetAttribute{
+				MarkdownDescription: "The pipeline's list of refs",
+				Computed:            true,
+				ElementType:         types.StringType,
+			},
+			"tags": schema.SetAttribute{
+				MarkdownDescription: "The pipeline's list of tags. Only for `Buddy Enterprise`",
+				Computed:            true,
+				ElementType:         types.StringType,
+			},
+			"definition_source": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's definition source",
+				Computed:            true,
+			},
+			"remote_project_name": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's remote definition project name",
+				Computed:            true,
+			},
+			"remote_branch": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's remote definition branch name",
+				Computed:            true,
+			},
+			"remote_path": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's remote definition path",
+				Computed:            true,
+			},
+			// singular form for compatibility
+			"event": schema.SetNestedAttribute{
+				MarkdownDescription: "The pipeline's list of events",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceEventModelAttributes(),
 				},
 			},
-			"tags": {
-				Description: "The pipeline's list of tags. Only for `Buddy Enterprise`",
-				Type:        schema.TypeSet,
-				Computed:    true,
-				Elem: &schema.Schema{
-					Type: schema.TypeString,
-				},
-			},
-			"event": {
-				Description: "The pipeline's list of events",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"type": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"refs": {
-							Type:     schema.TypeSet,
-							Computed: true,
-							Elem: &schema.Schema{
-								Type: schema.TypeString,
-							},
-						},
-					},
-				},
-			},
-			"definition_source": {
-				Description: "The pipeline's definition source",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"remote_project_name": {
-				Description: "The pipeline's remote definition project name",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"remote_branch": {
-				Description: "The pipeline's remote definition branch name",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"remote_path": {
-				Description: "The pipeline's remote definition path",
-				Type:        schema.TypeString,
-				Computed:    true,
-			},
-			"remote_parameter": {
-				Description: "The pipeline's remote definition parameters",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"key": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"value": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+			// singular form for compatibility
+			"remote_parameter": schema.SetNestedAttribute{
+				MarkdownDescription: "The pipeline's remote definition parameters",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceRemoteParameterModelAttributes(),
 				},
 			},
 		},
 	}
 }
 
-func readContextPipeline(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
+func (s *pipelineSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *pipelineSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
+	projectName := data.ProjectName.ValueString()
 	var pipeline *buddy.Pipeline
 	var err error
-	domain := d.Get("domain").(string)
-	projectName := d.Get("project_name").(string)
-	if pipelineId, ok := d.GetOk("pipeline_id"); ok {
-		pipeline, _, err = c.PipelineService.Get(domain, projectName, pipelineId.(int))
+	if !data.PipelineId.IsNull() && !data.PipelineId.IsUnknown() {
+		var httpRes *http.Response
+		pipeline, httpRes, err = s.client.PipelineService.Get(domain, projectName, int(data.PipelineId.ValueInt64()))
 		if err != nil {
-			return diag.FromErr(err)
+			if util.IsResourceNotFound(httpRes, err) {
+				resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("pipeline"))
+				return
+			}
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get pipeline", err))
+			return
 		}
 	} else {
-		name := d.Get("name").(string)
-		pipelines, _, err := c.PipelineService.GetListAll(domain, projectName)
+		name := data.Name.ValueString()
+		var pipelines *buddy.Pipelines
+		pipelines, _, err = s.client.PipelineService.GetListAll(domain, projectName)
 		if err != nil {
-			return diag.FromErr(err)
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get pipelines", err))
+			return
 		}
 		for _, p := range pipelines.Pipelines {
 			if p.Name == name {
@@ -187,12 +246,13 @@ func readContextPipeline(_ context.Context, d *schema.ResourceData, meta interfa
 			}
 		}
 		if pipeline == nil {
-			return diag.Errorf("Pipeline not found")
+			resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("pipeline"))
+			return
 		}
 	}
-	err = util.ApiPipelineToResourceData(domain, projectName, pipeline, d, true)
-	if err != nil {
-		return diag.FromErr(err)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, pipeline)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return diags
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

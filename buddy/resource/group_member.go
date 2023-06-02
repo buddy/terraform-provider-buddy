@@ -1,187 +1,250 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
+	"terraform-provider-buddy/buddy/util"
 )
 
-func GroupMember() *schema.Resource {
-	return &schema.Resource{
-		Description: "Create and manage a workspace group member\n\n" +
+var (
+	_ resource.Resource                = &groupMemberResource{}
+	_ resource.ResourceWithConfigure   = &groupMemberResource{}
+	_ resource.ResourceWithImportState = &groupMemberResource{}
+)
+
+func NewGroupMemberResource() resource.Resource {
+	return &groupMemberResource{}
+}
+
+type groupMemberResource struct {
+	client *buddy.Client
+}
+
+type groupMemberResourceModel struct {
+	ID             types.String `tfsdk:"id"`
+	Domain         types.String `tfsdk:"domain"`
+	GroupId        types.Int64  `tfsdk:"group_id"`
+	MemberId       types.Int64  `tfsdk:"member_id"`
+	Status         types.String `tfsdk:"status"`
+	HtmlUrl        types.String `tfsdk:"html_url"`
+	Name           types.String `tfsdk:"name"`
+	Email          types.String `tfsdk:"email"`
+	AvatarUrl      types.String `tfsdk:"avatar_url"`
+	Admin          types.Bool   `tfsdk:"admin"`
+	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
+}
+
+func (r *groupMemberResourceModel) decomposeId() (string, int, int, error) {
+	domain, gid, mid, err := util.DecomposeTripleId(r.ID.ValueString())
+	if err != nil {
+		return "", 0, 0, err
+	}
+	groupId, err := strconv.Atoi(gid)
+	if err != nil {
+		return "", 0, 0, err
+	}
+	memberId, err := strconv.Atoi(mid)
+	if err != nil {
+		return "", 0, 0, err
+	}
+	return domain, groupId, memberId, nil
+}
+
+func (r *groupMemberResourceModel) loadAPI(domain string, groupId int, member *buddy.Member) {
+	r.ID = types.StringValue(util.ComposeTripleId(domain, strconv.Itoa(groupId), strconv.Itoa(member.Id)))
+	r.Domain = types.StringValue(domain)
+	r.GroupId = types.Int64Value(int64(groupId))
+	r.MemberId = types.Int64Value(int64(member.Id))
+	r.Status = types.StringValue(member.Status)
+	r.HtmlUrl = types.StringValue(member.HtmlUrl)
+	r.Name = types.StringValue(member.Name)
+	r.Email = types.StringValue(member.Email)
+	r.AvatarUrl = types.StringValue(member.AvatarUrl)
+	r.Admin = types.BoolValue(member.Admin)
+	r.WorkspaceOwner = types.BoolValue(member.WorkspaceOwner)
+}
+
+func (r *groupMemberResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_group_member"
+}
+
+func (r *groupMemberResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Create and manage a workspace group member\n\n" +
 			"Workspace administrator rights are required\n\n" +
 			"Token scope required: `WORKSPACE`",
-		CreateContext: createContextGroupMember,
-		ReadContext:   readContextGroupMember,
-		UpdateContext: updateContexGroupMember,
-		DeleteContext: deleteContextGroupMember,
-		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
-		},
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"group_id": {
-				Description: "The group's ID",
-				Type:        schema.TypeInt,
-				Required:    true,
-				ForceNew:    true,
+			"group_id": schema.Int64Attribute{
+				MarkdownDescription: "The group's ID",
+				Required:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
-			"member_id": {
-				Description: "The member's ID",
-				Type:        schema.TypeInt,
-				Required:    true,
-				ForceNew:    true,
+			"member_id": schema.Int64Attribute{
+				MarkdownDescription: "The member's ID",
+				Required:            true,
+				PlanModifiers: []planmodifier.Int64{
+					int64planmodifier.RequiresReplace(),
+				},
 			},
-			"status": {
-				Description: "The member's status. Allowed: `MEMBER`, `MANAGER`",
-				Type:        schema.TypeString,
-				ValidateFunc: validation.StringInSlice([]string{
+			"status": schema.StringAttribute{
+				MarkdownDescription: "The member's status. Allowed: `MEMBER`, `MANAGER`",
+				Validators: []validator.String{stringvalidator.OneOf(
 					buddy.GroupMemberStatusMember,
 					buddy.GroupMemberStatusManager,
-				}, false),
+				)},
 				Optional: true,
 				Computed: true,
 			},
-			"html_url": {
-				Description: "The member's URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The member's URL",
+				Computed:            true,
 			},
-			"name": {
-				Description: "The member's name",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The member's name",
+				Computed:            true,
 			},
-			"email": {
-				Description: "The member's email",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"email": schema.StringAttribute{
+				MarkdownDescription: "The member's email",
+				Computed:            true,
 			},
-			"avatar_url": {
-				Description: "The member's avatar URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"avatar_url": schema.StringAttribute{
+				MarkdownDescription: "The member's avatar URL",
+				Computed:            true,
 			},
-			"admin": {
-				Description: "Is the member a workspace administrator",
-				Type:        schema.TypeBool,
-				Computed:    true,
+			"admin": schema.BoolAttribute{
+				MarkdownDescription: "Is the member a workspace administrator",
+				Computed:            true,
 			},
-			"workspace_owner": {
-				Description: "Is the member the workspace owner",
-				Type:        schema.TypeBool,
-				Computed:    true,
+			"workspace_owner": schema.BoolAttribute{
+				MarkdownDescription: "Is the member the workspace owner",
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func deleteContextGroupMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	domain, gid, mid, err := util.DecomposeTripleId(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+func (r *groupMemberResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
-	groupId, err := strconv.Atoi(gid)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	memberId, err := strconv.Atoi(mid)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	_, err = c.GroupService.DeleteGroupMember(domain, groupId, memberId)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
+	r.client = req.ProviderData.(*buddy.Client)
 }
 
-func readContextGroupMember(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	domain, gid, mid, err := util.DecomposeTripleId(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+func (r *groupMemberResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *groupMemberResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	groupId, err := strconv.Atoi(gid)
-	if err != nil {
-		return diag.FromErr(err)
+	domain := data.Domain.ValueString()
+	groupId := int(data.GroupId.ValueInt64())
+	ops := buddy.GroupMemberOps{
+		Id: util.PointerInt(data.MemberId.ValueInt64()),
 	}
-	memberId, err := strconv.Atoi(mid)
-	if err != nil {
-		return diag.FromErr(err)
+	if !data.Status.IsNull() && !data.Status.IsUnknown() {
+		ops.Status = data.Status.ValueStringPointer()
 	}
-	m, resp, err := c.GroupService.GetGroupMember(domain, groupId, memberId)
+	member, _, err := r.client.GroupService.AddGroupMember(domain, groupId, &ops)
 	if err != nil {
-		if util.IsResourceNotFound(resp, err) {
-			d.SetId("")
-			return diags
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("create group member", err))
+		return
+	}
+	data.loadAPI(domain, groupId, member)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *groupMemberResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *groupMemberResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain, groupId, memberId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("group_member", err))
+		return
+	}
+	member, httpResp, err := r.client.GroupService.GetGroupMember(domain, groupId, memberId)
+	if err != nil {
+		if util.IsResourceNotFound(httpResp, err) {
+			resp.State.RemoveResource(ctx)
+			return
 		}
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get group member", err))
+		return
 	}
-	err = util.ApiGroupMemberToResourceData(domain, groupId, m, d)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
+	data.loadAPI(domain, groupId, member)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func updateContexGroupMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	domain, gid, mid, err := util.DecomposeTripleId(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+func (r *groupMemberResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *groupMemberResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	groupId, err := strconv.Atoi(gid)
+	domain, groupId, memberId, err := data.decomposeId()
 	if err != nil {
-		return diag.FromErr(err)
-	}
-	memberId, err := strconv.Atoi(mid)
-	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("group_member", err))
+		return
 	}
 	status := buddy.GroupMemberStatusMember
-	if s, ok := d.GetOk("status"); ok {
-		status = s.(string)
+	if !data.Status.IsNull() && !data.Status.IsUnknown() {
+		status = data.Status.ValueString()
 	}
-	_, _, err = c.GroupService.UpdateGroupMember(domain, groupId, memberId, status)
+	member, _, err := r.client.GroupService.UpdateGroupMember(domain, groupId, memberId, status)
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("update group member", err))
+		return
 	}
-	return readContextGroupMember(ctx, d, meta)
+	data.loadAPI(domain, groupId, member)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func createContextGroupMember(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	domain := d.Get("domain").(string)
-	groupId := d.Get("group_id").(int)
-	ops := buddy.GroupMemberOps{
-		Id: util.InterfaceIntToPointer(d.Get("member_id")),
+func (r *groupMemberResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *groupMemberResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	if status, ok := d.GetOk("status"); ok {
-		ops.Status = util.InterfaceStringToPointer(status)
-	}
-	member, _, err := c.GroupService.AddGroupMember(domain, groupId, &ops)
+	domain, groupId, memberId, err := data.decomposeId()
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("group_member", err))
+		return
 	}
-	d.SetId(util.ComposeTripleId(domain, strconv.Itoa(groupId), strconv.Itoa(member.Id)))
-	return readContextGroupMember(ctx, d, meta)
+	_, err = r.client.GroupService.DeleteGroupMember(domain, groupId, memberId)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete group_member", err))
+	}
+}
+
+func (r *groupMemberResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }

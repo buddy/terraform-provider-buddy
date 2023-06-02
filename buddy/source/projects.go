@@ -1,111 +1,141 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"regexp"
+	"terraform-provider-buddy/buddy/util"
 )
 
-func Projects() *schema.Resource {
-	return &schema.Resource{
-		Description: "List projects and optionally filter them by membership, status, name or display name\n\n" +
+var (
+	_ datasource.DataSource              = &projectsSource{}
+	_ datasource.DataSourceWithConfigure = &projectsSource{}
+)
+
+func NewProjectsSource() datasource.DataSource {
+	return &projectsSource{}
+}
+
+type projectsSource struct {
+	client *buddy.Client
+}
+
+type projectsSourceModel struct {
+	ID               types.String `tfsdk:"id"`
+	Domain           types.String `tfsdk:"domain"`
+	NameRegex        types.String `tfsdk:"name_regex"`
+	DisplayNameRegex types.String `tfsdk:"display_name_regex"`
+	Membership       types.Bool   `tfsdk:"membership"`
+	Status           types.String `tfsdk:"status"`
+	Projects         types.Set    `tfsdk:"projects"`
+}
+
+func (s *projectsSourceModel) loadAPI(ctx context.Context, domain string, projects *[]*buddy.Project) diag.Diagnostics {
+	s.ID = types.StringValue(util.UniqueString())
+	s.Domain = types.StringValue(domain)
+	p, d := util.ProjectsModelFromApi(ctx, projects)
+	s.Projects = p
+	return d
+}
+
+func (s *projectsSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_projects"
+}
+
+func (s *projectsSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *projectsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "List projects and optionally filter them by membership, status, name or display name\n\n" +
 			"Token scope required: `WORKSPACE`",
-		ReadContext: readContextProjects,
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
 			},
-			"name_regex": {
-				Description:  "The project's name regular expression to match",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringIsValidRegExp,
+			"name_regex": schema.StringAttribute{
+				MarkdownDescription: "The project's name regular expression to match",
+				Optional:            true,
+				Validators: []validator.String{
+					util.RegexpValidator(),
+				},
 			},
-			"display_name_regex": {
-				Description:  "The project's display name regular expression to match",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringIsValidRegExp,
+			"display_name_regex": schema.StringAttribute{
+				MarkdownDescription: "The project's display name regular expression to match",
+				Optional:            true,
+				Validators: []validator.String{
+					util.RegexpValidator(),
+				},
 			},
-			"membership": {
-				Description: "For workspace administrators all workspace projects are returned, set true to lists projects the user actually belongs to",
-				Type:        schema.TypeBool,
-				Optional:    true,
+			"membership": schema.BoolAttribute{
+				MarkdownDescription: "For workspace administrators all workspace projects are returned, set true to lists projects the user actually belongs to",
+				Optional:            true,
 			},
-			"status": {
-				Description: "Filter projects by status (`ACTIVE`, `CLOSED`)",
-				Type:        schema.TypeString,
-				Optional:    true,
-				ValidateFunc: validation.StringInSlice([]string{
-					"ACTIVE",
-					"CLOSED",
-				}, false),
+			"status": schema.StringAttribute{
+				MarkdownDescription: "Filter projects by status (`ACTIVE`, `CLOSED`)",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.ProjectStatusActive,
+						buddy.ProjectStatusClosed,
+					),
+				},
 			},
-			"projects": {
-				Description: "List of projects",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"html_url": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"display_name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"status": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+			"projects": schema.SetNestedAttribute{
+				MarkdownDescription: "List of projects",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceProjectsModelAttributes(),
 				},
 			},
 		},
 	}
 }
 
-func readContextProjects(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
+func (s *projectsSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *projectsSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
 	var nameRegex *regexp.Regexp
 	var displayNameRegex *regexp.Regexp
-	opt := buddy.ProjectListQuery{}
-	if membership, ok := d.GetOk("membership"); ok {
-		opt.Membership = membership.(bool)
+	if !data.NameRegex.IsNull() && !data.NameRegex.IsUnknown() {
+		nameRegex = regexp.MustCompile(data.NameRegex.ValueString())
 	}
-	if status, ok := d.GetOk("status"); ok {
-		opt.Status = status.(string)
+	if !data.DisplayNameRegex.IsNull() && !data.DisplayNameRegex.IsUnknown() {
+		displayNameRegex = regexp.MustCompile(data.DisplayNameRegex.ValueString())
 	}
-	domain := d.Get("domain").(string)
-	projects, _, err := c.ProjectService.GetListAll(domain, &opt)
+	ops := buddy.ProjectListQuery{}
+	if !data.Membership.IsNull() && !data.Membership.IsUnknown() {
+		ops.Membership = data.Membership.ValueBool()
+	}
+	if !data.Status.IsNull() && !data.Status.IsUnknown() {
+		ops.Status = data.Status.ValueString()
+	}
+	projects, _, err := s.client.ProjectService.GetListAll(domain, &ops)
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get projects", err))
+		return
 	}
-	var result []interface{}
-	if name, ok := d.GetOk("name_regex"); ok {
-		nameRegex = regexp.MustCompile(name.(string))
-	}
-	if displayName, ok := d.GetOk("display_name_regex"); ok {
-		displayNameRegex = regexp.MustCompile(displayName.(string))
-	}
+	var result []*buddy.Project
 	for _, p := range projects.Projects {
 		if nameRegex != nil && !nameRegex.MatchString(p.Name) {
 			continue
@@ -113,12 +143,11 @@ func readContextProjects(_ context.Context, d *schema.ResourceData, meta interfa
 		if displayNameRegex != nil && !displayNameRegex.MatchString(p.DisplayName) {
 			continue
 		}
-		result = append(result, util.ApiShortProjectToMap(p))
+		result = append(result, p)
 	}
-	d.SetId(util.UniqueString())
-	err = d.Set("projects", result)
-	if err != nil {
-		return diag.FromErr(err)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, &result)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return diags
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -1,15 +1,53 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccPermission_upgrade(t *testing.T) {
+	var permission buddy.Permission
+	domain := util.UniqueString()
+	name := util.RandString(5)
+	pipelineAccessLevel := buddy.PermissionAccessLevelRunOnly
+	repositoryAccessLevel := buddy.PermissionAccessLevelReadWrite
+	sandboxAccessLevel := buddy.PermissionAccessLevelReadOnly
+	config := testAccPermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccPermissionGet("buddy_permission.bar", &permission),
+					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
+						Name:                  name,
+						PipelineAccessLevel:   pipelineAccessLevel,
+						RepositoryAccessLevel: repositoryAccessLevel,
+						SandboxAccessLevel:    sandboxAccessLevel,
+						Type:                  "CUSTOM",
+						Description:           "",
+					}),
+				),
+			},
+		},
+	})
+}
 
 func TestAccPermission(t *testing.T) {
 	var permission buddy.Permission
@@ -25,9 +63,9 @@ func TestAccPermission(t *testing.T) {
 	newDescription := util.RandString(5)
 	newProjectTeamAccessLevel := buddy.PermissionAccessLevelManage
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acc.PreCheck(t) },
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPermissionCheckDestroy,
+		PreCheck:                 func() { acc.PreCheck(t) },
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPermissionCheckDestroy,
 		Steps: []resource.TestStep{
 			// create a permission
 			{
@@ -170,14 +208,14 @@ func testAccPermissionGet(n string, permission *buddy.Permission) resource.TestC
 func testAccPermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_permission" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    pipeline_access_level = "%s"
-    repository_access_level = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   pipeline_access_level = "%s"
+   repository_access_level = "%s"
 	sandbox_access_level = "%s"
 }
 `, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel)
@@ -185,19 +223,21 @@ resource "buddy_permission" "bar" {
 
 func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, projectTeamAccessLevel string, sandboxAccessLevel string, description string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_permission" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    pipeline_access_level = "%s"
-    repository_access_level = "%s"
-	sandbox_access_level = "%s"
-	project_team_access_level = "%s"
-    description = "%s"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
+
+	resource "buddy_permission" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "%s"
+	   pipeline_access_level = "%s"
+	   repository_access_level = "%s"
+		sandbox_access_level = "%s"
+		project_team_access_level = "%s"
+	   description = "%s"
+	}
+
 `, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, description)
 }
 

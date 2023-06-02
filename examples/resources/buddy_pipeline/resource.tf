@@ -8,7 +8,7 @@ resource "buddy_pipeline" "click" {
   permissions {
     others = "DENIED"
     user {
-      id = 1
+      id           = 1
       access_level = "READ_WRITE"
     }
   }

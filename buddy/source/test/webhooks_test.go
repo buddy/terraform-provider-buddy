@@ -1,14 +1,42 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceWebhooks_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	target1 := "https://127.0.0.1"
+	target2 := "https://192.168.1.1"
+	config := testAccSourceWebhooksConfig(domain, target1, target2)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceWebhooksAttributes("data.buddy_webhooks.all", 2),
+					testAccSourceWebhooksAttributes("data.buddy_webhooks.filter", 1),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceWebhooks(t *testing.T) {
 	domain := util.UniqueString()
@@ -18,8 +46,8 @@ func TestAccSourceWebhooks(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceWebhooksConfig(domain, target1, target2),
@@ -60,32 +88,32 @@ func testAccSourceWebhooksAttributes(n string, count int) resource.TestCheckFunc
 func testAccSourceWebhooksConfig(domain string, target1 string, target2 string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_webhook" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    events = ["PUSH"]
+   domain = "${buddy_workspace.foo.domain}"
+   events = ["PUSH"]
 	projects = []
-    target_url = "%s"
+   target_url = "%s"
 }
 
 resource "buddy_webhook" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    events = ["PUSH"]
+   domain = "${buddy_workspace.foo.domain}"
+   events = ["PUSH"]
 	projects = []
-    target_url = "%s"
+   target_url = "%s"
 }
 
 data "buddy_webhooks" "all" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_webhook.a, buddy_webhook.b]
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_webhook.a, buddy_webhook.b]
 }
 
 data "buddy_webhooks" "filter" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_webhook.a, buddy_webhook.b]
-    target_url_regex = "192"
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_webhook.a, buddy_webhook.b]
+   target_url_regex = "192"
 }
 
 `, domain, target1, target2)

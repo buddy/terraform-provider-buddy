@@ -1,15 +1,48 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccProjectGroup_upgrade(t *testing.T) {
+	var group buddy.ProjectGroup
+	domain := util.UniqueString()
+	nameA := util.RandString(10)
+	nameB := util.RandString(10)
+	projectDisplayNameA := util.RandString(10)
+	projectDisplayNameB := util.RandString(10)
+	permissionNameA := util.RandString(10)
+	permissionNameB := util.RandString(10)
+	config := testAccProjectGroupConfig(domain, nameA, nameB, projectDisplayNameA, projectDisplayNameB, permissionNameA, permissionNameB, "a", "a", "a")
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectGroupGet("buddy_project_group.bar", &group),
+					testAccProjectGroupAttributes("buddy_project_group.bar", &group, permissionNameA),
+				),
+			},
+		},
+	})
+}
 
 func TestAccProjectGroup(t *testing.T) {
 	var group buddy.ProjectGroup
@@ -24,8 +57,8 @@ func TestAccProjectGroup(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProjectGroupCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProjectGroupCheckDestroy,
 		Steps: []resource.TestStep{
 			// create
 			{
@@ -145,42 +178,42 @@ func testAccProjectGroupGet(n string, group *buddy.ProjectGroup) resource.TestCh
 func testAccProjectGroupConfig(domain string, nameA string, nameB string, projectDisplayNameA string, projectDisplayNameB string, permissionNameA string, permissionNameB string, whichProject string, whichGroup string, whichPermission string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_group" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
 }
 
 resource "buddy_group" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
 }
 
 resource "buddy_project" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_project" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_permission" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    pipeline_access_level = "%s"
-    repository_access_level = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   pipeline_access_level = "%s"
+   repository_access_level = "%s"
 	sandbox_access_level = "%s"
 }
 
 resource "buddy_permission" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    pipeline_access_level = "%s"
-    repository_access_level = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   pipeline_access_level = "%s"
+   repository_access_level = "%s"
 	sandbox_access_level = "%s"
 }
 

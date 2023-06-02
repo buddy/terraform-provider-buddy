@@ -1,139 +1,204 @@
 package resource
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"terraform-provider-buddy/buddy/util"
+	"time"
 )
 
-func Workspace() *schema.Resource {
-	return &schema.Resource{
-		Description: "Create and manage a workspace\n\n" +
+var (
+	_ resource.Resource                = &workspaceResource{}
+	_ resource.ResourceWithConfigure   = &workspaceResource{}
+	_ resource.ResourceWithImportState = &workspaceResource{}
+)
+
+func NewWorkspaceResource() resource.Resource {
+	return &workspaceResource{}
+}
+
+type workspaceResource struct {
+	client *buddy.Client
+}
+
+type workspaceResourceModel struct {
+	ID             types.String `tfsdk:"id"`
+	Domain         types.String `tfsdk:"domain"`
+	Name           types.String `tfsdk:"name"`
+	EncryptionSalt types.String `tfsdk:"encryption_salt"`
+	WorkspaceId    types.Int64  `tfsdk:"workspace_id"`
+	HtmlUrl        types.String `tfsdk:"html_url"`
+	OwnerId        types.Int64  `tfsdk:"owner_id"`
+	Frozen         types.Bool   `tfsdk:"frozen"`
+	CreateDate     types.String `tfsdk:"create_date"`
+}
+
+func (r *workspaceResourceModel) loadAPI(workspace *buddy.Workspace) {
+	r.ID = types.StringValue(workspace.Domain)
+	r.Domain = types.StringValue(workspace.Domain)
+	r.Name = types.StringValue(workspace.Name)
+	r.WorkspaceId = types.Int64Value(int64(workspace.Id))
+	r.HtmlUrl = types.StringValue(workspace.HtmlUrl)
+	r.OwnerId = types.Int64Value(int64(workspace.OwnerId))
+	r.Frozen = types.BoolValue(workspace.Frozen)
+	cd, err := time.Parse(time.RFC3339, workspace.CreateDate)
+	if err == nil {
+		// fix seconds
+		r.CreateDate = types.StringValue(cd.Format(time.RFC3339))
+	} else {
+		r.CreateDate = types.StringValue(workspace.CreateDate)
+	}
+	// EncryptionSalt is not returned from api
+}
+
+func (r *workspaceResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_workspace"
+}
+
+func (r *workspaceResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Create and manage a workspace\n\n" +
 			"Invite-only token is required. Contact support@buddy.works for more details\n\n" +
 			"Token scope required: `WORKSPACE`",
-		CreateContext: createContextWorkspace,
-		ReadContext:   readContextWorkspace,
-		UpdateContext: updateContextWorkspace,
-		DeleteContext: deleteContextWorkspace,
-		Importer: &schema.ResourceImporter{
-			StateContext: schema.ImportStatePassthroughContext,
-		},
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ForceNew:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 			},
-			"name": {
-				Description: "The workspace's name",
-				Type:        schema.TypeString,
-				Optional:    true,
-				Computed:    true,
+			"name": schema.StringAttribute{
+				MarkdownDescription: "The workspace's name",
+				Optional:            true,
+				Computed:            true,
 			},
-			"encryption_salt": {
-				Description: "The workspace's salt to encrypt secrets in YAML & API",
-				Type:        schema.TypeString,
-				Optional:    true,
+			"encryption_salt": schema.StringAttribute{
+				MarkdownDescription: "The workspace's salt to encrypt secrets in YAML & API",
+				Optional:            true,
 			},
-			"workspace_id": {
-				Description: "The workspace's ID",
-				Type:        schema.TypeInt,
-				Computed:    true,
+			"workspace_id": schema.Int64Attribute{
+				MarkdownDescription: "The workspace's ID",
+				Computed:            true,
 			},
-			"html_url": {
-				Description: "The workspace's URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL",
+				Computed:            true,
 			},
-			"owner_id": {
-				Description: "The workspace's owner ID",
-				Type:        schema.TypeInt,
-				Computed:    true,
+			"owner_id": schema.Int64Attribute{
+				MarkdownDescription: "The workspace's owner ID",
+				Computed:            true,
 			},
-			"frozen": {
-				Description: "Is the workspace frozen",
-				Type:        schema.TypeBool,
-				Computed:    true,
+			"frozen": schema.BoolAttribute{
+				MarkdownDescription: "Is the workspace frozen",
+				Computed:            true,
 			},
-			"create_date": {
-				Description: "The workspace's create date",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"create_date": schema.StringAttribute{
+				MarkdownDescription: "The workspace's create date",
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func deleteContextWorkspace(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	_, err := c.WorkspaceService.Delete(d.Id())
-	if err != nil {
-		return diag.FromErr(err)
+func (r *workspaceResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
 	}
-	return diags
+	r.client = req.ProviderData.(*buddy.Client)
 }
 
-func readContextWorkspace(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	workspace, resp, err := c.WorkspaceService.Get(d.Id())
-	if err != nil {
-		if util.IsResourceNotFound(resp, err) {
-			d.SetId("")
-			return diags
-		}
-		return diag.FromErr(err)
-	}
-	err = util.ApiWorkspaceToResourceData(workspace, d, false)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
+func (r *workspaceResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
 }
 
-func updateContextWorkspace(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	if d.HasChanges("name", "encryption_salt") {
-		domain := d.Get("domain").(string)
-		opt := buddy.WorkspaceUpdateOps{
-			Name: util.InterfaceStringToPointer(d.Get("name")),
-		}
-		if salt, ok := d.GetOk("encryption_salt"); ok {
-			opt.EncryptionSalt = util.InterfaceStringToPointer(salt)
-		}
-		_, _, err := c.WorkspaceService.Update(domain, &opt)
-		if err != nil {
-			return diag.FromErr(err)
-		}
+func (r *workspaceResource) Create(ctx context.Context, req resource.CreateRequest, resp *resource.CreateResponse) {
+	var data *workspaceResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return readContextWorkspace(ctx, d, meta)
+	ops := buddy.WorkspaceCreateOps{
+		Domain: data.Domain.ValueStringPointer(),
+	}
+	if !data.EncryptionSalt.IsNull() && !data.EncryptionSalt.IsUnknown() {
+		ops.EncryptionSalt = data.EncryptionSalt.ValueStringPointer()
+	}
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
+		ops.Name = data.Name.ValueStringPointer()
+	}
+	workspace, _, err := r.client.WorkspaceService.Create(&ops)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("create workspace", err))
+		return
+	}
+	data.loadAPI(workspace)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func createContextWorkspace(ctx context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	opt := buddy.WorkspaceCreateOps{
-		Domain: util.InterfaceStringToPointer(d.Get("domain")),
+func (r *workspaceResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *workspaceResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	if salt, ok := d.GetOk("encryption_salt"); ok {
-		opt.EncryptionSalt = util.InterfaceStringToPointer(salt)
-	}
-	if name, ok := d.GetOk("name"); ok {
-		opt.Name = util.InterfaceStringToPointer(name)
-	}
-	workspace, _, err := c.WorkspaceService.Create(&opt)
+	workspace, httpResp, err := r.client.WorkspaceService.Get(data.ID.ValueString())
 	if err != nil {
-		return diag.FromErr(err)
+		if util.IsResourceNotFound(httpResp, err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get workspace", err))
+		return
 	}
-	d.SetId(workspace.Domain)
-	return readContextWorkspace(ctx, d, meta)
+	data.loadAPI(workspace)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *workspaceResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
+	var data *workspaceResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	ops := buddy.WorkspaceUpdateOps{}
+	if !data.Name.IsNull() && !data.Name.IsUnknown() {
+		ops.Name = data.Name.ValueStringPointer()
+	}
+	if !data.EncryptionSalt.IsNull() && !data.EncryptionSalt.IsUnknown() {
+		ops.EncryptionSalt = data.EncryptionSalt.ValueStringPointer()
+	}
+	workspace, _, err := r.client.WorkspaceService.Update(data.ID.ValueString(), &ops)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("update workspace", err))
+		return
+	}
+	data.loadAPI(workspace)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *workspaceResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *workspaceResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	_, err := r.client.WorkspaceService.Delete(data.ID.ValueString())
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete workspace", err))
+	}
 }

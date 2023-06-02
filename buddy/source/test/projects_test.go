@@ -1,14 +1,45 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceProjects_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	name1 := "aaa" + util.UniqueString()
+	name2 := util.UniqueString() + "bbb"
+	name3 := util.UniqueString()
+	config := testAccSourceProjectsConfig(domain, name1, name2, name3)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceProjectsAttributes("data.buddy_projects.a", 1, name1),
+					testAccSourceProjectsAttributes("data.buddy_projects.b", 1, name2),
+					testAccSourceProjectsAttributes("data.buddy_projects.c", 0, ""),
+					testAccSourceProjectsAttributes("data.buddy_projects.d", 3, ""),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceProjects(t *testing.T) {
 	domain := util.UniqueString()
@@ -19,8 +50,8 @@ func TestAccSourceProjects(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceProjectsConfig(domain, name1, name2, name3),
@@ -73,45 +104,45 @@ func testAccSourceProjectsAttributes(n string, count int, name string) resource.
 func testAccSourceProjectsConfig(domain string, name1 string, name2 string, name3 string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "w" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "a" {
-    domain = "${buddy_workspace.w.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.w.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_project" "b" {
-    domain = "${buddy_workspace.w.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.w.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_project" "c" {
-    domain = "${buddy_workspace.w.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.w.domain}"
+   display_name = "%s"
 }
 
 data "buddy_projects" "a" {
 	depends_on = [buddy_project.a, buddy_project.b, buddy_project.c]
-    domain = "${buddy_workspace.w.domain}"
-    name_regex = "^aaa"
+   domain = "${buddy_workspace.w.domain}"
+   name_regex = "^aaa"
 }
 
 data "buddy_projects" "b" {
 	depends_on = [buddy_project.a, buddy_project.b, buddy_project.c]
-    domain = "${buddy_workspace.w.domain}"
-    display_name_regex = "bbb$"
+   domain = "${buddy_workspace.w.domain}"
+   display_name_regex = "bbb$"
 }
 
 data "buddy_projects" "c" {
 	depends_on = [buddy_project.a, buddy_project.b, buddy_project.c]
-    domain = "${buddy_workspace.w.domain}"
-    status = "CLOSED"
+   domain = "${buddy_workspace.w.domain}"
+   status = "CLOSED"
 }
 
 data "buddy_projects" "d" {
 	depends_on = [buddy_project.a, buddy_project.b, buddy_project.c]
-    domain = "${buddy_workspace.w.domain}"
+   domain = "${buddy_workspace.w.domain}"
 }
 `, domain, name1, name2, name3)
 }

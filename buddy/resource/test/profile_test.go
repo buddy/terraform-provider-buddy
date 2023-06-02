@@ -1,23 +1,52 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccProfile_upgrade(t *testing.T) {
+	var profile buddy.Profile
+	r := util.RandInt()
+	config := testAccProfileUpdateConfig(r)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccProfileGet(&profile),
+					testAccProfileAttributes("buddy_profile.me", &profile, &testAccProfileExpectedAttributes{
+						Name: fmt.Sprintf("aaaa %d", r),
+					}),
+				),
+			},
+		},
+	})
+}
 
 func TestAccProfile(t *testing.T) {
 	var profile buddy.Profile
 	r := util.RandInt()
 	resource.Test(t, resource.TestCase{
-		PreCheck:          func() { acc.PreCheck(t) },
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      acc.DummyCheckDestroy,
+		PreCheck:                 func() { acc.PreCheck(t) },
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
 		Steps: []resource.TestStep{
 			// update
 			{
@@ -84,6 +113,6 @@ func testAccProfileGet(profile *buddy.Profile) resource.TestCheckFunc {
 func testAccProfileUpdateConfig(r int) string {
 	return fmt.Sprintf(`
 resource "buddy_profile" "me" {
-    name	= "aaaa %d"
+   name	= "aaaa %d"
 }`, r)
 }

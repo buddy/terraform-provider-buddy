@@ -1,15 +1,50 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSso_upgrade(t *testing.T) {
+	var sso buddy.Sso
+	domain := util.UniqueString()
+	ssoUrl := "https://login.microsoftonline.com/" + util.UniqueString() + "/saml2"
+	issuer := "https://sts.windows.net/" + util.UniqueString()
+	signature := buddy.SignatureMethodSha256
+	digest := buddy.DigestMethodSha256
+	err, cert := util.GenerateCertificate()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	config := testAccSsoConfig(domain, ssoUrl, issuer, cert, signature, digest)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSsoGet("buddy_sso.bar", &sso),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, ssoUrl, issuer, cert, signature, digest, false),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSso(t *testing.T) {
 	var sso buddy.Sso
@@ -34,8 +69,8 @@ func TestAccSso(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccSsoCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccSsoCheckDestroy,
 		Steps: []resource.TestStep{
 			// create
 			{
@@ -158,34 +193,34 @@ func testAccSsoGet(n string, sso *buddy.Sso) resource.TestCheckFunc {
 func testAccSsoConfig(domain string, ssoUrl string, issuer string, certificate string, signature string, digest string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_sso" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    sso_url = "%s"
-    issuer = "%s"
-    certificate = <<EOT
+   domain = "${buddy_workspace.foo.domain}"
+   sso_url = "%s"
+   issuer = "%s"
+   certificate = <<EOT
 %sEOT
-    signature = "%s"
-    digest = "%s"
+   signature = "%s"
+   digest = "%s"
 }`, domain, ssoUrl, issuer, certificate, signature, digest)
 }
 
 func testAccSsoConfigRequireForAll(domain string, ssoUrl string, issuer string, certificate string, signature string, digest string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_sso" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    sso_url = "%s"
-    issuer = "%s"
-    certificate = <<EOT
+   domain = "${buddy_workspace.foo.domain}"
+   sso_url = "%s"
+   issuer = "%s"
+   certificate = <<EOT
 %sEOT
-    signature = "%s"
-    digest = "%s"
-    require_for_all = true
+   signature = "%s"
+   digest = "%s"
+   require_for_all = true
 }`, domain, ssoUrl, issuer, certificate, signature, digest)
 }

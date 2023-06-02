@@ -1,75 +1,132 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
+	"net/http"
+	"strconv"
+	"terraform-provider-buddy/buddy/util"
 )
 
-func Webhook() *schema.Resource {
-	return &schema.Resource{
-		Description: "Get webhook by target URL or webhook ID\n\n" +
+var (
+	_ datasource.DataSource              = &webhookSource{}
+	_ datasource.DataSourceWithConfigure = &webhookSource{}
+)
+
+func NewWebhookSource() datasource.DataSource {
+	return &webhookSource{}
+}
+
+type webhookSource struct {
+	client *buddy.Client
+}
+
+type webhookSourceModel struct {
+	ID        types.String `tfsdk:"id"`
+	Domain    types.String `tfsdk:"domain"`
+	TargetUrl types.String `tfsdk:"target_url"`
+	WebhookId types.Int64  `tfsdk:"webhook_id"`
+	HtmlUrl   types.String `tfsdk:"html_url"`
+}
+
+func (s *webhookSourceModel) loadAPI(domain string, webhook *buddy.Webhook) {
+	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(webhook.Id)))
+	s.Domain = types.StringValue(domain)
+	s.TargetUrl = types.StringValue(webhook.TargetUrl)
+	s.WebhookId = types.Int64Value(int64(webhook.Id))
+	s.HtmlUrl = types.StringValue(webhook.HtmlUrl)
+}
+
+func (s *webhookSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_webhook"
+}
+
+func (s *webhookSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *webhookSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "Get webhook by target URL or webhook ID\n\n" +
 			"Token scope required: `WORKSPACE`, `WEBHOOK_INFO`",
-		ReadContext: readContextWebhook,
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
 			},
-			"target_url": {
-				Description: "The webhook's target URL",
-				Type:        schema.TypeString,
-				Computed:    true,
-				Optional:    true,
-				ExactlyOneOf: []string{
-					"webhook_id",
-					"target_url",
+			"target_url": schema.StringAttribute{
+				MarkdownDescription: "The webhook's target URL",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("target_url"),
+						path.MatchRoot("webhook_id"),
+					}...),
 				},
 			},
-			"webhook_id": {
-				Description: "The webhook's ID",
-				Type:        schema.TypeInt,
-				Optional:    true,
-				Computed:    true,
-				ExactlyOneOf: []string{
-					"webhook_id",
-					"target_url",
+			"webhook_id": schema.Int64Attribute{
+				MarkdownDescription: "The webhook's ID",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.Int64{
+					int64validator.ExactlyOneOf(path.Expressions{
+						path.MatchRoot("target_url"),
+						path.MatchRoot("webhook_id"),
+					}...),
 				},
 			},
-			"html_url": {
-				Description: "The webhook's URL",
-				Type:        schema.TypeString,
-				Computed:    true,
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The webhook's URL",
+				Computed:            true,
 			},
 		},
 	}
 }
 
-func readContextWebhook(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
+func (s *webhookSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *webhookSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	var webhook *buddy.Webhook
 	var err error
-	domain := d.Get("domain").(string)
-	if webhookId, ok := d.GetOk("webhook_id"); ok {
-		webhook, _, err = c.WebhookService.Get(domain, webhookId.(int))
+	domain := data.Domain.ValueString()
+	if !data.WebhookId.IsNull() && !data.WebhookId.IsUnknown() {
+		var httpRes *http.Response
+		wid := int(data.WebhookId.ValueInt64())
+		webhook, httpRes, err = s.client.WebhookService.Get(domain, wid)
 		if err != nil {
-			return diag.FromErr(err)
+			if util.IsResourceNotFound(httpRes, err) {
+				resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("webhook"))
+				return
+			}
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get webhook", err))
+			return
 		}
 	} else {
-		targetUrl := d.Get("target_url").(string)
-		webhooks, _, err := c.WebhookService.GetList(domain)
+		var webhooks *buddy.Webhooks
+		targetUrl := data.TargetUrl.ValueString()
+		webhooks, _, err = s.client.WebhookService.GetList(domain)
 		if err != nil {
-			return diag.FromErr(err)
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get webhooks", err))
+			return
 		}
 		for _, w := range webhooks.Webhooks {
 			if w.TargetUrl == targetUrl {
@@ -78,12 +135,10 @@ func readContextWebhook(_ context.Context, d *schema.ResourceData, meta interfac
 			}
 		}
 		if webhook == nil {
-			return diag.Errorf("Webhook not found")
+			resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("webhook"))
+			return
 		}
 	}
-	err = util.ApiWebhookToResourceData(domain, webhook, d, true)
-	if err != nil {
-		return diag.FromErr(err)
-	}
-	return diags
+	data.loadAPI(domain, webhook)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -1,15 +1,47 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccProfilePublicKey_upgrade(t *testing.T) {
+	var key buddy.PublicKey
+	err, publicKey, _ := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	content := publicKey
+	title := util.RandString(10)
+	config := testAccProfilePublicKeyConfig(content, title)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccProfilePublicKeyGet("buddy_profile_public_key.foo", &key),
+					testAccProfilePublicKeyAttributes("buddy_profile_public_key.foo", &key, content, title),
+				),
+			},
+		},
+	})
+}
 
 func TestAccProfilePublicKey(t *testing.T) {
 	var key buddy.PublicKey
@@ -29,8 +61,8 @@ func TestAccProfilePublicKey(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccProfilePublicKeyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccProfilePublicKeyCheckDestroy,
 		Steps: []resource.TestStep{
 			// create key
 			{
@@ -106,8 +138,8 @@ func testAccProfilePublicKeyGet(n string, key *buddy.PublicKey) resource.TestChe
 func testAccProfilePublicKeyConfig(content string, title string) string {
 	return fmt.Sprintf(`
 resource "buddy_profile_public_key" "foo" {
-    content = "%s"
-    title = "%s"
+   content = "%s"
+   title = "%s"
 }
 `, content, title)
 }

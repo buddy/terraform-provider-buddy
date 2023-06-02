@@ -1,15 +1,42 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourcePermissions_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	config := testAccSourcePermissionsConfig(domain)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePermissionsAttributes("data.buddy_permissions.all", 4),
+					testAccSourcePermissionsAttributes("data.buddy_permissions.name", 1),
+					testAccSourcePermissionsAttributes("data.buddy_permissions.type", 1),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourcePermissions(t *testing.T) {
 	domain := util.UniqueString()
@@ -17,8 +44,8 @@ func TestAccSourcePermissions(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourcePermissionsConfig(domain),
@@ -72,33 +99,33 @@ func testAccSourcePermissionsAttributes(n string, count int) resource.TestCheckF
 func testAccSourcePermissionsConfig(domain string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "abcdef"
-    pipeline_access_level = "%s"
-    repository_access_level = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "abcdef"
+   pipeline_access_level = "%s"
+   repository_access_level = "%s"
 	sandbox_access_level = "%s"
 	project_team_access_level = "%s"
 }
 
 data "buddy_permissions" "all" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_permission.perm]
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_permission.perm]
 }
 
 data "buddy_permissions" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_permission.perm]
-    name_regex = "^abc"
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_permission.perm]
+   name_regex = "^abc"
 }
 
 data "buddy_permissions" "type" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_permission.perm]
-    type = "DEVELOPER"
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_permission.perm]
+   type = "DEVELOPER"
 }
 `, domain, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage)
 }

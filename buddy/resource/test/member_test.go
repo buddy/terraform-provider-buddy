@@ -1,15 +1,43 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccMember_upgrade(t *testing.T) {
+	var member buddy.Member
+	domain := util.UniqueString()
+	email := util.RandEmail()
+	config := testAccMemberConfig(domain, email)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccMemberGet("buddy_member.bar", &member),
+					testAccMemberAttributes("buddy_member.bar", &member, false, email, false, nil),
+				),
+			},
+		},
+	})
+}
 
 func TestAccMember(t *testing.T) {
 	var member buddy.Member
@@ -20,8 +48,8 @@ func TestAccMember(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccMemberCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccMemberCheckDestroy,
 		Steps: []resource.TestStep{
 			// create member
 			{
@@ -59,7 +87,7 @@ func TestAccMember(t *testing.T) {
 			},
 			// update member
 			{
-				Config: testAccMemberConfig(domain, email),
+				Config: testAccMemberUpdateNoAutoAssignConfig(domain, email),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMemberGet("buddy_member.bar", &member),
 					testAccMemberAttributes("buddy_member.bar", &member, false, email, false, nil),
@@ -157,68 +185,99 @@ func testAccMemberGet(n string, member *buddy.Member) resource.TestCheckFunc {
 
 func testAccMemberUpdateConfig(domain string, email string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "test"
-    pipeline_access_level = "READ_ONLY"
-    repository_access_level = "READ_ONLY"
-	sandbox_access_level = "READ_ONLY"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_member" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    email = "%s"
-    admin = true
-}
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+		sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_member" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	   admin = true
+	}
+
 `, domain, email)
 }
 
 func testAccMemberUpdateAutoAssignConfig(domain string, email string, autoAssign bool) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "test"
-    pipeline_access_level = "READ_ONLY"
-    repository_access_level = "READ_ONLY"
-	sandbox_access_level = "READ_ONLY"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_member" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    email = "%s"
-    admin = true
-	auto_assign_to_new_projects = %t
-	auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
-}
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+		sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_member" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	   admin = true
+		auto_assign_to_new_projects = %t
+		auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
+	}
+
 `, domain, email, autoAssign)
+}
+
+func testAccMemberUpdateNoAutoAssignConfig(domain string, email string) string {
+	return fmt.Sprintf(`
+
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
+
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+	   sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_member" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	   admin = false
+       auto_assign_to_new_projects = false
+	}
+
+`, domain, email)
 }
 
 func testAccMemberConfig(domain string, email string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_permission" "perm" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "test"
-    pipeline_access_level = "READ_ONLY"
-    repository_access_level = "READ_ONLY"
-	sandbox_access_level = "READ_ONLY"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_member" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    email = "%s"
-}
+	resource "buddy_permission" "perm" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "test"
+	   pipeline_access_level = "READ_ONLY"
+	   repository_access_level = "READ_ONLY"
+		sandbox_access_level = "READ_ONLY"
+	}
+
+	resource "buddy_member" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	}
+
 `, domain, email)
 }
 

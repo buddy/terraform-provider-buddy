@@ -1,23 +1,49 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceIntegrations_upgrade(t *testing.T) {
+	config := testAccSourceIntegrationsConfig()
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.all", 2),
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.name", 1),
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.type", 1),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceIntegrations(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceIntegrationsConfig(),
@@ -61,41 +87,41 @@ func testAccSourceIntegrationsAttributes(n string, count int) resource.TestCheck
 func testAccSourceIntegrationsConfig() string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "abcdef"
-    type = "%s"
-    scope = "%s"
-    access_key = "ABC1234567890"
-    secret_key = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "abcdef"
+   type = "%s"
+   scope = "%s"
+   access_key = "ABC1234567890"
+   secret_key = "ABC1234567890"
 }
 
 resource "buddy_integration" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "zzzzz"
-    type = "%s"
-    scope = "%s"
-    token = "abcdefghijklmnoprst"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "zzzzz"
+   type = "%s"
+   scope = "%s"
+   token = "abcdefghijklmnoprst"
 }
 
 data "buddy_integrations" "all" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_integration.a, buddy_integration.b]
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_integration.a, buddy_integration.b]
 }
 
 data "buddy_integrations" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    depends_on = [buddy_integration.a, buddy_integration.b]
-    name_regex = "^abc"
+   domain = "${buddy_workspace.foo.domain}"
+   depends_on = [buddy_integration.a, buddy_integration.b]
+   name_regex = "^abc"
 }
 
 data "buddy_integrations" "type" {
-    domain = "${buddy_workspace.foo.domain}"
-    type = "AMAZON"
-    depends_on = [buddy_integration.a, buddy_integration.b]
+   domain = "${buddy_workspace.foo.domain}"
+   type = "AMAZON"
+   depends_on = [buddy_integration.a, buddy_integration.b]
 }
 `, util.UniqueString(), buddy.IntegrationTypeAmazon, buddy.IntegrationScopeAdmin, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeWorkspace)
 }

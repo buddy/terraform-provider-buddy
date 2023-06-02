@@ -1,14 +1,43 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceVariable_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	key := util.RandString(10)
+	val := util.RandString(10)
+	desc := util.RandString(10)
+	config := testAccSourceVariableConfig(domain, key, val, desc, false, true)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceVariableAttributes("data.buddy_variable.id", key, val, desc, false, true),
+					testAccSourceVariableAttributes("data.buddy_variable.key", key, val, desc, false, true),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceVariable(t *testing.T) {
 	domain := util.UniqueString()
@@ -19,8 +48,8 @@ func TestAccSourceVariable(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceVariableConfig(domain, key, val, desc, false, true),
@@ -68,26 +97,26 @@ func testAccSourceVariableAttributes(n string, key string, val string, desc stri
 func testAccSourceVariableConfig(domain string, key string, val string, desc string, encrypred bool, settable bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_variable" "var" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "%s"
-    value = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   value = "%s"
 	encrypted = %s
 	settable = %s
 	description = "%s"
 }
 
 data "buddy_variable" "id" {
-    domain = "${buddy_workspace.foo.domain}"
-    variable_id = "${buddy_variable.var.variable_id}"
+   domain = "${buddy_workspace.foo.domain}"
+   variable_id = "${buddy_variable.var.variable_id}"
 }
 
 data "buddy_variable" "key" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "${buddy_variable.var.key}"
+   domain = "${buddy_workspace.foo.domain}"
+   key = "${buddy_variable.var.key}"
 }
 `, domain, key, val, strconv.FormatBool(encrypred), strconv.FormatBool(settable), desc)
 }

@@ -1,18 +1,69 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"encoding/base64"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"log"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 	"time"
 )
+
+func TestAccPipeline_permissions_upgrade(t *testing.T) {
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	ref := util.RandString(10)
+	config := testAccPipelinePermissionsEmpty(domain, projectName, name, ref)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                      name,
+						On:                        buddy.PipelineOnClick,
+						AlwaysFromScratch:         false,
+						AutoClearCache:            false,
+						NoSkipToMostRecent:        false,
+						DoNotCreateCommitStatus:   false,
+						IgnoreFailOnProjectStatus: false,
+						FetchAllRefs:              false,
+						FailOnPrepareEnvWarning:   false,
+						Priority:                  buddy.PipelinePriorityNormal,
+						TargetSiteUrl:             "",
+						ExecutionMessageTemplate:  "",
+						Project:                   &project,
+						Creator:                   &profile,
+						Ref:                       ref,
+						Permissions:               nil,
+					}),
+				),
+			},
+		},
+	})
+}
 
 type testAccPipelineExpectedAttributes struct {
 	Name                      string
@@ -78,8 +129,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPipelineCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
@@ -104,9 +155,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Project:                   &project,
 						Creator:                   &profile,
 						Ref:                       ref,
-						Permissions: &buddy.PipelinePermissions{
-							Others: buddy.PipelinePermissionDefault,
-						},
+						Permissions:               nil,
 					}),
 				),
 			},
@@ -225,7 +274,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 					}),
 				),
 			},
-			// back to empty
+			// to empty
 			{
 				Config: testAccPipelinePermissionsBackToEmpty(domain, projectName, name, ref, email, groupName),
 				Check: resource.ComposeTestCheckFunc(
@@ -248,9 +297,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Project:                   &project,
 						Creator:                   &profile,
 						Ref:                       ref,
-						Permissions: &buddy.PipelinePermissions{
-							Others: buddy.PipelinePermissionReadWrite,
-						},
+						Permissions:               nil,
 					}),
 				),
 			},
@@ -259,7 +306,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 				ResourceName:            "buddy_pipeline.bar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"create_date"},
+				ImportStateVerifyIgnore: []string{"permissions"},
 			},
 		},
 	})
@@ -285,8 +332,8 @@ func TestAccPipeline_remote(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPipelineCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
 		Steps: []resource.TestStep{
 			// create workspace & projects
 			{
@@ -371,8 +418,8 @@ func TestAccPipeline_schedule(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPipelineCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
@@ -418,10 +465,9 @@ func TestAccPipeline_schedule(t *testing.T) {
 			},
 			// import
 			{
-				ResourceName:            "buddy_pipeline.bar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"create_date"},
+				ResourceName:      "buddy_pipeline.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -442,8 +488,8 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPipelineCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
@@ -531,10 +577,9 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 			},
 			// import
 			{
-				ResourceName:            "buddy_pipeline.bar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"create_date"},
+				ResourceName:      "buddy_pipeline.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -771,8 +816,8 @@ func TestAccPipeline_event(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPipelineCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
@@ -893,7 +938,7 @@ func TestAccPipeline_event(t *testing.T) {
 				ResourceName:            "buddy_pipeline.bar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"create_date"},
+				ImportStateVerifyIgnore: []string{"trigger_condition", "event"},
 			},
 		},
 	})
@@ -919,8 +964,8 @@ func TestAccPipeline_click(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccPipelineCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
@@ -978,10 +1023,9 @@ func TestAccPipeline_click(t *testing.T) {
 			},
 			// import pipeline
 			{
-				ResourceName:            "buddy_pipeline.bar",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"create_date"},
+				ResourceName:      "buddy_pipeline.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
@@ -1405,7 +1449,18 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 			}
 		}
 		if len(want.TriggerConditions) > 0 {
-			for i, triggerCondition := range want.TriggerConditions {
+			for _, triggerCondition := range want.TriggerConditions {
+				i := 0
+				for {
+					if i >= len(want.TriggerConditions) {
+						return fmt.Errorf("trigger condition not found: %s", triggerCondition.TriggerCondition)
+					}
+					tc := attrs[fmt.Sprintf("trigger_condition.%d.condition", i)]
+					if tc == triggerCondition.TriggerCondition {
+						break
+					}
+					i += 1
+				}
 				if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerCondition", i), pipeline.TriggerConditions[i].TriggerCondition, triggerCondition.TriggerCondition); err != nil {
 					return err
 				}

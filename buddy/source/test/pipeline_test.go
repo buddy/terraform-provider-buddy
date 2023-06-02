@@ -1,15 +1,44 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourcePipeline_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	ref := util.RandString(10)
+	config := testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, ""),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, ""),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourcePipeline(t *testing.T) {
 	domain := util.UniqueString()
@@ -21,8 +50,8 @@ func TestAccSourcePipeline(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			// click
 			{
@@ -104,36 +133,36 @@ func testAccSourcePipelineAttributes(n string, name string, on string, ref strin
 func testAccSourcePipelineConfigEvent(domain string, projectName string, name string, ref string, priority string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_pipeline" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "EVENT"
-    event {
-        type = "PUSH"
-        refs = ["%s"]
-    }
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   on = "EVENT"
+   event {
+       type = "PUSH"
+       refs = ["%s"]
+   }
 	priority = "%s"
 }
 
 data "buddy_pipeline" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "${buddy_pipeline.bar.name}"
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "${buddy_pipeline.bar.name}"
 }
 
 data "buddy_pipeline" "id" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
 `, domain, projectName, name, ref, priority)
 }
@@ -141,33 +170,33 @@ data "buddy_pipeline" "id" {
 func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_pipeline" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "CLICK"
-    refs = ["%s"]
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   on = "CLICK"
+   refs = ["%s"]
 	priority = "%s"
 }
 
 data "buddy_pipeline" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "${buddy_pipeline.bar.name}"
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "${buddy_pipeline.bar.name}"
 }
 
 data "buddy_pipeline" "id" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
 `, domain, projectName, name, ref, priority)
 }
@@ -175,35 +204,35 @@ data "buddy_pipeline" "id" {
 func testAccSourcePipelineConfigClickDisabled(domain string, projectName string, name string, ref string, priority string, reason string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_pipeline" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "CLICK"
-    refs = ["%s"]
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   on = "CLICK"
+   refs = ["%s"]
 	priority = "%s"
 	disabled = true
 	disabling_reason = "%s"
 }
 
 data "buddy_pipeline" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "${buddy_pipeline.bar.name}"
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "${buddy_pipeline.bar.name}"
 }
 
 data "buddy_pipeline" "id" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
 `, domain, projectName, name, ref, priority, reason)
 }

@@ -1,92 +1,121 @@
 package source
 
 import (
-	"buddy-terraform/buddy/util"
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/validation"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"regexp"
+	"terraform-provider-buddy/buddy/util"
 )
 
-func ProjectGroups() *schema.Resource {
-	return &schema.Resource{
-		Description: "List project groups and optionally filter them by name\n\n" +
+var (
+	_ datasource.DataSource              = &projectGroupsSource{}
+	_ datasource.DataSourceWithConfigure = &projectGroupsSource{}
+)
+
+func NewProjectGroupsSource() datasource.DataSource {
+	return &projectGroupsSource{}
+}
+
+type projectGroupsSource struct {
+	client *buddy.Client
+}
+
+type projectGroupsSourceModel struct {
+	ID          types.String `tfsdk:"id"`
+	Domain      types.String `tfsdk:"domain"`
+	ProjectName types.String `tfsdk:"project_name"`
+	NameRegex   types.String `tfsdk:"name_regex"`
+	Groups      types.Set    `tfsdk:"groups"`
+}
+
+func (s *projectGroupsSourceModel) loadAPI(ctx context.Context, domain string, projectName string, groups *[]*buddy.Group) diag.Diagnostics {
+	s.ID = types.StringValue(util.UniqueString())
+	s.Domain = types.StringValue(domain)
+	s.ProjectName = types.StringValue(projectName)
+	g, d := util.GroupsModelFromApi(ctx, groups)
+	s.Groups = g
+	return d
+}
+
+func (s *projectGroupsSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
+	resp.TypeName = req.ProviderTypeName + "_project_groups"
+}
+
+func (s *projectGroupsSource) Configure(_ context.Context, req datasource.ConfigureRequest, _ *datasource.ConfigureResponse) {
+	if req.ProviderData == nil {
+		return
+	}
+	s.client = req.ProviderData.(*buddy.Client)
+}
+
+func (s *projectGroupsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		MarkdownDescription: "List project groups and optionally filter them by name\n\n" +
 			"Token scope required: `WORKSPACE`",
-		ReadContext: readContextProjectGroups,
-		Schema: map[string]*schema.Schema{
-			"id": {
-				Description: "The Terraform resource identifier for this item",
-				Type:        schema.TypeString,
-				Computed:    true,
+		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
 			},
-			"domain": {
-				Description:  "The workspace's URL handle",
-				Type:         schema.TypeString,
-				Required:     true,
-				ValidateFunc: util.ValidateDomain,
+			"domain": schema.StringAttribute{
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
 			},
-			"project_name": {
-				Description: "The project's name",
-				Type:        schema.TypeString,
-				Required:    true,
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "The project's name",
+				Required:            true,
 			},
-			"name_regex": {
-				Description:  "The group's name regular expression to match",
-				Type:         schema.TypeString,
-				Optional:     true,
-				ValidateFunc: validation.StringIsValidRegExp,
+			"name_regex": schema.StringAttribute{
+				MarkdownDescription: "The group's name regular expression to match",
+				Optional:            true,
+				Validators: []validator.String{
+					util.RegexpValidator(),
+				},
 			},
-			"groups": {
-				Description: "List of groups",
-				Type:        schema.TypeList,
-				Computed:    true,
-				Elem: &schema.Resource{
-					Schema: map[string]*schema.Schema{
-						"html_url": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-						"group_id": {
-							Type:     schema.TypeInt,
-							Computed: true,
-						},
-						"name": {
-							Type:     schema.TypeString,
-							Computed: true,
-						},
-					},
+			"groups": schema.SetNestedAttribute{
+				MarkdownDescription: "List of groups",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceGroupModelAttributes(),
 				},
 			},
 		},
 	}
 }
 
-func readContextProjectGroups(_ context.Context, d *schema.ResourceData, meta interface{}) diag.Diagnostics {
-	c := meta.(*buddy.Client)
-	var diags diag.Diagnostics
-	var nameRegex *regexp.Regexp
-	domain := d.Get("domain").(string)
-	projectName := d.Get("project_name").(string)
-	groups, _, err := c.ProjectGroupService.GetProjectGroups(domain, projectName)
+func (s *projectGroupsSource) Read(ctx context.Context, req datasource.ReadRequest, resp *datasource.ReadResponse) {
+	var data *projectGroupsSourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	domain := data.Domain.ValueString()
+	projectName := data.ProjectName.ValueString()
+	groups, _, err := s.client.ProjectGroupService.GetProjectGroups(domain, projectName)
 	if err != nil {
-		return diag.FromErr(err)
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get project groups", err))
+		return
 	}
-	var result []interface{}
-	if name, ok := d.GetOk("name_regex"); ok {
-		nameRegex = regexp.MustCompile(name.(string))
+	var nameRegex *regexp.Regexp
+	if !data.NameRegex.IsNull() && !data.NameRegex.IsUnknown() {
+		nameRegex = regexp.MustCompile(data.NameRegex.ValueString())
 	}
+	var result []*buddy.Group
 	for _, g := range groups.Groups {
 		if nameRegex != nil && !nameRegex.MatchString(g.Name) {
 			continue
 		}
-		result = append(result, util.ApiShortGroupToMap(g))
+		result = append(result, g)
 	}
-	d.SetId(util.UniqueString())
-	err = d.Set("groups", result)
-	if err != nil {
-		return diag.FromErr(err)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, &result)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-	return diags
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

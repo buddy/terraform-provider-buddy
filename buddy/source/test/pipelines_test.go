@@ -1,15 +1,45 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourcePipelines_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name1 := "aaaa" + util.RandString(10)
+	name2 := util.RandString(10)
+	ref := util.RandString(10)
+	config := testAccSourcePipelinesConfig(domain, projectName, name1, name2, ref)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePipelinesAttributes("data.buddy_pipelines.all", 2, "", ""),
+					testAccSourcePipelinesAttributes("data.buddy_pipelines.name", 1, name1, ref),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourcePipelines(t *testing.T) {
 	domain := util.UniqueString()
@@ -21,8 +51,8 @@ func TestAccSourcePipelines(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourcePipelinesConfig(domain, projectName, name1, name2, ref),
@@ -85,44 +115,44 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 func testAccSourcePipelinesConfig(domain string, projectName string, name1 string, name2 string, ref string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_pipeline" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "CLICK"
-    refs = ["%s"]
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   on = "CLICK"
+   refs = ["%s"]
 }
 
 resource "buddy_pipeline" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "EVENT"
-    event {
-        type = "PUSH"
-        refs = ["%s"]
-    }
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   on = "EVENT"
+   event {
+       type = "PUSH"
+       refs = ["%s"]
+   }
 }
 
 data "buddy_pipelines" "all" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    depends_on = [buddy_pipeline.a, buddy_pipeline.b]
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   depends_on = [buddy_pipeline.a, buddy_pipeline.b]
 }
 
 data "buddy_pipelines" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name_regex = "^aaaa"
-    depends_on = [buddy_pipeline.a, buddy_pipeline.b]
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name_regex = "^aaaa"
+   depends_on = [buddy_pipeline.a, buddy_pipeline.b]
 }
 `, domain, projectName, name1, ref, name2, ref)
 }

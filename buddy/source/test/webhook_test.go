@@ -1,15 +1,45 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceWebhook_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	event := buddy.WebhookEventPush
+	projectName := util.UniqueString()
+	targetUrl := "https://127.0.0.1"
+	secretKey := util.RandString(10)
+	config := testAccSourceWebhookConfig(domain, event, projectName, targetUrl, secretKey)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceWebhookAttributes("data.buddy_webhook.id", targetUrl),
+					testAccSourceWebhookAttributes("data.buddy_webhook.url", targetUrl),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceWebhook(t *testing.T) {
 	domain := util.UniqueString()
@@ -21,8 +51,8 @@ func TestAccSourceWebhook(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceWebhookConfig(domain, event, projectName, targetUrl, secretKey),
@@ -59,30 +89,30 @@ func testAccSourceWebhookAttributes(n string, targetUrl string) resource.TestChe
 func testAccSourceWebhookConfig(domain string, event string, projectName string, targetUrl string, secretKey string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_webhook" "web" {
-    domain = "${buddy_workspace.foo.domain}"
-    events = ["%s"]
-    target_url = "%s"
-    secret_key = "%s"
-    projects = ["${buddy_project.proj.name}"]
+   domain = "${buddy_workspace.foo.domain}"
+   events = ["%s"]
+   target_url = "%s"
+   secret_key = "%s"
+   projects = ["${buddy_project.proj.name}"]
 }
 
 data "buddy_webhook" "id" {
-    domain = "${buddy_workspace.foo.domain}"
-    webhook_id = "${buddy_webhook.web.webhook_id}"
+   domain = "${buddy_workspace.foo.domain}"
+   webhook_id = "${buddy_webhook.web.webhook_id}"
 }
 
 data "buddy_webhook" "url" {
-    domain = "${buddy_workspace.foo.domain}"
-    target_url = "${buddy_webhook.web.target_url}"
+   domain = "${buddy_workspace.foo.domain}"
+   target_url = "${buddy_webhook.web.target_url}"
 }
 `, domain, projectName, event, targetUrl, secretKey)
 }

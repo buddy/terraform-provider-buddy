@@ -1,14 +1,41 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceMember_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	config := testAccSourceMemberConfig(domain, name)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceMemberAttributes("data.buddy_member.id", name),
+					testAccSourceMemberAttributes("data.buddy_member.name", name),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceMember(t *testing.T) {
 	domain := util.UniqueString()
@@ -17,8 +44,8 @@ func TestAccSourceMember(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceMemberConfig(domain, name),
@@ -69,21 +96,21 @@ func testAccSourceMemberAttributes(n string, name string) resource.TestCheckFunc
 func testAccSourceMemberConfig(domain string, name string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_profile" "me" {
-    name = "%s"
+   name = "%s"
 }
 
 data "buddy_member" "id" {
-    domain = "${buddy_workspace.foo.domain}"
-    member_id = "${buddy_profile.me.member_id}"
+   domain = "${buddy_workspace.foo.domain}"
+   member_id = "${buddy_profile.me.member_id}"
 }
 
 data "buddy_member" "name" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "${buddy_profile.me.name}"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "${buddy_profile.me.name}"
 }
 
 `, domain, name)

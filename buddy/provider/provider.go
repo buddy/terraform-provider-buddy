@@ -1,113 +1,167 @@
 package provider
 
 import (
-	"buddy-terraform/buddy/resource"
-	"buddy-terraform/buddy/source"
 	"context"
+	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/diag"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/schema"
+	"github.com/hashicorp/terraform-plugin-framework/datasource"
+	"github.com/hashicorp/terraform-plugin-framework/path"
+	"github.com/hashicorp/terraform-plugin-framework/provider"
+	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/types"
 	"os"
-	"strconv"
+	buddyresource "terraform-provider-buddy/buddy/resource"
+	buddysource "terraform-provider-buddy/buddy/source"
 )
 
-func Provider() *schema.Provider {
-	return &schema.Provider{
-		Schema: map[string]*schema.Schema{
-			"token": {
-				Type:        schema.TypeString,
-				Required:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BUDDY_TOKEN", nil),
-				Description: descriptions["token"],
+var _ provider.Provider = &BuddyProvider{}
+
+type BuddyProvider struct {
+	version string
+}
+
+type BuddyProviderModel struct {
+	Token    types.String `tfsdk:"token"`
+	BaseUrl  types.String `tfsdk:"base_url"`
+	Insecure types.Bool   `tfsdk:"insecure"`
+}
+
+func (p *BuddyProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
+	resp.TypeName = "buddy"
+	resp.Version = p.version
+}
+
+func (p *BuddyProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp *provider.SchemaResponse) {
+	resp.Schema = schema.Schema{
+		Attributes: map[string]schema.Attribute{
+			"token": schema.StringAttribute{
+				MarkdownDescription: "The OAuth2 token or Personal Access Token. Can be specified with the `BUDDY_TOKEN` environment variable.",
+				Sensitive:           true,
+				Optional:            true,
 			},
-			"base_url": {
-				Type:        schema.TypeString,
-				Optional:    true,
-				DefaultFunc: schema.EnvDefaultFunc("BUDDY_BASE_URL", ""),
-				Description: descriptions["base_url"],
+			"base_url": schema.StringAttribute{
+				MarkdownDescription: "The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
+				Optional:            true,
 			},
-			"insecure": {
-				Type:     schema.TypeBool,
-				Optional: true,
-				DefaultFunc: func() (interface{}, error) {
-					v := os.Getenv("BUDDY_INSECURE")
-					if v != "" {
-						return strconv.ParseBool(v)
-					}
-					return false, nil
-				},
-				Description: descriptions["insecure"],
+			"insecure": schema.BoolAttribute{
+				MarkdownDescription: "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
+				Optional:            true,
 			},
 		},
-		ResourcesMap: map[string]*schema.Resource{
-			"buddy_profile":            resource.Profile(),
-			"buddy_profile_email":      resource.ProfileEmail(),
-			"buddy_profile_public_key": resource.ProfilePublicKey(),
-			"buddy_workspace":          resource.Workspace(),
-			"buddy_sso":                resource.Sso(),
-			"buddy_group":              resource.Group(),
-			"buddy_group_member":       resource.GroupMember(),
-			"buddy_member":             resource.Member(),
-			"buddy_permission":         resource.Permission(),
-			"buddy_project":            resource.Project(),
-			"buddy_project_member":     resource.ProjectMember(),
-			"buddy_project_group":      resource.ProjectGroup(),
-			"buddy_webhook":            resource.Webhook(),
-			"buddy_variable":           resource.Variable(),
-			"buddy_variable_ssh_key":   resource.VariableSshKey(),
-			"buddy_integration":        resource.Integration(),
-			"buddy_pipeline":           resource.Pipeline(),
-		},
-		DataSourcesMap: map[string]*schema.Resource{
-			"buddy_workspaces":         source.Workspaces(),
-			"buddy_profile":            source.Profile(),
-			"buddy_group":              source.Group(),
-			"buddy_groups":             source.Groups(),
-			"buddy_group_members":      source.GroupMembers(),
-			"buddy_members":            source.Members(),
-			"buddy_member":             source.Member(),
-			"buddy_workspace":          source.Workspace(),
-			"buddy_permission":         source.Permission(),
-			"buddy_permissions":        source.Permissions(),
-			"buddy_project":            source.Project(),
-			"buddy_projects":           source.Projects(),
-			"buddy_project_member":     source.ProjectMember(),
-			"buddy_project_members":    source.ProjectMembers(),
-			"buddy_project_group":      source.ProjectGroup(),
-			"buddy_project_groups":     source.ProjectGroups(),
-			"buddy_variable":           source.Variable(),
-			"buddy_variable_ssh_key":   source.VariableSshKey(),
-			"buddy_variables":          source.Variables(),
-			"buddy_variables_ssh_keys": source.VariablesSshKeys(),
-			"buddy_webhook":            source.Webhook(),
-			"buddy_webhooks":           source.Webhooks(),
-			"buddy_integration":        source.Integration(),
-			"buddy_integrations":       source.Integrations(),
-			"buddy_pipeline":           source.Pipeline(),
-			"buddy_pipelines":          source.Pipelines(),
-		},
-		ConfigureContextFunc: providerConfigure,
 	}
 }
 
-var descriptions map[string]string
-
-func init() {
-	descriptions = map[string]string{
-		"token":    "The OAuth2 token or Personal Access Token. Can be specified with the `BUDDY_TOKEN` environment variable.",
-		"base_url": "The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
-		"insecure": "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
+func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureRequest, resp *provider.ConfigureResponse) {
+	var config BuddyProviderModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &config)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-}
+	if config.Token.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("token"),
+			"Unknown Buddy Token",
+			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy Token",
+		)
+	}
+	if config.BaseUrl.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("base_url"),
+			"Unknown Buddy Base URL for the API endpoint",
+			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy Base URL",
+		)
+	}
+	if config.BaseUrl.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("insecure"),
+			"Unknown Buddy insecure value for the API endpoint",
+			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy insecure attribute",
+		)
+	}
+	if resp.Diagnostics.HasError() {
+		return
+	}
 
-func providerConfigure(_ context.Context, d *schema.ResourceData) (interface{}, diag.Diagnostics) {
-	token := d.Get("token").(string)
-	baseUrl := d.Get("base_url").(string)
-	insecure := d.Get("insecure").(bool)
-	var diags diag.Diagnostics
-	c, err := buddy.NewClient(token, baseUrl, insecure)
+	token := os.Getenv("BUDDY_TOKEN")
+	if !config.Token.IsNull() {
+		token = config.Token.ValueString()
+	}
+	baseUrl := os.Getenv("BUDDY_BASE_URL")
+	if !config.BaseUrl.IsNull() {
+		baseUrl = config.BaseUrl.ValueString()
+	}
+	insecure := os.Getenv("BUDDY_INSECURE") == "true"
+	if !config.Insecure.IsNull() {
+		insecure = config.Insecure.ValueBool()
+	}
+
+	client, err := buddy.NewClient(token, baseUrl, insecure)
 	if err != nil {
-		return nil, diag.FromErr(err)
+		resp.Diagnostics.AddError("Failed to create Buddy Client from provider configuration", fmt.Sprintf("The provider failed to create a new Buddy Client from the giver configuration: %s", err.Error()))
+		return
 	}
-	return c, diags
+	resp.DataSourceData = client
+	resp.ResourceData = client
+}
+
+func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource {
+	return []func() resource.Resource{
+		buddyresource.NewWorkspaceResource,
+		buddyresource.NewGroupResource,
+		buddyresource.NewGroupMemberResource,
+		buddyresource.NewPermissionResource,
+		buddyresource.NewMemberResource,
+		buddyresource.NewProfileResource,
+		buddyresource.NewProfileEmailResource,
+		buddyresource.NewProfilePublicKeyResource,
+		buddyresource.NewIntegrationResource,
+		buddyresource.NewProjectResource,
+		buddyresource.NewProjectGroupResource,
+		buddyresource.NewProjectMemberResource,
+		buddyresource.NewSsoResoruce,
+		buddyresource.NewVariableResource,
+		buddyresource.NewVariableSshResource,
+		buddyresource.NewWebhookResource,
+		buddyresource.NewPipelineResource,
+	}
+}
+
+func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataSource {
+	return []func() datasource.DataSource{
+		buddysource.NewGroupSource,
+		buddysource.NewGroupMembersSource,
+		buddysource.NewGroupsSource,
+		buddysource.NewIntegrationSource,
+		buddysource.NewIntegrationsSource,
+		buddysource.NewMemberSource,
+		buddysource.NewMembersSource,
+		buddysource.NewPermissionSource,
+		buddysource.NewPermissionsSource,
+		buddysource.NewProfileSource,
+		buddysource.NewProjectSource,
+		buddysource.NewProjectGroupSource,
+		buddysource.NewProjectGroupsSource,
+		buddysource.NewProjectMemberSource,
+		buddysource.NewProjectMembersSource,
+		buddysource.NewProjectsSource,
+		buddysource.NewVariableSource,
+		buddysource.NewVariableSshKeySource,
+		buddysource.NewVariablesSource,
+		buddysource.NewVariablesSshKeysSource,
+		buddysource.NewWebhookSource,
+		buddysource.NewWebhooksSource,
+		buddysource.NewWorkspaceSource,
+		buddysource.NewWorkspacesSource,
+		buddysource.NewPipelineSource,
+		buddysource.NewPipelinesSource,
+	}
+}
+
+func New(version string) func() provider.Provider {
+	return func() provider.Provider {
+		return &BuddyProvider{
+			version: version,
+		}
+	}
 }

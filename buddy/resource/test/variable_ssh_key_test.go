@@ -1,16 +1,51 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"strings"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccVariableSshKey_workspace_upgrade(t *testing.T) {
+	var variable buddy.Variable
+	domain := util.UniqueString()
+	key := util.UniqueString()
+	filePlace := buddy.VariableSshKeyFilePlaceContainer
+	filePath := "~/.ssh/test"
+	fileChmod := "600"
+	err, _, privateKey := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	config := testAccVariableSshKeyWorkspaceSimpleConfig(domain, key, filePlace, filePath, fileChmod, privateKey)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, key, privateKey, filePlace, filePath, fileChmod, ""),
+				),
+			},
+		},
+	})
+}
 
 func TestAccVariableSshKey_workspace(t *testing.T) {
 	var variable buddy.Variable
@@ -33,8 +68,8 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccVariableSshKeyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableSshKeyCheckDestroy,
 		Steps: []resource.TestStep{
 			// create variable
 			{
@@ -100,8 +135,8 @@ func TestAccVariableSshKey_project(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccVariableSshKeyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableSshKeyCheckDestroy,
 		Steps: []resource.TestStep{
 			// create variable
 			{
@@ -225,23 +260,23 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 func testAccVariableSshKeyProjectComplexConfig(domain string, projectName string, key string, filePlace string, filePath string, fileChmod string, description string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "aha" {
 	domain = "${buddy_workspace.foo.domain}"
-	display_name = "%s" 
+	display_name = "%s"
 }
 
 resource "buddy_variable_ssh_key" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
+   domain = "${buddy_workspace.foo.domain}"
 	project_name = "${buddy_project.aha.name}"
-    key = "%s"
-    file_place = "%s"
-    file_path = "%s"
-    file_chmod = "%s"
+   key = "%s"
+   file_place = "%s"
+   file_path = "%s"
+   file_chmod = "%s"
 	description = "%s"
-    value = <<EOT
+   value = <<EOT
 %s
 EOT
 }
@@ -251,17 +286,17 @@ EOT
 func testAccVariableSshKeyWorkspaceComplexConfig(domain string, key string, filePlace string, filePath string, fileChmod string, description string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_variable_ssh_key" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "%s"
-    file_place = "%s"
-    file_path = "%s"
-    file_chmod = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   file_place = "%s"
+   file_path = "%s"
+   file_chmod = "%s"
 	description = "%s"
-    value = <<EOT
+   value = <<EOT
 %s
 EOT
 }
@@ -271,16 +306,16 @@ EOT
 func testAccVariableSshKeyWorkspaceSimpleConfig(domain string, key string, filePlace string, filePath string, fileChmod string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_variable_ssh_key" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "%s"
-    file_place = "%s"
-    file_path = "%s"
-    file_chmod = "%s"
-    value = <<EOT
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   file_place = "%s"
+   file_path = "%s"
+   file_chmod = "%s"
+   value = <<EOT
 %s
 EOT
 }

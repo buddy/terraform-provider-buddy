@@ -1,14 +1,42 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccSourceGroup_upgrade(t *testing.T) {
+	domain := util.UniqueString()
+	name := util.RandString(5)
+	desc := util.RandString(5)
+	config := testAccSourceGroupConfig(domain, name, desc)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceGroupAttributes("data.buddy_group.id", name, desc),
+					testAccSourceGroupAttributes("data.buddy_group.name", name, desc),
+				),
+			},
+		},
+	})
+}
 
 func TestAccSourceGroup(t *testing.T) {
 	domain := util.UniqueString()
@@ -18,8 +46,8 @@ func TestAccSourceGroup(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		CheckDestroy:      acc.DummyCheckDestroy,
-		ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
 				Config: testAccSourceGroupConfig(domain, name, desc),
@@ -59,12 +87,12 @@ func testAccSourceGroupAttributes(n string, name string, desc string) resource.T
 func testAccSourceGroupConfig(domain string, name string, desc string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_group" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
 	description = "%s"
 }
 

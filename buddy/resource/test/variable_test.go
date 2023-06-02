@@ -1,16 +1,45 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
 	"strings"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccVariable_workspace_upgrade(t *testing.T) {
+	var variable buddy.Variable
+	domain := util.UniqueString()
+	key := util.UniqueString()
+	val := util.RandString(10)
+	config := testAccVariableWorkspaceSimpleConfig(domain, key, val)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, key, val, "", false, false),
+				),
+			},
+		},
+	})
+}
 
 func TestAccVariable_workspace(t *testing.T) {
 	var variable buddy.Variable
@@ -25,8 +54,8 @@ func TestAccVariable_workspace(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccVariableCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableCheckDestroy,
 		Steps: []resource.TestStep{
 			// create variable
 			{
@@ -84,8 +113,8 @@ func TestAccVariable_project(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccVariableCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableCheckDestroy,
 		Steps: []resource.TestStep{
 			// create variable
 			{
@@ -208,13 +237,13 @@ func testAccVariableGet(n string, variable *buddy.Variable) resource.TestCheckFu
 func testAccVariableWorkspaceSimpleConfig(domain string, key string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_variable" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "%s"
-    value = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   value = "%s"
 }
 `, domain, key, val)
 }
@@ -222,19 +251,19 @@ resource "buddy_variable" "bar" {
 func testAccVariableProjectComplexConfig(domain string, projectName string, key string, val string, encrypted bool, settable bool, description string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "aha" {
 	domain = "${buddy_workspace.foo.domain}"
-	display_name = "%s" 
+	display_name = "%s"
 }
 
 resource "buddy_variable" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
+   domain = "${buddy_workspace.foo.domain}"
 	project_name = "${buddy_project.aha.name}"
-    key = "%s"
-    value = "%s"
+   key = "%s"
+   value = "%s"
 	encrypted = %t
 	settable = %t
 	description = "%s"
@@ -245,13 +274,13 @@ resource "buddy_variable" "bar" {
 func testAccVariableWorkspaceComplexConfig(domain string, key string, val string, encrypted bool, settable bool, description string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_variable" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    key = "%s"
-    value = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   value = "%s"
 	encrypted = %t
 	settable = %t
 	description = "%s"

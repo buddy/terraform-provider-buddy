@@ -1,15 +1,46 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
+
+func TestAccGroupMember_upgrade(t *testing.T) {
+	var member buddy.Member
+	domain := util.UniqueString()
+	groupNameA := util.RandString(5)
+	groupNameB := util.RandString(5)
+	memberEmailA := util.RandEmail()
+	memberEmailB := util.RandEmail()
+	config := testAccGroupMemberConfig(domain, groupNameA, groupNameB, memberEmailA, memberEmailB, "a", "a")
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccGroupMemberGet("buddy_group_member.bar", &member),
+					testAccGroupMemberAttributes("buddy_group_member.bar", &member, buddy.GroupMemberStatusMember),
+				),
+			},
+		},
+	})
+}
 
 func TestAccGroupMember(t *testing.T) {
 	var member buddy.Member
@@ -22,8 +53,8 @@ func TestAccGroupMember(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccGroupMemberDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccGroupMemberDestroy,
 		Steps: []resource.TestStep{
 			// create group member
 			{
@@ -133,60 +164,64 @@ func testAccGroupMemberGet(n string, member *buddy.Member) resource.TestCheckFun
 
 func testAccGroupMemberWithStatusConfig(domain string, groupName string, memberEmail string, status string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_group" "g" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_member" "m" {
-    domain = "${buddy_workspace.foo.domain}"
-    email = "%s"
-}
+	resource "buddy_group" "g" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "%s"
+	}
 
-resource "buddy_group_member" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    group_id = "${buddy_group.g.group_id}"
-    member_id = "${buddy_member.m.member_id}"
-	status = "%s"
-}
+	resource "buddy_member" "m" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	}
+
+	resource "buddy_group_member" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   group_id = "${buddy_group.g.group_id}"
+	   member_id = "${buddy_member.m.member_id}"
+		status = "%s"
+	}
+
 `, domain, groupName, memberEmail, status)
 }
 
 func testAccGroupMemberConfig(domain string, groupNameA string, groupNameB string, memberEmailA string, memberEmailB string, whichMemberJoin string, whichGroupJoin string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-    domain = "%s"
-}
 
-resource "buddy_group" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-}
+	resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
 
-resource "buddy_group" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-}
+	resource "buddy_group" "a" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "%s"
+	}
 
-resource "buddy_member" "a" {
-    domain = "${buddy_workspace.foo.domain}"
-    email = "%s"
-}
+	resource "buddy_group" "b" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   name = "%s"
+	}
 
-resource "buddy_member" "b" {
-    domain = "${buddy_workspace.foo.domain}"
-    email = "%s"
-}
+	resource "buddy_member" "a" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	}
 
-resource "buddy_group_member" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    group_id = "${buddy_group.%s.group_id}"
-    member_id = "${buddy_member.%s.member_id}"
-}
+	resource "buddy_member" "b" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   email = "%s"
+	}
+
+	resource "buddy_group_member" "bar" {
+	   domain = "${buddy_workspace.foo.domain}"
+	   group_id = "${buddy_group.%s.group_id}"
+	   member_id = "${buddy_member.%s.member_id}"
+	}
+
 `, domain, groupNameA, groupNameB, memberEmailA, memberEmailB, whichGroupJoin, whichMemberJoin)
 }
 

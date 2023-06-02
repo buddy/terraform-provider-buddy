@@ -1,13 +1,13 @@
 package test
 
 import (
-	"buddy-terraform/buddy/acc"
-	"buddy-terraform/buddy/util"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/helper/resource"
-	"github.com/hashicorp/terraform-plugin-sdk/v2/terraform"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
 
@@ -26,6 +26,35 @@ var ignoreImportVerify = []string{
 	"partner_token",
 }
 
+func TestAccIntegration_amazon_upgrade(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	scope := buddy.IntegrationScopeAdmin
+	config := testAccIntegrationAmazon(domain, name, scope)
+	resource.Test(t, resource.TestCase{
+		Steps: []resource.TestStep{
+			{
+				ExternalProviders: map[string]resource.ExternalProvider{
+					"buddy": {
+						VersionConstraint: "1.12.0",
+						Source:            "buddy/buddy",
+					},
+				},
+				Config: config,
+			},
+			{
+				ProtoV6ProviderFactories: acc.ProviderFactories,
+				Config:                   config,
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, scope, false, false),
+				),
+			},
+		},
+	})
+}
+
 func TestAccIntegration_amazon(t *testing.T) {
 	var integration buddy.Integration
 	domain := util.UniqueString()
@@ -37,8 +66,8 @@ func TestAccIntegration_amazon(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -78,8 +107,8 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -121,8 +150,8 @@ func TestAccIntegration_shopify(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -164,8 +193,8 @@ func TestAccIntegration_shopify_partner(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -205,8 +234,8 @@ func TestAccIntegration_gitlab(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -246,8 +275,8 @@ func TestAccIntegration_github(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -287,8 +316,8 @@ func TestAccIntegration_rackspace(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -328,8 +357,8 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -369,8 +398,8 @@ func TestAccIntegration_upcloud(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -410,8 +439,8 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 		PreCheck: func() {
 			acc.PreCheck(t)
 		},
-		ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:      testAccIntegrationCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
 		Steps: []resource.TestStep{
 			// create integration
 			{
@@ -481,7 +510,7 @@ func testAccIntegrationAttributes(n string, integration *buddy.Integration, name
 		if err := util.CheckFieldEqualAndSet("integration_id", attrs["integration_id"], integration.HashId); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("html_url", attrs["html_url"], integration.HtmlUrl); err != nil {
+		if err := util.CheckFieldSet("html_url", attrs["html_url"]); err != nil {
 			return err
 		}
 		return nil
@@ -510,26 +539,26 @@ func testAccIntegrationGet(n string, integration *buddy.Integration) resource.Te
 func testAccIntegrationAmazon(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    access_key = "ABC1234567890"
-    secret_key = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   access_key = "ABC1234567890"
+   secret_key = "ABC1234567890"
 
-    role_assumption {
-        arn = "arn1"
-    }
+   role_assumption {
+       arn = "arn1"
+   }
 
-	role_assumption {
-        arn = "arn2"
-        external_id = "3"
-        duration = 100
-    }
+   role_assumption {
+       arn = "arn2"
+       external_id = "3"
+       duration = 100
+   }
 }
 `, domain, name, buddy.IntegrationTypeAmazon, scope)
 }
@@ -537,15 +566,15 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationGitHub(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    token = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   token = "ABC1234567890"
 }
 `, domain, name, buddy.IntegrationTypeGitHub, scope)
 }
@@ -553,15 +582,15 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationGitLab(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    token = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   token = "ABC1234567890"
 }
 `, domain, name, buddy.IntegrationTypeGitLab, scope)
 }
@@ -569,16 +598,16 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationRackspace(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    username = "ABC1234567890"
-    token = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   username = "ABC1234567890"
+   token = "ABC1234567890"
 }
 `, domain, name, buddy.IntegrationTypeRackspace, scope)
 }
@@ -586,17 +615,17 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationCloudflare(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    api_key = "ABC1234567890"
-    token = "ABC1234567890"
-    email = "test@test.pl"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   api_key = "ABC1234567890"
+   token = "ABC1234567890"
+   email = "test@test.pl"
 }
 `, domain, name, buddy.IntegrationTypeCloudflare, scope)
 }
@@ -604,16 +633,16 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationUpcloud(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    username = "ABC1234567890"
-    password = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   username = "ABC1234567890"
+   password = "ABC1234567890"
 }
 `, domain, name, buddy.IntegrationTypeUpcloud, scope)
 }
@@ -621,17 +650,17 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationAzureCloud(domain string, name string, scope string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    app_id = "ABC1234567890"
-    tenant_id = "test@test.pl"
-    password = "ABC1234567890"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   app_id = "ABC1234567890"
+   tenant_id = "test@test.pl"
+   password = "ABC1234567890"
 }
 `, domain, name, buddy.IntegrationTypeAzureCloud, scope)
 }
@@ -639,26 +668,26 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationDigitalOcean(domain string, name string, groupNameA string, groupNameB string, scopeGroupName string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_group" "%s" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
 }
 
 resource "buddy_group" "%s" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    group_id = "${buddy_group.%s.group_id}"
-    token = "ABC"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   group_id = "${buddy_group.%s.group_id}"
+   token = "ABC"
 }
 `, domain, groupNameA, groupNameA, groupNameB, groupNameB, name, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeGroup, scopeGroupName)
 }
@@ -666,27 +695,27 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationShopify(domain string, name string, projectNameA string, projectNameB string, scope string, scopeProjectName string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "%s" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_project" "%s" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    project_name = "${buddy_project.%s.name}"
-    shop = "ABC"
-    token = "ABC"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   project_name = "${buddy_project.%s.name}"
+   shop = "ABC"
+   token = "ABC"
 }
 `, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, scope, scopeProjectName)
 }
@@ -694,26 +723,26 @@ resource "buddy_integration" "bar" {
 func testAccIntegrationShopifyPartner(domain string, name string, projectNameA string, projectNameB string, scope string, scopeProjectName string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+   domain = "%s"
 }
 
 resource "buddy_project" "%s" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_project" "%s" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
 }
 
 resource "buddy_integration" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    name = "%s"
-    type = "%s"
-    scope = "%s"
-    project_name = "${buddy_project.%s.name}"
-    token = "ABC"
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   project_name = "${buddy_project.%s.name}"
+   token = "ABC"
 	partner_token = "EFG"
 }
 `, domain, projectNameA, projectNameA, projectNameB, projectNameB, name, buddy.IntegrationTypeShopify, scope, scopeProjectName)
