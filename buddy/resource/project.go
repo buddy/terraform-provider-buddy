@@ -70,7 +70,6 @@ func (r *projectResourceModel) loadAPI(ctx context.Context, domain string, proje
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, project.Name))
 	r.Domain = types.StringValue(domain)
 	r.DisplayName = types.StringValue(project.DisplayName)
-	r.WithoutRepository = types.BoolValue(project.WithoutRepository)
 	r.UpdateDefaultBranchFromExternal = types.BoolValue(project.UpdateDefaultBranchFromExternal)
 	r.FetchSubmodules = types.BoolValue(project.FetchSubmodules)
 	r.FetchSubmodulesEnvKey = types.StringValue(project.FetchSubmodulesEnvKey)
@@ -121,7 +120,6 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"without_repository": schema.BoolAttribute{
 				MarkdownDescription: "Defines wheter or not create GIT repository",
 				Optional:            true,
-				Computed:            true,
 			},
 			"integration_id": schema.StringAttribute{
 				MarkdownDescription: "The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket",

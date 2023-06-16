@@ -1,3 +1,6 @@
+# Release v1.13.1 (2023-06-16)
+* Fixes without_repository in buddy_project
+
 # Release v1.13.0 (2023-06-02)
 * Bumps min Go version to 1.19
 * Migrates from sdk v2 to terraform plugin framework (no breaking changes)

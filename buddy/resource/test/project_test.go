@@ -95,6 +95,7 @@ func TestAccProject_withoutRepository(t *testing.T) {
 	var project buddy.Project
 	domain := util.UniqueString()
 	displayName := util.RandString(10)
+	newDisplayName := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -110,11 +111,20 @@ func TestAccProject_withoutRepository(t *testing.T) {
 					testAccProjectAttributes("buddy_project.bar", &project, displayName, true, buddy.ProjectAccessPrivate, false, false, ""),
 				),
 			},
+			// update project
+			{
+				Config: testAccProjectWithoutRepositoryConfig(domain, newDisplayName),
+				Check: resource.ComposeTestCheckFunc(
+					testAccProjectGet("buddy_project.bar", &project),
+					testAccProjectAttributes("buddy_project.bar", &project, newDisplayName, true, buddy.ProjectAccessPrivate, false, false, ""),
+				),
+			},
 			// import project
 			{
-				ResourceName:      "buddy_project.bar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "buddy_project.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"without_repository"},
 			},
 		},
 	})
