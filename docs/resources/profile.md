@@ -17,7 +17,7 @@ Token scope required: `USER_INFO`
 
 ```terraform
 resource "buddy_profile" "me" {
-  name  = "my name"
+  name = "my name"
 }
 ```
 

@@ -21,7 +21,7 @@ data "buddy_groups" "all" {
 }
 
 data "buddy_groups" "filter" {
-  domain = "mydomain"
+  domain     = "mydomain"
   name_regex = "devs"
 }
 ```

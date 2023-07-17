@@ -203,19 +203,19 @@ resource "buddy_integration" "docker_hub" {
 }
 
 resource "buddy_integration" "github" {
-  domain   = "mydomain"
-  name     = "github"
-  type     = "GIT_HUB"
-  scope    = "ADMIN"
-  token    = "github token"
+  domain = "mydomain"
+  name   = "github"
+  type   = "GIT_HUB"
+  scope  = "ADMIN"
+  token  = "github token"
 }
 
 resource "buddy_integration" "gitlab" {
-  domain   = "mydomain"
-  name     = "gitlab"
-  type     = "GIT_LAB"
-  scope    = "ADMIN"
-  token    = "gitlab token"
+  domain = "mydomain"
+  name   = "gitlab"
+  type   = "GIT_LAB"
+  scope  = "ADMIN"
+  token  = "gitlab token"
 }
 
 resource "buddy_integration" "google_service_account" {
@@ -251,12 +251,12 @@ resource "buddy_integration" "google_service_account" {
 `ADMIN_IN_PROJECT` - only workspace administrators in specified project can use the integration
 
 `GROUP_IN_PROJECT` - only group members in specified project can use the integration
-- `type` (String) The integration's type. Allowed: `DIGITAL_OCEAN`, `AMAZON`, `SHOPIFY`, `PUSHOVER`, `RACKSPACE`, `CLOUDFLARE`, `NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `DO_SPACES`, `HONEYBADGER`, `VULTR`, `SENTRY_ENTERPRISE`, `LOGGLY`, `FIREBASE`, `UPCLOUD`, `GHOST_INSPECTOR`, `AZURE_CLOUD`, `DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`, `GIT_HUB`, `GIT_LAB`
+- `type` (String) The integration's type. Allowed: `DIGITAL_OCEAN`, `AMAZON`, `SHOPIFY`, `PUSHOVER`, `RACKSPACE`, `CLOUDFLARE`, `NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `DO_SPACES`, `HONEYBADGER`, `VULTR`, `SENTRY_ENTERPRISE`, `LOGGLY`, `FIREBASE`, `UPCLOUD`, `GHOST_INSPECTOR`, `AZURE_CLOUD`, `DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`, `GIT_HUB`, `GIT_LAB`, `STACK_HAWK`
 
 ### Optional
 
 - `access_key` (String, Sensitive) The integration's access key. Provide for: `DO_SPACES`, `AMAZON`, `PUSHOVER`
-- `api_key` (String, Sensitive) The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`
+- `api_key` (String, Sensitive) The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`, `STACK_HAWK`
 - `app_id` (String) The integration's application's ID. Provide for: `AZURE_CLOUD`
 - `email` (String, Sensitive) The integration's email. Provide for: `CLOUDFLARE`
 - `group_id` (Number) The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`
