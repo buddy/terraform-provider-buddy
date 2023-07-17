@@ -428,6 +428,47 @@ func TestAccIntegration_upcloud(t *testing.T) {
 	})
 }
 
+func TestAccIntegration_stackHawk(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	scope := buddy.IntegrationScopeWorkspace
+	newScope := buddy.IntegrationScopeAdmin
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
+		Steps: []resource.TestStep{
+			// create integration
+			{
+				Config: testAccIntegrationStackHawk(domain, name, scope),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeStackHawk, scope, false, false),
+				),
+			},
+			// update integration
+			{
+				Config: testAccIntegrationStackHawk(domain, newName, newScope),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeStackHawk, newScope, false, false),
+				),
+			},
+			// import integration
+			{
+				ResourceName:            "buddy_integration.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: ignoreImportVerify,
+			},
+		},
+	})
+}
+
 func TestAccIntegration_azurecloud(t *testing.T) {
 	var integration buddy.Integration
 	domain := util.UniqueString()
@@ -663,6 +704,22 @@ resource "buddy_integration" "bar" {
    password = "ABC1234567890"
 }
 `, domain, name, buddy.IntegrationTypeAzureCloud, scope)
+}
+
+func testAccIntegrationStackHawk(domain string, name string, scope string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_integration" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   api_key = "ABC1234567890"
+}
+`, domain, name, buddy.IntegrationTypeStackHawk, scope)
 }
 
 func testAccIntegrationDigitalOcean(domain string, name string, groupNameA string, groupNameB string, scopeGroupName string) string {

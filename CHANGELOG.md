@@ -1,3 +1,6 @@
+# Release v1.14.0 (2023-07-17)
+* Adds `STACK_HAWK` integration type
+
 # Release v1.13.1 (2023-06-16)
 * Fixes without_repository in buddy_project
 

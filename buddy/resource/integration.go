@@ -105,7 +105,7 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "The integration's type. Allowed: `DIGITAL_OCEAN`, `AMAZON`, `SHOPIFY`, `PUSHOVER`, " +
 					"`RACKSPACE`, `CLOUDFLARE`, `NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `DO_SPACES`, `HONEYBADGER`, " +
 					"`VULTR`, `SENTRY_ENTERPRISE`, `LOGGLY`, `FIREBASE`, `UPCLOUD`, `GHOST_INSPECTOR`, `AZURE_CLOUD`, " +
-					"`DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`, `GIT_HUB`, `GIT_LAB`",
+					"`DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`, `GIT_HUB`, `GIT_LAB`, `STACK_HAWK`",
 				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -134,6 +134,7 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 					buddy.IntegrationTypeGoogleServiceAccount,
 					buddy.IntegrationTypeGitHub,
 					buddy.IntegrationTypeGitLab,
+					buddy.IntegrationTypeStackHawk,
 				)},
 			},
 			"scope": schema.StringAttribute{
@@ -212,7 +213,7 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Sensitive:           true,
 			},
 			"api_key": schema.StringAttribute{
-				MarkdownDescription: "The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`",
+				MarkdownDescription: "The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`, `STACK_HAWK`",
 				Optional:            true,
 				Sensitive:           true,
 			},
