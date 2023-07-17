@@ -114,8 +114,7 @@ resource "buddy_member" "m2" {
    email ="%s"
 }
 
-resource "buddy_profile" "me" {
-	name = "abcdef"
+data "buddy_profile" "me" {
 }
 
 resource "buddy_group_member" "gm1" {
@@ -134,7 +133,7 @@ resource "buddy_group_member" "gm2" {
 resource "buddy_group_member" "gm3" {
    domain = "${buddy_workspace.w.domain}"
    group_id = "${buddy_group.g.group_id}"
-   member_id = "${buddy_profile.me.member_id}"
+   member_id = "${data.buddy_profile.me.member_id}"
 	status = "MANAGER"
 }
 
@@ -147,7 +146,7 @@ data "buddy_group_members" "gm" {
 data "buddy_group_members" "filter" {
    domain = "${buddy_workspace.w.domain}"
    group_id = "${buddy_group.g.group_id}"
-	name_regex = "^abc"
+	 name_regex = "^${data.buddy_profile.me.name}"
    depends_on = [buddy_group_member.gm1, buddy_group_member.gm2, buddy_group_member.gm3]
 }
 `, domain, groupName, email1, email2)

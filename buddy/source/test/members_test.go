@@ -104,19 +104,18 @@ resource "buddy_member" "m2" {
    email ="%s"
 }
 
-resource "buddy_profile" "me" {
-	name = "abcdef"
+data "buddy_profile" "me" {
 }
 
 data "buddy_members" "m" {
    domain = "${buddy_workspace.w.domain}"
-   depends_on = [buddy_member.m1, buddy_member.m2, buddy_profile.me]
+   depends_on = [buddy_member.m1, buddy_member.m2, data.buddy_profile.me]
 }
 
 data "buddy_members" "filter" {
    domain = "${buddy_workspace.w.domain}"
-   depends_on = [buddy_member.m1, buddy_member.m2, buddy_profile.me]
-	name_regex = "^abc"
+   depends_on = [buddy_member.m1, buddy_member.m2, data.buddy_profile.me]
+	 name_regex = "^${data.buddy_profile.me.name}"
 }
 `, domain, email1, email2)
 }
