@@ -101,6 +101,7 @@ func (s *integrationsSource) Schema(_ context.Context, _ datasource.SchemaReques
 						buddy.IntegrationTypeDockerHub,
 						buddy.IntegrationTypeGitHub,
 						buddy.IntegrationTypeGitLab,
+						buddy.IntegrationTypeStackHawk,
 					),
 				},
 			},
