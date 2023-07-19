@@ -33,8 +33,11 @@ type ssoResource struct {
 type ssoResourceModel struct {
 	ID            types.String `tfsdk:"id"`
 	Domain        types.String `tfsdk:"domain"`
+	Type          types.String `tfsdk:"type"`
 	SsoUrl        types.String `tfsdk:"sso_url"`
 	Issuer        types.String `tfsdk:"issuer"`
+	ClientId      types.String `tfsdk:"client_id"`
+	ClientSecret  types.String `tfsdk:"client_secret"`
 	Certificate   types.String `tfsdk:"certificate"`
 	Signature     types.String `tfsdk:"signature"`
 	Digest        types.String `tfsdk:"digest"`
@@ -45,6 +48,7 @@ type ssoResourceModel struct {
 func (r *ssoResourceModel) loadAPI(domain string, sso *buddy.Sso) {
 	r.ID = types.StringValue(domain)
 	r.Domain = types.StringValue(domain)
+	r.Type = types.StringValue(sso.Type)
 	r.SsoUrl = types.StringValue(sso.SsoUrl)
 	r.Issuer = types.StringValue(sso.Issuer)
 	r.Certificate = types.StringValue(sso.Certificate)
@@ -79,9 +83,15 @@ func (r *ssoResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"type": schema.StringAttribute{
+				MarkdownDescription: "The SSO type. Allowed: `SAML`, `OIDC`. Default: `SAML`",
+				Optional:            true,
+				Computed:            true,
+			},
 			"sso_url": schema.StringAttribute{
 				MarkdownDescription: "The identity provider single sign-on url",
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 			},
 			"issuer": schema.StringAttribute{
 				MarkdownDescription: "The identity provider issuer url",
@@ -89,18 +99,22 @@ func (r *ssoResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 			},
 			"certificate": schema.StringAttribute{
 				MarkdownDescription: "The identity provider certificate",
-				Required:            true,
+				Sensitive:           true,
+				Optional:            true,
+				Computed:            true,
 			},
 			"signature": schema.StringAttribute{
 				MarkdownDescription: "The SAML signature algorithm. Allowed: `sha1`, `sha256`, `sha512`",
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf("sha1", "sha256", "sha512"),
 				},
 			},
 			"digest": schema.StringAttribute{
 				MarkdownDescription: "The SAML digest algorithm. Allowed: `sha1`, `sha256`, `sha512`",
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				Validators: []validator.String{
 					stringvalidator.OneOf("sha1", "sha256", "sha512"),
 				},
@@ -109,6 +123,15 @@ func (r *ssoResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 				MarkdownDescription: "Enable mandatory SAML SSO authentication for all workspace members",
 				Optional:            true,
 				Computed:            true,
+			},
+			"client_id": schema.StringAttribute{
+				MarkdownDescription: "The OIDC application's Client ID",
+				Optional:            true,
+			},
+			"client_secret": schema.StringAttribute{
+				MarkdownDescription: "The OIDC application's Client Secret",
+				Sensitive:           true,
+				Optional:            true,
 			},
 			"html_url": schema.StringAttribute{
 				MarkdownDescription: "The Sso's URL",
@@ -133,12 +156,21 @@ func (r *ssoResource) updateSso(ctx context.Context, diag *diag.Diagnostics, pla
 	}
 	domain := data.Domain.ValueString()
 	_, _ = r.client.SsoService.Enable(domain)
-	ops := buddy.SsoUpdateOps{
-		SsoUrl:          data.SsoUrl.ValueStringPointer(),
-		Issuer:          data.Issuer.ValueStringPointer(),
-		Certificate:     data.Certificate.ValueStringPointer(),
-		SignatureMethod: data.Signature.ValueStringPointer(),
-		DigestMethod:    data.Digest.ValueStringPointer(),
+	ops := buddy.SsoUpdateOps{}
+	typ := buddy.SsoTypeSaml
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
+		typ = data.Type.ValueString()
+	}
+	ops.Type = &typ
+	ops.Issuer = data.Issuer.ValueStringPointer()
+	if typ == buddy.SsoTypeSaml {
+		ops.SsoUrl = data.SsoUrl.ValueStringPointer()
+		ops.Certificate = data.Certificate.ValueStringPointer()
+		ops.SignatureMethod = data.Signature.ValueStringPointer()
+		ops.DigestMethod = data.Digest.ValueStringPointer()
+	} else {
+		ops.ClientId = data.ClientId.ValueStringPointer()
+		ops.ClientSecret = data.ClientSecret.ValueStringPointer()
 	}
 	if !data.RequireForAll.IsNull() && !data.RequireForAll.IsUnknown() {
 		ops.RequireSsoForAllMembers = data.RequireForAll.ValueBoolPointer()

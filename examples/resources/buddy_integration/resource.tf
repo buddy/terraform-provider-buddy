@@ -17,6 +17,32 @@ resource "buddy_integration" "aws" {
   }
 }
 
+resource "buddy_integration" "aws_trusted" {
+  domain    = "mydomain"
+  name      = "ec2 access"
+  type      = "AMAZON"
+  scope     = "ADMIN"
+  auth_type = "TRUSTED"
+
+  role_assumption {
+    arn         = "arn1"
+    external_id = "123"
+  }
+}
+
+resource "buddy_integration" "aws_oidc" {
+  domain    = "mydomain"
+  name      = "ec2 access"
+  type      = "AMAZON"
+  scope     = "ADMIN"
+  auth_type = "OIDC"
+  audience  = "https://myservice.com"
+
+  role_assumption {
+    arn = "arn1"
+  }
+}
+
 resource "buddy_integration" "do_private" {
   domain = "mydomain"
   name   = "digital ocean"
@@ -175,6 +201,17 @@ resource "buddy_integration" "azure_cloud" {
   password  = "pass"
 }
 
+resource "buddy_integration" "azure_cloud_oidc" {
+  domain    = "mydomain"
+  name      = "azure_cloud"
+  type      = "AZURE_CLOUD"
+  scope     = "ADMIN"
+  app_id    = "id"
+  tenant_id = "tenant"
+  audience  = "https://myservice.com"
+  auth_type = "OIDC"
+}
+
 resource "buddy_integration" "docker_hub" {
   domain   = "mydomain"
   name     = "docker_hub"
@@ -206,4 +243,15 @@ resource "buddy_integration" "google_service_account" {
   type    = "GOOGLE_SERVICE_ACCOUNT"
   scope   = "ADMIN"
   api_key = "key"
+}
+
+resource "buddy_integration" "google_service_account_oidc" {
+  domain         = "mydomain"
+  name           = "google_service_account"
+  type           = "GOOGLE_SERVICE_ACCOUNT"
+  scope          = "ADMIN"
+  auth_type      = "OIDC"
+  audience       = "https://myservice.com"
+  google_config  = "client library json config"
+  google_project = "google-project-name"
 }

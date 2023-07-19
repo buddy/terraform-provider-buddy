@@ -35,6 +35,32 @@ resource "buddy_integration" "aws" {
   }
 }
 
+resource "buddy_integration" "aws_trusted" {
+  domain    = "mydomain"
+  name      = "ec2 access"
+  type      = "AMAZON"
+  scope     = "ADMIN"
+  auth_type = "TRUSTED"
+
+  role_assumption {
+    arn         = "arn1"
+    external_id = "123"
+  }
+}
+
+resource "buddy_integration" "aws_oidc" {
+  domain    = "mydomain"
+  name      = "ec2 access"
+  type      = "AMAZON"
+  scope     = "ADMIN"
+  auth_type = "OIDC"
+  audience  = "https://myservice.com"
+
+  role_assumption {
+    arn = "arn1"
+  }
+}
+
 resource "buddy_integration" "do_private" {
   domain = "mydomain"
   name   = "digital ocean"
@@ -193,6 +219,17 @@ resource "buddy_integration" "azure_cloud" {
   password  = "pass"
 }
 
+resource "buddy_integration" "azure_cloud_oidc" {
+  domain    = "mydomain"
+  name      = "azure_cloud"
+  type      = "AZURE_CLOUD"
+  scope     = "ADMIN"
+  app_id    = "id"
+  tenant_id = "tenant"
+  audience  = "https://myservice.com"
+  auth_type = "OIDC"
+}
+
 resource "buddy_integration" "docker_hub" {
   domain   = "mydomain"
   name     = "docker_hub"
@@ -224,6 +261,17 @@ resource "buddy_integration" "google_service_account" {
   type    = "GOOGLE_SERVICE_ACCOUNT"
   scope   = "ADMIN"
   api_key = "key"
+}
+
+resource "buddy_integration" "google_service_account_oidc" {
+  domain         = "mydomain"
+  name           = "google_service_account"
+  type           = "GOOGLE_SERVICE_ACCOUNT"
+  scope          = "ADMIN"
+  auth_type      = "OIDC"
+  audience       = "https://myservice.com"
+  google_config  = "client library json config"
+  google_project = "google-project-name"
 }
 ```
 
@@ -258,7 +306,11 @@ resource "buddy_integration" "google_service_account" {
 - `access_key` (String, Sensitive) The integration's access key. Provide for: `DO_SPACES`, `AMAZON`, `PUSHOVER`
 - `api_key` (String, Sensitive) The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`, `STACK_HAWK`
 - `app_id` (String) The integration's application's ID. Provide for: `AZURE_CLOUD`
+- `audience` (String) The integration's audience. Provide for OIDC with: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`
+- `auth_type` (String) The integration's auth type. Provide for: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`. Allowed: `DEFAULT, TRUSTED, OIDC`
 - `email` (String, Sensitive) The integration's email. Provide for: `CLOUDFLARE`
+- `google_config` (String) The integration's google config. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
+- `google_project` (String) The integration's google project. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `group_id` (Number) The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`
 - `partner_token` (String, Sensitive) The integration's partner token. Provide for: `SHOPIFY`
 - `password` (String, Sensitive) The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`

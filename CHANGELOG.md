@@ -1,3 +1,6 @@
+# Release v1.15.0 (2023-08-01)
+* Adds OIDC support in integrations & login
+
 # Release v1.14.0 (2023-07-17)
 * Adds `STACK_HAWK` integration type
 
