@@ -42,12 +42,16 @@ type integrationResourceModel struct {
 	PartnerToken    types.String `tfsdk:"partner_token"`
 	AccessKey       types.String `tfsdk:"access_key"`
 	SecretKey       types.String `tfsdk:"secret_key"`
+	Audience        types.String `tfsdk:"audience"`
+	AuthType        types.String `tfsdk:"auth_type"`
 	AppId           types.String `tfsdk:"app_id"`
 	TenantId        types.String `tfsdk:"tenant_id"`
 	Password        types.String `tfsdk:"password"`
 	ApiKey          types.String `tfsdk:"api_key"`
 	Email           types.String `tfsdk:"email"`
 	RoleAssumptions types.List   `tfsdk:"role_assumption"`
+	GoogleConfig    types.String `tfsdk:"google_config"`
+	GoogleProject   types.String `tfsdk:"google_project"`
 	IntegrationId   types.String `tfsdk:"integration_id"`
 	HtmlUrl         types.String `tfsdk:"html_url"`
 }
@@ -65,6 +69,7 @@ func (r *integrationResourceModel) loadAPI(domain string, integration *buddy.Int
 	r.Domain = types.StringValue(domain)
 	r.Name = types.StringValue(integration.Name)
 	r.Type = types.StringValue(integration.Type)
+	r.AuthType = types.StringValue(integration.AuthType)
 	r.Scope = types.StringValue(integration.Scope)
 	r.ProjectName = types.StringValue(integration.ProjectName)
 	r.GroupId = types.Int64Value(int64(integration.GroupId))
@@ -199,6 +204,28 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Optional:            true,
 				Sensitive:           true,
 			},
+			"audience": schema.StringAttribute{
+				MarkdownDescription: "The integration's audience. Provide for OIDC with: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`",
+				Optional:            true,
+			},
+			"google_config": schema.StringAttribute{
+				MarkdownDescription: "The integration's google config. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC",
+				Optional:            true,
+			},
+			"google_project": schema.StringAttribute{
+				MarkdownDescription: "The integration's google project. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC",
+				Optional:            true,
+			},
+			"auth_type": schema.StringAttribute{
+				MarkdownDescription: "The integration's auth type. Provide for: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`. Allowed: `DEFAULT, TRUSTED, OIDC`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.IntegrationAuthTypeDefault,
+					buddy.IntegrationAuthTypeTrusted,
+					buddy.IntegrationAuthTypeOidc,
+				)},
+			},
 			"app_id": schema.StringAttribute{
 				MarkdownDescription: "The integration's application's ID. Provide for: `AZURE_CLOUD`",
 				Optional:            true,
@@ -289,16 +316,22 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.Token.IsNull() && !data.Token.IsUnknown() {
 		ops.Token = data.Token.ValueStringPointer()
 	}
+	var authType string
+	if !data.AuthType.IsNull() && !data.AuthType.IsUnknown() {
+		authType = data.AuthType.ValueString()
+	}
 	if !data.PartnerToken.IsNull() && !data.PartnerToken.IsUnknown() {
 		ops.PartnerToken = data.PartnerToken.ValueStringPointer()
-		authType := buddy.IntegrationAuthTypeTokenAppExtension
-		ops.AuthType = &authType
+		authType = buddy.IntegrationAuthTypeTokenAppExtension
 	}
 	if !data.AccessKey.IsNull() && !data.AccessKey.IsUnknown() {
 		ops.AccessKey = data.AccessKey.ValueStringPointer()
 	}
 	if !data.SecretKey.IsNull() && !data.SecretKey.IsUnknown() {
 		ops.SecretKey = data.SecretKey.ValueStringPointer()
+	}
+	if !data.Audience.IsNull() && !data.Audience.IsUnknown() {
+		ops.Audience = data.Audience.ValueStringPointer()
 	}
 	if !data.AppId.IsNull() && !data.AppId.IsUnknown() {
 		ops.AppId = data.AppId.ValueStringPointer()
@@ -315,6 +348,12 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		ops.Email = data.Email.ValueStringPointer()
 	}
+	if !data.GoogleProject.IsNull() && !data.GoogleProject.IsUnknown() {
+		ops.GoogleProject = data.GoogleProject.ValueStringPointer()
+	}
+	if !data.GoogleConfig.IsNull() && !data.GoogleConfig.IsUnknown() {
+		ops.Config = data.GoogleConfig.ValueStringPointer()
+	}
 	if !data.RoleAssumptions.IsNull() && !data.RoleAssumptions.IsUnknown() {
 		roles, diags := util.RoleAssumptionsModelToAPI(ctx, &data.RoleAssumptions)
 		resp.Diagnostics.Append(diags...)
@@ -322,6 +361,9 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 			return
 		}
 		ops.RoleAssumptions = roles
+	}
+	if authType != "" {
+		ops.AuthType = &authType
 	}
 	integration, _, err := r.client.IntegrationService.Create(domain, &ops)
 	if err != nil {
@@ -387,16 +429,22 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 	if !data.Token.IsNull() && !data.Token.IsUnknown() {
 		ops.Token = data.Token.ValueStringPointer()
 	}
+	var authType string
+	if !data.AuthType.IsNull() && !data.AuthType.IsUnknown() {
+		authType = data.AuthType.ValueString()
+	}
 	if !data.PartnerToken.IsNull() && !data.PartnerToken.IsUnknown() {
 		ops.PartnerToken = data.PartnerToken.ValueStringPointer()
-		authType := buddy.IntegrationAuthTypeTokenAppExtension
-		ops.AuthType = &authType
+		authType = buddy.IntegrationAuthTypeTokenAppExtension
 	}
 	if !data.AccessKey.IsNull() && !data.AccessKey.IsUnknown() {
 		ops.AccessKey = data.AccessKey.ValueStringPointer()
 	}
 	if !data.SecretKey.IsNull() && !data.SecretKey.IsUnknown() {
 		ops.SecretKey = data.SecretKey.ValueStringPointer()
+	}
+	if !data.Audience.IsNull() && !data.Audience.IsUnknown() {
+		ops.Audience = data.Audience.ValueStringPointer()
 	}
 	if !data.AppId.IsNull() && !data.AppId.IsUnknown() {
 		ops.AppId = data.AppId.ValueStringPointer()
@@ -413,6 +461,12 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 	if !data.Email.IsNull() && !data.Email.IsUnknown() {
 		ops.Email = data.Email.ValueStringPointer()
 	}
+	if !data.GoogleProject.IsNull() && !data.GoogleProject.IsUnknown() {
+		ops.GoogleProject = data.GoogleProject.ValueStringPointer()
+	}
+	if !data.GoogleConfig.IsNull() && !data.GoogleConfig.IsUnknown() {
+		ops.Config = data.GoogleConfig.ValueStringPointer()
+	}
 	if !data.RoleAssumptions.IsNull() && !data.RoleAssumptions.IsUnknown() {
 		roles, diags := util.RoleAssumptionsModelToAPI(ctx, &data.RoleAssumptions)
 		resp.Diagnostics.Append(diags...)
@@ -420,6 +474,9 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 			return
 		}
 		ops.RoleAssumptions = roles
+	}
+	if authType != "" {
+		ops.AuthType = &authType
 	}
 	integration, _, err := r.client.IntegrationService.Update(domain, integrationId, &ops)
 	if err != nil {

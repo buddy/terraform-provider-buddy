@@ -39,8 +39,57 @@ func TestAccSso_upgrade(t *testing.T) {
 				Config:                   config,
 				Check: resource.ComposeTestCheckFunc(
 					testAccSsoGet("buddy_sso.bar", &sso),
-					testAccSsoAttributes("buddy_sso.bar", &sso, domain, ssoUrl, issuer, cert, signature, digest, false),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeSaml, ssoUrl, issuer, cert, signature, digest, false),
 				),
+			},
+		},
+	})
+}
+
+func TestAccSsoOIDC(t *testing.T) {
+	var sso buddy.Sso
+	domain := util.UniqueString()
+	issuer := "https://sts.windows.net/" + util.UniqueString()
+	newIssuer := "https://sts.windows.net/" + util.UniqueString()
+	clientId := util.UniqueString()
+	clientSecret := util.UniqueString()
+	newClientSecret := util.UniqueString()
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccSsoCheckDestroy,
+		Steps: []resource.TestStep{
+			// create
+			{
+				Config: testAccSsoOidcConfig(domain, issuer, clientId, clientSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSsoGet("buddy_sso.bar", &sso),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeOidc, "", issuer, "", "", "", false),
+				),
+			},
+			// update
+			{
+				Config: testAccSsoOidcConfig(domain, newIssuer, clientId, newClientSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSsoGet("buddy_sso.bar", &sso),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeOidc, "", newIssuer, "", "", "", false),
+				),
+			},
+			// require 4 all
+			{
+				Config: testAccSsoOidcConfigRequireForAll(domain, newIssuer, clientId, newClientSecret),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSsoGet("buddy_sso.bar", &sso),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeOidc, "", newIssuer, "", "", "", true),
+				),
+			},
+			{
+				ResourceName:            "buddy_sso.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"client_id", "client_secret"},
 			},
 		},
 	})
@@ -77,7 +126,7 @@ func TestAccSso(t *testing.T) {
 				Config: testAccSsoConfig(domain, ssoUrl, issuer, cert, signature, digest),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSsoGet("buddy_sso.bar", &sso),
-					testAccSsoAttributes("buddy_sso.bar", &sso, domain, ssoUrl, issuer, cert, signature, digest, false),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeSaml, ssoUrl, issuer, cert, signature, digest, false),
 				),
 			},
 			// update
@@ -85,7 +134,7 @@ func TestAccSso(t *testing.T) {
 				Config: testAccSsoConfig(domain, newSsoUrl, newIssuer, newCert, newSignature, newDigest),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSsoGet("buddy_sso.bar", &sso),
-					testAccSsoAttributes("buddy_sso.bar", &sso, domain, newSsoUrl, newIssuer, newCert, newSignature, newDigest, false),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeSaml, newSsoUrl, newIssuer, newCert, newSignature, newDigest, false),
 				),
 			},
 			// require 4 all
@@ -93,7 +142,7 @@ func TestAccSso(t *testing.T) {
 				Config: testAccSsoConfigRequireForAll(domain, newSsoUrl, newIssuer, newCert, newSignature, newDigest),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSsoGet("buddy_sso.bar", &sso),
-					testAccSsoAttributes("buddy_sso.bar", &sso, domain, newSsoUrl, newIssuer, newCert, newSignature, newDigest, true),
+					testAccSsoAttributes("buddy_sso.bar", &sso, domain, buddy.SsoTypeSaml, newSsoUrl, newIssuer, newCert, newSignature, newDigest, true),
 				),
 			},
 			{
@@ -121,7 +170,7 @@ func testAccSsoCheckDestroy(s *terraform.State) error {
 	return nil
 }
 
-func testAccSsoAttributes(n string, sso *buddy.Sso, domain string, ssoUrl string, issuer string, cert string, signature string, digest string, requireForAll bool) resource.TestCheckFunc {
+func testAccSsoAttributes(n string, sso *buddy.Sso, domain string, typ string, ssoUrl string, issuer string, cert string, signature string, digest string, requireForAll bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -135,34 +184,43 @@ func testAccSsoAttributes(n string, sso *buddy.Sso, domain string, ssoUrl string
 		if err := util.CheckFieldEqualAndSet("domain", attrs["domain"], domain); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("sso_url", attrs["sso_url"], ssoUrl); err != nil {
+		if err := util.CheckFieldEqualAndSet("type", attrs["type"], typ); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("SsoUrl", sso.SsoUrl, ssoUrl); err != nil {
+		if err := util.CheckFieldEqualAndSet("Type", sso.Type, typ); err != nil {
 			return err
 		}
+		if typ == buddy.SsoTypeSaml {
+			if err := util.CheckFieldEqualAndSet("sso_url", attrs["sso_url"], ssoUrl); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("SsoUrl", sso.SsoUrl, ssoUrl); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("certificate", attrs["certificate"], cert); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("Certificate", sso.Certificate, cert); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("signature", attrs["signature"], signature); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("SignatureMethod", sso.SignatureMethod, signature); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("digest", attrs["digest"], digest); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("DigestMethod", sso.DigestMethod, digest); err != nil {
+				return err
+			}
+		}
+
 		if err := util.CheckFieldEqualAndSet("issuer", attrs["issuer"], issuer); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("Issuer", sso.Issuer, issuer); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("certificate", attrs["certificate"], cert); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("Certificate", sso.Certificate, cert); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("signature", attrs["signature"], signature); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("SignatureMethod", sso.SignatureMethod, signature); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("digest", attrs["digest"], digest); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("DigestMethod", sso.DigestMethod, digest); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("require_for_all", attrsRequireForAll, requireForAll); err != nil {
@@ -188,6 +246,37 @@ func testAccSsoGet(n string, sso *buddy.Sso) resource.TestCheckFunc {
 		*sso = *ss
 		return nil
 	}
+}
+
+func testAccSsoOidcConfig(domain string, issuer string, clientId string, clientSecret string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_sso" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+	 type = "OIDC"
+   issuer = "%s"
+   client_id = "%s"
+   client_secret = "%s"
+}`, domain, issuer, clientId, clientSecret)
+}
+
+func testAccSsoOidcConfigRequireForAll(domain string, issuer string, clientId string, clientSecret string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_sso" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+	 type = "OIDC"
+   issuer = "%s"
+   client_id = "%s"
+   client_secret = "%s"
+	require_for_all = true
+}`, domain, issuer, clientId, clientSecret)
 }
 
 func testAccSsoConfig(domain string, ssoUrl string, issuer string, certificate string, signature string, digest string) string {
