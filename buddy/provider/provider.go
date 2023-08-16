@@ -11,8 +11,10 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"os"
+	"strconv"
 	buddyresource "terraform-provider-buddy/buddy/resource"
 	buddysource "terraform-provider-buddy/buddy/source"
+	"time"
 )
 
 var _ provider.Provider = &BuddyProvider{}
@@ -25,6 +27,7 @@ type BuddyProviderModel struct {
 	Token    types.String `tfsdk:"token"`
 	BaseUrl  types.String `tfsdk:"base_url"`
 	Insecure types.Bool   `tfsdk:"insecure"`
+	Timeout  types.Int64  `tfsdk:"timeout"`
 }
 
 func (p *BuddyProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -46,6 +49,10 @@ func (p *BuddyProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp
 			},
 			"insecure": schema.BoolAttribute{
 				MarkdownDescription: "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
+				Optional:            true,
+			},
+			"timeout": schema.Int64Attribute{
+				MarkdownDescription: "The Buddy API client timeout in seconds. Can be specified with the `BUDDY_TIMEOUT` environmental variable. Default: 30s",
 				Optional:            true,
 			},
 		},
@@ -79,6 +86,13 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy insecure attribute",
 		)
 	}
+	if config.Timeout.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("timeout"),
+			"Unknown Buddy timeout value for the API endpoint",
+			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy timeout attribute",
+		)
+	}
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -95,8 +109,21 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 	if !config.Insecure.IsNull() {
 		insecure = config.Insecure.ValueBool()
 	}
+	timeout := 30
+	t := os.Getenv("BUDDY_TIMEOUT")
+	if t != "" {
+		var err error
+		timeout, err = strconv.Atoi(t)
+		if err != nil {
+			resp.Diagnostics.AddError("Wrong value in BUDDY_TIMEOUT env variable", "The provider cannot create the Buddy API client as there is wrong value for the BUDDY_TIMEOUT env variable")
+			return
+		}
+	}
+	if !config.Timeout.IsNull() {
+		timeout = int(config.Timeout.ValueInt64())
+	}
 
-	client, err := buddy.NewClient(token, baseUrl, insecure)
+	client, err := buddy.NewClientWithTimeout(token, baseUrl, insecure, time.Duration(timeout)*time.Second)
 	if err != nil {
 		resp.Diagnostics.AddError("Failed to create Buddy Client from provider configuration", fmt.Sprintf("The provider failed to create a new Buddy Client from the giver configuration: %s", err.Error()))
 		return
