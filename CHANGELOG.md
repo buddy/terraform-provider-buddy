@@ -1,3 +1,6 @@
+# Release v1.15.1 (2023-08-16)
+* Adds timeout in api client
+ 
 # Release v1.15.0 (2023-08-01)
 * Adds OIDC support in integrations & login
 

@@ -13,7 +13,10 @@ import (
 func TestAccSourceMember_upgrade(t *testing.T) {
 	domain := util.UniqueString()
 	config := testAccSourceMemberConfig(domain)
-	p, _, _ := acc.ApiClient.ProfileService.Get()
+	p, _, err := acc.ApiClient.ProfileService.Get()
+	if err != nil {
+		t.Fatal(err)
+	}
 	resource.Test(t, resource.TestCase{
 		Steps: []resource.TestStep{
 			{
