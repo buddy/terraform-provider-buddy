@@ -29,7 +29,7 @@ func TestAccSourceMember_upgrade(t *testing.T) {
 				ProtoV6ProviderFactories: acc.ProviderFactories,
 				Config:                   config,
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceMemberAttributes("data.buddy_member.id", p.Name),
+					testAccSourceMemberAttributes("data.buddy_member.id", strconv.Itoa(p.Id)),
 					testAccSourceMemberAttributes("data.buddy_member.name", p.Name),
 				),
 			},
