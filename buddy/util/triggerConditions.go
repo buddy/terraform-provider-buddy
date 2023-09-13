@@ -17,6 +17,8 @@ type triggerConditionModel struct {
 	ZoneId        types.String `tfsdk:"zone_id"`
 	ProjectName   types.String `tfsdk:"project_name"`
 	PipelineName  types.String `tfsdk:"pipeline_name"`
+	TriggerUser   types.String `tfsdk:"trigger_user"`
+	TriggerGroup  types.String `tfsdk:"trigger_group"`
 }
 
 func TriggerConditionsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.PipelineTriggerCondition, diag.Diagnostics) {
@@ -57,6 +59,12 @@ func TriggerConditionsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.P
 			paths, d := StringSetToApi(ctx, &v.Paths)
 			diags.Append(d...)
 			tc.TriggerConditionPaths = *paths
+		}
+		if !v.TriggerGroup.IsNull() && !v.TriggerGroup.IsUnknown() {
+			tc.TriggerGroup = v.TriggerGroup.ValueString()
+		}
+		if !v.TriggerUser.IsNull() && !v.TriggerUser.IsUnknown() {
+			tc.TriggerUser = v.TriggerUser.ValueString()
 		}
 		triggerConditions[i] = tc
 	}

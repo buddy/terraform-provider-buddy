@@ -812,6 +812,10 @@ func TestAccPipeline_event(t *testing.T) {
 	newTcZoneId := "Europe/Amsterdam"
 	eventType := buddy.PipelineEventTypePush
 	newEventType := buddy.PipelineEventTypeCreateRef
+	user := util.RandEmail()
+	newUser := util.RandEmail()
+	group := util.RandString(10)
+	newGroup := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -821,7 +825,7 @@ func TestAccPipeline_event(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigEvent(domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId),
+				Config: testAccPipelineConfigEvent(domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId, user, group),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -872,13 +876,29 @@ func TestAccPipeline_event(t *testing.T) {
 								TriggerDays:      []int{tcDays},
 								ZoneId:           tcZoneId,
 							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIs,
+								TriggerUser:      user,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIsNot,
+								TriggerUser:      user,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIsInGroup,
+								TriggerGroup:     group,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIsNotInGroup,
+								TriggerGroup:     group,
+							},
 						},
 					}),
 				),
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigEvent(domain, projectName, newName, newEventType, newRef, newTcChangePath, newTcVarKey, newTcVarValue, newTcHours, newTcDays, newTcZoneId),
+				Config: testAccPipelineConfigEvent(domain, projectName, newName, newEventType, newRef, newTcChangePath, newTcVarKey, newTcVarValue, newTcHours, newTcDays, newTcZoneId, newUser, newGroup),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -928,6 +948,22 @@ func TestAccPipeline_event(t *testing.T) {
 								TriggerHours:     []int{newTcHours},
 								TriggerDays:      []int{newTcDays},
 								ZoneId:           newTcZoneId,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIs,
+								TriggerUser:      newUser,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIsNot,
+								TriggerUser:      newUser,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIsInGroup,
+								TriggerGroup:     newGroup,
+							},
+							{
+								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIsNotInGroup,
+								TriggerGroup:     newGroup,
 							},
 						},
 					}),
@@ -1475,6 +1511,16 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 						return err
 					}
 				}
+				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionTriggeringUserIs || triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionTriggeringUserIsNot {
+					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerUser", i), pipeline.TriggerConditions[i].TriggerUser, triggerCondition.TriggerUser); err != nil {
+						return err
+					}
+				}
+				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionTriggeringUserIsInGroup || triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionTriggeringUserIsNotInGroup {
+					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerGroup", i), pipeline.TriggerConditions[i].TriggerGroup, triggerCondition.TriggerGroup); err != nil {
+						return err
+					}
+				}
 				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarIs ||
 					triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarIsNot ||
 					triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionVarContains ||
@@ -1557,7 +1603,7 @@ func testAccPipelineGet(n string, pipeline *buddy.Pipeline) resource.TestCheckFu
 	}
 }
 
-func testAccPipelineConfigEvent(domain string, projectName string, name string, eventType string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string) string {
+func testAccPipelineConfigEvent(domain string, projectName string, name string, eventType string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string, user string, group string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -1566,6 +1612,38 @@ resource "buddy_workspace" "foo" {
 resource "buddy_project" "proj" {
     domain = "${buddy_workspace.foo.domain}"
     display_name = "%s"
+}
+
+resource "buddy_member" "user" {
+		domain = "${buddy_workspace.foo.domain}"
+  	email  = "%s"
+}
+
+resource "buddy_group" "group" {
+		domain = "${buddy_workspace.foo.domain}"
+  	name = "%s"
+}
+
+resource "buddy_permission" "perm" {
+  domain = "${buddy_workspace.foo.domain}"
+  name                    = "perm"
+  pipeline_access_level   = "RUN_ONLY"
+  repository_access_level = "READ_ONLY"
+  sandbox_access_level    = "DENIED"
+}
+
+resource "buddy_project_group" "group_in_project" {
+  domain = "${buddy_workspace.foo.domain}"
+  project_name = "${buddy_project.proj.name}"
+  group_id      = "${buddy_group.group.group_id}"
+  permission_id = "${buddy_permission.perm.permission_id}"
+}
+
+resource "buddy_project_member" "user_in_project" {
+  domain = "${buddy_workspace.foo.domain}"
+  project_name = "${buddy_project.proj.name}"
+  member_id     = "${buddy_member.user.member_id}"
+  permission_id = "${buddy_permission.perm.permission_id}"
 }
 
 resource "buddy_pipeline" "bar" {
@@ -1610,8 +1688,24 @@ resource "buddy_pipeline" "bar" {
         days = [%d]
         zone_id = "%s"
     }
+		trigger_condition {
+				condition = "TRIGGERING_USER_IS"
+				trigger_user = "${buddy_member.user.email}"
+		}
+		trigger_condition {
+				condition = "TRIGGERING_USER_IS_NOT"
+				trigger_user = "${buddy_member.user.email}"
+		}
+		trigger_condition {
+				condition = "TRIGGERING_USER_IS_IN_GROUP"
+				trigger_group = "${buddy_group.group.name}"
+		}
+		trigger_condition {
+				condition = "TRIGGERING_USER_IS_NOT_IN_GROUP"
+				trigger_group = "${buddy_group.group.name}"
+		}
 }
-`, domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
+`, domain, projectName, user, group, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
 }
 
 func testAccPipelinePermissionsEmpty(domain string, projectName string, name string, ref string) string {

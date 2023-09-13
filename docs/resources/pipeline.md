@@ -145,6 +145,22 @@ resource "buddy_pipeline" "conditions" {
     days      = [1, 20]
     zone_id   = "America/Monterrey"
   }
+  trigger_condition {
+    condition = "TRIGGERING_USER_IS_NOT_IN_GROUP"
+    trigger_group = "devs"
+  }
+  trigger_condition {
+    condition = "TRIGGERING_USER_IS_IN_GROUP"
+    trigger_group = "admins"
+  }
+  trigger_condition {
+    condition = "TRIGGERING_USER_IS_NOT"
+    trigger_user = "test1@test.com"
+  }
+  trigger_condition {
+    condition = "TRIGGERING_USER_IS"
+    trigger_user = "test2@test.com"
+  }
 }
 ```
 
@@ -266,6 +282,8 @@ Optional:
 - `paths` (Set of String)
 - `pipeline_name` (String)
 - `project_name` (String)
+- `trigger_group` (String)
+- `trigger_user` (String)
 - `variable_key` (String)
 - `variable_value` (String)
 - `zone_id` (String)
