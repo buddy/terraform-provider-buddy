@@ -467,6 +467,10 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 									buddy.PipelineTriggerConditionVarNotContains,
 									buddy.PipelineTriggerConditionDateTime,
 									buddy.PipelineTriggerConditionSuccessPipeline,
+									buddy.PipelineTriggerConditionTriggeringUserIsNotInGroup,
+									buddy.PipelineTriggerConditionTriggeringUserIsInGroup,
+									buddy.PipelineTriggerConditionTriggeringUserIs,
+									buddy.PipelineTriggerConditionTriggeringUserIsNot,
 								),
 							},
 						},
@@ -495,6 +499,12 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							Optional: true,
 						},
 						"pipeline_name": schema.StringAttribute{
+							Optional: true,
+						},
+						"trigger_user": schema.StringAttribute{
+							Optional: true,
+						},
+						"trigger_group": schema.StringAttribute{
 							Optional: true,
 						},
 					},
