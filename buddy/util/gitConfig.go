@@ -57,14 +57,18 @@ func GitConfigModelFromApi(ctx context.Context, gitConfig *buddy.PipelineGitConf
 
 func GitConfigModelToApi(ctx context.Context, gc *types.Object) (*buddy.PipelineGitConfig, diag.Diagnostics) {
 	var diags diag.Diagnostics
-	if gc == nil {
+	if gc == nil || gc.IsNull() || gc.IsUnknown() {
 		return nil, diags
 	}
 	var gitConfig buddy.PipelineGitConfig
-	d := gc.As(ctx, &gitConfig, basetypes.ObjectAsOptions{
+	gcm := GitConfigModel{}
+	d := gc.As(ctx, &gcm, basetypes.ObjectAsOptions{
 		UnhandledNullAsEmpty:    false,
 		UnhandledUnknownAsEmpty: false,
 	})
 	diags.Append(d...)
+	gitConfig.Project = gcm.Project.ValueString()
+	gitConfig.Branch = gcm.Branch.ValueString()
+	gitConfig.Path = gcm.Path.ValueString()
 	return &gitConfig, diags
 }
