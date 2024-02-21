@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 	"strconv"
 	"terraform-provider-buddy/buddy/util"
 )
@@ -87,12 +86,8 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
 	r.Name = types.StringValue(pipeline.Name)
 	r.GitConfigRef = types.StringValue(pipeline.GitConfigRef)
-	var gitConfig basetypes.ObjectValue
-	if pipeline.GitConfig != nil {
-		var d diag.Diagnostics
-		gitConfig, d = util.GitConfigModelFromApi(ctx, pipeline.GitConfig)
-		diags.Append(d...)
-	}
+	gitConfig, d := util.GitConfigModelFromApi(ctx, pipeline.GitConfig)
+	diags.Append(d...)
 	r.GitConfig = gitConfig
 	r.PipelineId = types.Int64Value(int64(pipeline.Id))
 	r.On = types.StringValue(pipeline.On)
@@ -642,7 +637,7 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 		ops.TargetSiteUrl = data.TargetSiteUrl.ValueStringPointer()
 	}
 	if !data.GitConfigRef.IsNull() && !data.GitConfigRef.IsUnknown() {
-		ops.GitConfigRef = data.DefinitionSource.ValueStringPointer()
+		ops.GitConfigRef = data.GitConfigRef.ValueStringPointer()
 	}
 	if !data.GitConfig.IsNull() && !data.GitConfig.IsUnknown() {
 		gitConfig, d := util.GitConfigModelToApi(ctx, &data.GitConfig)

@@ -97,6 +97,8 @@ type testAccPipelineExpectedAttributes struct {
 
 type testAccPipelineRemoteExpectedAttributes struct {
 	Name              string
+	GitConfigRef      string
+	GitConfig         *buddy.PipelineGitConfig
 	DefinitionSource  string
 	RemoteProjectName string
 	RemoteBranch      string
@@ -320,6 +322,15 @@ func TestAccPipeline_remote(t *testing.T) {
 	projectName := util.UniqueString()
 	remoteProjectName := util.UniqueString()
 	remoteProjectName2 := util.UniqueString()
+	gitConfigBranch := util.UniqueString()
+	gitConfigPath := util.UniqueString()
+	gitConfigYml := fmt.Sprintf(`
+  git_config = {
+    project = "%s"
+    branch = "%s"
+    path="%s"
+  }
+`, projectName, gitConfigBranch, gitConfigPath)
 	name := util.RandString(10)
 	remoteBranch := "master"
 	remotePath := util.RandString(10)
@@ -345,13 +356,14 @@ func TestAccPipeline_remote(t *testing.T) {
 					testAccPipelineCreateRemoteYaml(domain, remoteProjectName, remotePath, yaml)
 					testAccPipelineCreateRemoteYaml(domain, remoteProjectName2, remotePath2, yaml)
 				},
-				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, remoteProjectName, remoteProjectName2, remoteProjectName, remoteBranch, remotePath, cmd),
+				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, buddy.PipelineGitConfigRefNone, "", remoteProjectName, remoteProjectName2, remoteProjectName, remoteBranch, remotePath, cmd),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
 						Name:              name,
+						GitConfigRef:      buddy.PipelineGitConfigRefNone,
 						RemoteParam:       cmd,
 						RemoteProjectName: remoteProjectName,
 						RemoteBranch:      remoteBranch,
@@ -364,13 +376,39 @@ func TestAccPipeline_remote(t *testing.T) {
 			},
 			// update remote project
 			{
-				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, remoteProjectName, remoteProjectName2, remoteProjectName2, remoteBranch, remotePath2, cmd2),
+				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, buddy.PipelineGitConfigRefDynamic, "", remoteProjectName, remoteProjectName2, remoteProjectName2, remoteBranch, remotePath2, cmd2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
 						Name:              name,
+						GitConfigRef:      buddy.PipelineGitConfigRefDynamic,
+						RemoteParam:       cmd2,
+						RemoteProjectName: remoteProjectName2,
+						RemoteBranch:      remoteBranch,
+						RemotePath:        remotePath2,
+						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
+						Creator:           &profile,
+						Project:           &project,
+					}),
+				),
+			},
+			// update to git config fixed
+			{
+				Config: testAccPipelineConfigRemoteMain(domain, projectName, name, buddy.PipelineGitConfigRefFixed, gitConfigYml, remoteProjectName, remoteProjectName2, remoteProjectName2, remoteBranch, remotePath2, cmd2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:         name,
+						GitConfigRef: buddy.PipelineGitConfigRefFixed,
+						GitConfig: &buddy.PipelineGitConfig{
+							Project: projectName,
+							Branch:  gitConfigBranch,
+							Path:    gitConfigPath,
+						},
 						RemoteParam:       cmd2,
 						RemoteProjectName: remoteProjectName2,
 						RemoteBranch:      remoteBranch,
@@ -390,6 +428,7 @@ func TestAccPipeline_remote(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
 						Name:             name,
+						GitConfigRef:     buddy.PipelineGitConfigRefNone,
 						DefinitionSource: buddy.PipelineDefinitionSourceLocal,
 						Creator:          &profile,
 						Project:          &project,
@@ -701,7 +740,7 @@ resource "buddy_pipeline" "remote" {
 `, domain, projectName, remoteProjectName, remoteProjectName2, name, branch)
 }
 
-func testAccPipelineConfigRemoteMain(domain string, projectName string, name string, remoteProjectName string, remoteProjectName2 string, selectedRemoteProjectName string, remoteBranch string, remotePath string, cmd string) string {
+func testAccPipelineConfigRemoteMain(domain string, projectName string, name string, gitConfigRef string, gitConfig string, remoteProjectName string, remoteProjectName2 string, selectedRemoteProjectName string, remoteBranch string, remotePath string, cmd string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -727,6 +766,8 @@ resource "buddy_pipeline" "remote" {
 	project_name = "${buddy_project.proj.name}"
 	depends_on = [buddy_project.remote_proj, buddy_project.remote_proj2]
 	name = "%s"
+  git_config_ref = "%s"
+  %s
 	definition_source = "REMOTE"
 	remote_project_name = "%s"
 	remote_branch = "%s"
@@ -736,7 +777,7 @@ resource "buddy_pipeline" "remote" {
 		value = "%s"
 	}
 }
-`, domain, projectName, remoteProjectName, remoteProjectName2, name, selectedRemoteProjectName, remoteBranch, remotePath, cmd)
+`, domain, projectName, remoteProjectName, remoteProjectName2, name, gitConfigRef, gitConfig, selectedRemoteProjectName, remoteBranch, remotePath, cmd)
 }
 
 func testAccPipelineConfigRemoteInit(domain string, projectName string, remoteProjectName string, remoteProjectName2 string) string {
@@ -1067,6 +1108,57 @@ func TestAccPipeline_click(t *testing.T) {
 	})
 }
 
+func testAccPipelineGitConfig(pipeline *buddy.Pipeline, attrs map[string]string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) error {
+	if gitConfigRef != "" {
+		if err := util.CheckFieldEqualAndSet("GitConfigRef", pipeline.GitConfigRef, gitConfigRef); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("git_config_ref", attrs["git_config_ref"], gitConfigRef); err != nil {
+			return err
+		}
+		attrsGitConfigProject, attrsGitConfigProjectExists := attrs["git_config.project"]
+		attrsGitConfigBranch, attrsGitConfigBranchExists := attrs["git_config.branch"]
+		attrsGitConfigPath, attrsGitConfigPathExists := attrs["git_config.path"]
+		if gitConfig == nil {
+			if pipeline.GitConfig != nil {
+				return util.ErrorFieldSet("GitConfig")
+			}
+			if attrsGitConfigProjectExists {
+				return util.ErrorFieldSet("git_config.project")
+			}
+			if attrsGitConfigBranchExists {
+				return util.ErrorFieldSet("git_config.branch")
+			}
+			if attrsGitConfigPathExists {
+				return util.ErrorFieldSet("git_config.path")
+			}
+		} else {
+			if pipeline.GitConfig == nil {
+				return util.ErrorFieldEmpty("GitConfig")
+			}
+			if err := util.CheckFieldEqualAndSet("GitConfig.Project", pipeline.GitConfig.Project, gitConfig.Project); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("GitConfig.Branch", pipeline.GitConfig.Branch, gitConfig.Branch); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("GitConfig.Path", pipeline.GitConfig.Path, gitConfig.Path); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("git_config.project", attrsGitConfigProject, gitConfig.Project); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("git_config.branch", attrsGitConfigBranch, gitConfig.Branch); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("git_config.path", attrsGitConfigPath, gitConfig.Path); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
+}
+
 func testAccPipelineRemoteAttributes(n string, pipeline *buddy.Pipeline, want *testAccPipelineRemoteExpectedAttributes) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -1152,6 +1244,9 @@ func testAccPipelineRemoteAttributes(n string, pipeline *buddy.Pipeline, want *t
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("definition_source", attrs["definition_source"], want.DefinitionSource); err != nil {
+			return err
+		}
+		if err := testAccPipelineGitConfig(pipeline, attrs, want.GitConfigRef, want.GitConfig); err != nil {
 			return err
 		}
 		if want.DefinitionSource == buddy.PipelineDefinitionSourceRemote {
