@@ -1972,8 +1972,8 @@ resource "buddy_pipeline" "bar" {
     name = "%s"
     on = "CLICK"
     always_from_scratch = %t
-	fail_on_prepare_env_warning = %t
-	fetch_all_refs = %t
+	  fail_on_prepare_env_warning = %t
+	  fetch_all_refs = %t
     auto_clear_cache = %t
     no_skip_to_most_recent = %t
     do_not_create_commit_status = %t
