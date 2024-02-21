@@ -49,9 +49,7 @@ func SourceGitConfigModelAttributes() map[string]sourceschema.Attribute {
 func GitConfigModelFromApi(ctx context.Context, gitConfig *buddy.PipelineGitConfig) (basetypes.ObjectValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	gc := &GitConfigModel{}
-	gc.Project = types.StringValue(gitConfig.Project)
-	gc.Branch = types.StringValue(gitConfig.Branch)
-	gc.Path = types.StringValue(gitConfig.Path)
+	gc.loadAPI(ctx, gitConfig)
 	r, d := types.ObjectValueFrom(ctx, GitConfigModelAttrs(), &gc)
 	diags.Append(d...)
 	return r, diags
