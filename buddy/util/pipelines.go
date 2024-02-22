@@ -23,6 +23,8 @@ type pipelineModel struct {
 	Refs                  types.Set    `tfsdk:"refs"`
 	Tags                  types.Set    `tfsdk:"tags"`
 	Event                 types.Set    `tfsdk:"event"`
+	GitConfigRef          types.String `tfsdk:"git_config_ref"`
+	GitConfig             types.Object `tfsdk:"git_config"`
 	DefinitionSource      types.String `tfsdk:"definition_source"`
 	RemoteProjectName     types.String `tfsdk:"remote_project_name"`
 	RemoteBranch          types.String `tfsdk:"remote_branch"`
@@ -44,6 +46,8 @@ func pipelineModelAttrs() map[string]attr.Type {
 		"refs":                    types.SetType{ElemType: types.StringType},
 		"tags":                    types.SetType{ElemType: types.StringType},
 		"event":                   types.SetType{ElemType: types.ObjectType{AttrTypes: eventModelAttrs()}},
+		"git_config_ref":          types.StringType,
+		"git_config":              types.ObjectType{AttrTypes: GitConfigModelAttrs()},
 		"definition_source":       types.StringType,
 		"remote_project_name":     types.StringType,
 		"remote_branch":           types.StringType,
@@ -72,6 +76,10 @@ func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) d
 	e, d := EventsModelFromApi(ctx, &pipeline.Events)
 	diags.Append(d...)
 	p.Event = e
+	p.GitConfigRef = types.StringValue(pipeline.GitConfigRef)
+	gitConfig, d := GitConfigModelFromApi(ctx, pipeline.GitConfig)
+	diags.Append(d...)
+	p.GitConfig = gitConfig
 	p.DefinitionSource = types.StringValue(GetPipelineDefinitionSource(pipeline))
 	p.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
 	p.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
@@ -132,6 +140,13 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 		"tags": sourceschema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
+		},
+		"git_config_ref": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"git_config": sourceschema.ObjectAttribute{
+			Computed:       true,
+			AttributeTypes: GitConfigModelAttrs(),
 		},
 		"definition_source": sourceschema.StringAttribute{
 			Computed: true,

@@ -198,7 +198,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"git_config": schema.ObjectAttribute{
-				MarkdownDescription: "The pipeline's GIT configuration spec",
+				MarkdownDescription: "The pipeline's GIT configuration spec for `git_config_ref` = `FIXED`",
 				Optional:            true,
 				Computed:            true,
 				AttributeTypes:      util.GitConfigModelAttrs(),

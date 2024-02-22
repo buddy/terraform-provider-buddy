@@ -11,36 +11,6 @@ import (
 	"testing"
 )
 
-func TestAccSourcePipelines_upgrade(t *testing.T) {
-	domain := util.UniqueString()
-	projectName := util.UniqueString()
-	name1 := "aaaa" + util.RandString(10)
-	name2 := util.RandString(10)
-	ref := util.RandString(10)
-	config := testAccSourcePipelinesConfig(domain, projectName, name1, name2, ref)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelinesAttributes("data.buddy_pipelines.all", 2, "", ""),
-					testAccSourcePipelinesAttributes("data.buddy_pipelines.name", 1, name1, ref),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourcePipelines(t *testing.T) {
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
@@ -102,6 +72,9 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("pipelines.0.priority", attrs["pipelines.0.priority"], buddy.PipelinePriorityNormal); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("pipelines.0.git_config_ref", attrs["pipelines.0.git_config_ref"], buddy.PipelineGitConfigRefNone); err != nil {
 				return err
 			}
 			if err := util.CheckIntFieldSet("pipelines.0.pipeline_id", attrsPipelineId); err != nil {

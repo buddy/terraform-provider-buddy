@@ -4,7 +4,6 @@ import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
-	sourceschema "github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -30,20 +29,6 @@ func (gc *GitConfigModel) loadAPI(_ context.Context, gitConfig *buddy.PipelineGi
 	gc.Branch = types.StringValue(gitConfig.Branch)
 	gc.Path = types.StringValue(gitConfig.Path)
 	return diags
-}
-
-func SourceGitConfigModelAttributes() map[string]sourceschema.Attribute {
-	return map[string]sourceschema.Attribute{
-		"project": sourceschema.StringAttribute{
-			Computed: true,
-		},
-		"branch": sourceschema.StringAttribute{
-			Computed: true,
-		},
-		"path": sourceschema.StringAttribute{
-			Computed: true,
-		},
-	}
 }
 
 func GitConfigModelFromApi(ctx context.Context, gitConfig *buddy.PipelineGitConfig) (basetypes.ObjectValue, diag.Diagnostics) {
