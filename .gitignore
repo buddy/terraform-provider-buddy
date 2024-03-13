@@ -12,3 +12,4 @@ vendor/
 schemas/
 yaml/
 bin/
+test.sh

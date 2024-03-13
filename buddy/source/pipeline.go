@@ -45,6 +45,8 @@ type pipelineSourceModel struct {
 	Refs                  types.Set    `tfsdk:"refs"`
 	Event                 types.Set    `tfsdk:"event"`
 	Tags                  types.Set    `tfsdk:"tags"`
+	GitConfigRef          types.String `tfsdk:"git_config_ref"`
+	GitConfig             types.Object `tfsdk:"git_config"`
 	DefinitionSource      types.String `tfsdk:"definition_source"`
 	RemoteProjectName     types.String `tfsdk:"remote_project_name"`
 	RemoteBranch          types.String `tfsdk:"remote_branch"`
@@ -75,6 +77,10 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	t, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Tags)
 	diags.Append(d...)
 	s.Tags = t
+	s.GitConfigRef = types.StringValue(pipeline.GitConfigRef)
+	gitConfig, d := util.GitConfigModelFromApi(ctx, pipeline.GitConfig)
+	diags.Append(d...)
+	s.GitConfig = gitConfig
 	s.DefinitionSource = types.StringValue(util.GetPipelineDefinitionSource(pipeline))
 	s.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
 	s.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
@@ -173,6 +179,15 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 				MarkdownDescription: "The pipeline's list of tags. Only for `Buddy Enterprise`",
 				Computed:            true,
 				ElementType:         types.StringType,
+			},
+			"git_config_ref": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's GIT configuration type",
+				Computed:            true,
+			},
+			"git_config": schema.ObjectAttribute{
+				MarkdownDescription: "The pipeline's GIT configuration spec for `git_config_ref` = `FIXED`",
+				Computed:            true,
+				AttributeTypes:      util.GitConfigModelAttrs(),
 			},
 			"definition_source": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's definition source",

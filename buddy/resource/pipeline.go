@@ -40,6 +40,8 @@ type pipelineResourceModel struct {
 	HtmlUrl                   types.String `tfsdk:"html_url"`
 	PipelineId                types.Int64  `tfsdk:"pipeline_id"`
 	Name                      types.String `tfsdk:"name"`
+	GitConfigRef              types.String `tfsdk:"git_config_ref"`
+	GitConfig                 types.Object `tfsdk:"git_config"`
 	DefinitionSource          types.String `tfsdk:"definition_source"`
 	RemoteProjectName         types.String `tfsdk:"remote_project_name"`
 	RemoteBranch              types.String `tfsdk:"remote_branch"`
@@ -83,6 +85,10 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.ProjectName = types.StringValue(projectName)
 	r.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
 	r.Name = types.StringValue(pipeline.Name)
+	r.GitConfigRef = types.StringValue(pipeline.GitConfigRef)
+	gitConfig, d := util.GitConfigModelFromApi(ctx, pipeline.GitConfig)
+	diags.Append(d...)
+	r.GitConfig = gitConfig
 	r.PipelineId = types.Int64Value(int64(pipeline.Id))
 	r.On = types.StringValue(pipeline.On)
 	refs, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
@@ -177,6 +183,25 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's name",
 				Required:            true,
+			},
+			"git_config_ref": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(buddy.PipelineGitConfigRefNone),
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.PipelineGitConfigRefNone,
+						buddy.PipelineGitConfigRefFixed,
+						buddy.PipelineGitConfigRefDynamic,
+					),
+				},
+			},
+			"git_config": schema.ObjectAttribute{
+				MarkdownDescription: "The pipeline's GIT configuration spec for `git_config_ref` = `FIXED`",
+				Optional:            true,
+				Computed:            true,
+				AttributeTypes:      util.GitConfigModelAttrs(),
 			},
 			"definition_source": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`",
@@ -611,6 +636,17 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.TargetSiteUrl.IsNull() && !data.TargetSiteUrl.IsUnknown() {
 		ops.TargetSiteUrl = data.TargetSiteUrl.ValueStringPointer()
 	}
+	if !data.GitConfigRef.IsNull() && !data.GitConfigRef.IsUnknown() {
+		ops.GitConfigRef = data.GitConfigRef.ValueStringPointer()
+	}
+	if !data.GitConfig.IsNull() && !data.GitConfig.IsUnknown() {
+		gitConfig, d := util.GitConfigModelToApi(ctx, &data.GitConfig)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.GitConfig = gitConfig
+	}
 	if !data.DefinitionSource.IsNull() && !data.DefinitionSource.IsUnknown() {
 		ops.DefinitionSource = data.DefinitionSource.ValueStringPointer()
 	}
@@ -789,6 +825,17 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	if !data.TargetSiteUrl.IsNull() && !data.TargetSiteUrl.IsUnknown() {
 		ops.TargetSiteUrl = data.TargetSiteUrl.ValueStringPointer()
+	}
+	if !data.GitConfigRef.IsNull() && !data.GitConfigRef.IsUnknown() {
+		ops.GitConfigRef = data.GitConfigRef.ValueStringPointer()
+	}
+	if !data.GitConfig.IsNull() && !data.GitConfig.IsUnknown() {
+		gitConfig, d := util.GitConfigModelToApi(ctx, &data.GitConfig)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.GitConfig = gitConfig
 	}
 	if !data.DefinitionSource.IsNull() && !data.DefinitionSource.IsUnknown() {
 		ops.DefinitionSource = data.DefinitionSource.ValueStringPointer()

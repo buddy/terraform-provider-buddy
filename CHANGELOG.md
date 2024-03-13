@@ -1,3 +1,6 @@
+# Release v1.17.0
+* Adds GIT configuration to pipeline
+
 # Release v1.16.0 (2023-09-13)
 * Adds new trigger conditions to pipeline
 

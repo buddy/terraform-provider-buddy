@@ -5,6 +5,7 @@ resource "buddy_pipeline" "click" {
   on                  = "CLICK"
   refs                = ["main"]
   always_from_scratch = true
+  git_config_ref      = "NONE"
   permissions {
     others = "DENIED"
     user {
@@ -62,14 +63,21 @@ resource "buddy_pipeline" "schedule" {
   start_date                  = "2016-11-18T12:38:16.000Z"
   delay                       = 10
   paused                      = true
+  git_config_ref              = "FIXED"
+  git_config                  = {
+    project = "project_name"
+    branch  = "branch_name"
+    path    = "path/to/definition.yml"
+  }
 }
 
 resource "buddy_pipeline" "schedule_cron" {
-  domain       = "mydomain"
-  project_name = "myproject"
-  name         = "schedule_cron"
-  on           = "SCHEDULE"
-  cron         = "15 14 1 * *"
+  domain         = "mydomain"
+  project_name   = "myproject"
+  name           = "schedule_cron"
+  on             = "SCHEDULE"
+  cron           = "15 14 1 * *"
+  git_config_ref = "DYNAMIC"
 }
 
 resource "buddy_pipeline" "remote" {

@@ -177,6 +177,10 @@ func ErrorFieldEmpty(field string) error {
 	return fmt.Errorf("expected %q not to be empty", field)
 }
 
+func ErrorFieldSet(field string) error {
+	return fmt.Errorf("expected %q to be empty", field)
+}
+
 func ErrorResourceExists() error {
 	return errors.New("resource still exists")
 }
