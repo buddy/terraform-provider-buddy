@@ -1,4 +1,4 @@
-# Release v1.17.0
+# Release v1.17.0 (2024-03-13)
 * Adds GIT configuration to pipeline
 
 # Release v1.16.0 (2023-09-13)
