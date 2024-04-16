@@ -30,5 +30,3 @@ data "buddy_profile" "me" {
 - `id` (String) The Terraform resource identifier for this item
 - `member_id` (Number) The user's ID
 - `name` (String) The user's name
-
-

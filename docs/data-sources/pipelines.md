@@ -60,6 +60,8 @@ Read-Only:
 - `disabled` (Boolean)
 - `disabling_reason` (String)
 - `event` (Attributes Set) (see [below for nested schema](#nestedatt--pipelines--event))
+- `git_config` (Object) (see [below for nested schema](#nestedatt--pipelines--git_config))
+- `git_config_ref` (String)
 - `html_url` (String)
 - `last_execution_revision` (String)
 - `last_execution_status` (String)
@@ -83,6 +85,16 @@ Read-Only:
 - `type` (String)
 
 
+<a id="nestedatt--pipelines--git_config"></a>
+### Nested Schema for `pipelines.git_config`
+
+Read-Only:
+
+- `branch` (String)
+- `path` (String)
+- `project` (String)
+
+
 <a id="nestedatt--pipelines--remote_parameter"></a>
 ### Nested Schema for `pipelines.remote_parameter`
 
@@ -90,5 +102,3 @@ Read-Only:
 
 - `key` (String)
 - `value` (String)
-
-

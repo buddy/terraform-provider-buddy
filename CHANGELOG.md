@@ -1,3 +1,7 @@
+# Release v1.18.0 (2024-04-12)
+* Go version 1.21
+* Bump deps
+
 # Release v1.17.0 (2024-03-13)
 * Adds GIT configuration to pipeline
 

@@ -50,5 +50,3 @@ Read-Only:
 - `group_id` (Number)
 - `html_url` (String)
 - `name` (String)
-
-

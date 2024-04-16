@@ -48,6 +48,8 @@ data "buddy_pipeline" "by_id" {
 - `disabled` (Boolean) Defines wheter or not the pipeline can be run
 - `disabling_reason` (String) The pipeline's disabling reason
 - `event` (Attributes Set) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
+- `git_config` (Object) The pipeline's GIT configuration spec for `git_config_ref` = `FIXED` (see [below for nested schema](#nestedatt--git_config))
+- `git_config_ref` (String) The pipeline's GIT configuration type
 - `html_url` (String) The pipeline's URL
 - `id` (String) The Terraform resource identifier for this item
 - `last_execution_revision` (String) The pipeline's last run revision
@@ -70,6 +72,16 @@ Read-Only:
 - `type` (String)
 
 
+<a id="nestedatt--git_config"></a>
+### Nested Schema for `git_config`
+
+Read-Only:
+
+- `branch` (String)
+- `path` (String)
+- `project` (String)
+
+
 <a id="nestedatt--remote_parameter"></a>
 ### Nested Schema for `remote_parameter`
 
@@ -77,5 +89,3 @@ Read-Only:
 
 - `key` (String)
 - `value` (String)
-
-

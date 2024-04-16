@@ -44,5 +44,3 @@ data "buddy_integration" "azure" {
 - `html_url` (String) The integration's URL
 - `id` (String) The Terraform resource identifier for this item
 - `type` (String) The integration's type
-
-

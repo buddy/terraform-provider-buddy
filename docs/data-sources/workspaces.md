@@ -50,5 +50,3 @@ Read-Only:
 - `html_url` (String)
 - `name` (String)
 - `workspace_id` (Number)
-
-

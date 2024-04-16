@@ -44,5 +44,3 @@ data "buddy_project" "by_display_name" {
 - `html_url` (String) The project's URL
 - `id` (String) The Terraform resource identifier for this item
 - `status` (String) The project's status
-
-

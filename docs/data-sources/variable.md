@@ -52,5 +52,3 @@ data "buddy_variable_ssh_key" "by_key_in_project" {
 - `id` (String) The Terraform resource identifier for this item
 - `settable` (Boolean) Is the variable's value changeable
 - `value` (String, Sensitive) The variable's value. Encrypted if **encrypted** == true
-
-

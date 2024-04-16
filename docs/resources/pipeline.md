@@ -23,6 +23,7 @@ resource "buddy_pipeline" "click" {
   on                  = "CLICK"
   refs                = ["main"]
   always_from_scratch = true
+  git_config_ref      = "NONE"
   permissions {
     others = "DENIED"
     user {
@@ -80,14 +81,21 @@ resource "buddy_pipeline" "schedule" {
   start_date                  = "2016-11-18T12:38:16.000Z"
   delay                       = 10
   paused                      = true
+  git_config_ref              = "FIXED"
+  git_config                  = {
+    project = "project_name"
+    branch  = "branch_name"
+    path    = "path/to/definition.yml"
+  }
 }
 
 resource "buddy_pipeline" "schedule_cron" {
-  domain       = "mydomain"
-  project_name = "myproject"
-  name         = "schedule_cron"
-  on           = "SCHEDULE"
-  cron         = "15 14 1 * *"
+  domain         = "mydomain"
+  project_name   = "myproject"
+  name           = "schedule_cron"
+  on             = "SCHEDULE"
+  cron           = "15 14 1 * *"
+  git_config_ref = "DYNAMIC"
 }
 
 resource "buddy_pipeline" "remote" {
@@ -146,19 +154,19 @@ resource "buddy_pipeline" "conditions" {
     zone_id   = "America/Monterrey"
   }
   trigger_condition {
-    condition = "TRIGGERING_USER_IS_NOT_IN_GROUP"
+    condition     = "TRIGGERING_USER_IS_NOT_IN_GROUP"
     trigger_group = "devs"
   }
   trigger_condition {
-    condition = "TRIGGERING_USER_IS_IN_GROUP"
+    condition     = "TRIGGERING_USER_IS_IN_GROUP"
     trigger_group = "admins"
   }
   trigger_condition {
-    condition = "TRIGGERING_USER_IS_NOT"
+    condition    = "TRIGGERING_USER_IS_NOT"
     trigger_user = "test1@test.com"
   }
   trigger_condition {
-    condition = "TRIGGERING_USER_IS"
+    condition    = "TRIGGERING_USER_IS"
     trigger_user = "test2@test.com"
   }
 }
@@ -188,6 +196,8 @@ resource "buddy_pipeline" "conditions" {
 - `execution_message_template` (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
 - `fail_on_prepare_env_warning` (Boolean) Defines either or not run should fail if any warning occurs in prepare environment
 - `fetch_all_refs` (Boolean) Defines whether or not fetch all refs from repository
+- `git_config` (Object) The pipeline's GIT configuration spec for `git_config_ref` = `FIXED` (see [below for nested schema](#nestedatt--git_config))
+- `git_config_ref` (String) The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `on` (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
@@ -223,6 +233,16 @@ Required:
 
 - `refs` (Set of String)
 - `type` (String)
+
+
+<a id="nestedatt--git_config"></a>
+### Nested Schema for `git_config`
+
+Optional:
+
+- `branch` (String)
+- `path` (String)
+- `project` (String)
 
 
 <a id="nestedblock--permissions"></a>

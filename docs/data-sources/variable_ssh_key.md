@@ -58,5 +58,3 @@ data "buddy_variable" "by_key_in_project" {
 - `public_value` (String) The variable's public key
 - `settable` (Boolean) Is the variable's value changeable, always false for buddy_variable_ssh_key
 - `value` (String, Sensitive) The variable's value, always encrypted for buddy_variable_ssh_key
-
-
