@@ -56,5 +56,3 @@ Read-Only:
 - `repository_access_level` (String)
 - `sandbox_access_level` (String)
 - `type` (String)
-
-

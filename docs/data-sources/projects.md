@@ -69,5 +69,3 @@ Read-Only:
 - `html_url` (String)
 - `name` (String)
 - `status` (String)
-
-

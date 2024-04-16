@@ -72,5 +72,3 @@ Read-Only:
 - `settable` (Boolean)
 - `value` (String, Sensitive)
 - `variable_id` (Number)
-
-

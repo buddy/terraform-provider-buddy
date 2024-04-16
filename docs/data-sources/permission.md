@@ -49,5 +49,3 @@ data "buddy_permission" "by_id" {
 - `repository_access_level` (String) The permission's access level to repository
 - `sandbox_access_level` (String) The permission's access level to sandboxes
 - `type` (String) The permission's type
-
-

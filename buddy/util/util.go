@@ -32,10 +32,6 @@ const (
 	CharSetAlpha = "abcdefghijklmnopqrstuvwxyz"
 )
 
-func init() {
-	rand.Seed(time.Now().UTC().UnixNano())
-}
-
 func NewDiagnosticApiError(method string, err error) diag.Diagnostic {
 	return diag.NewErrorDiagnostic("Buddy API error occured", fmt.Sprintf("Unable to %s:\n%s", method, err.Error()))
 }

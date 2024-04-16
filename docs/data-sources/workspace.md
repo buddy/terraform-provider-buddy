@@ -38,5 +38,3 @@ data "buddy_workspace" "by_domain" {
 - `html_url` (String) The workspace's URL
 - `id` (String) The Terraform resource identifier for this item
 - `workspace_id` (Number) The workspace's ID
-
-

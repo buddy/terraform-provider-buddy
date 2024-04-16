@@ -52,5 +52,3 @@ Read-Only:
 - `name` (String)
 - `status` (String)
 - `workspace_owner` (Boolean)
-
-

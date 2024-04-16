@@ -41,5 +41,3 @@ data "buddy_webhook" "by_target_url" {
 
 - `html_url` (String) The webhook's URL
 - `id` (String) The Terraform resource identifier for this item
-
-

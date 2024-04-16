@@ -50,5 +50,3 @@ Read-Only:
 - `html_url` (String)
 - `target_url` (String)
 - `webhook_id` (Number)
-
-

@@ -52,5 +52,3 @@ Read-Only:
 - `integration_id` (String)
 - `name` (String)
 - `type` (String)
-
-
