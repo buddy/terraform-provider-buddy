@@ -39,6 +39,7 @@ type integrationResourceModel struct {
 	Username        types.String `tfsdk:"username"`
 	Shop            types.String `tfsdk:"shop"`
 	Token           types.String `tfsdk:"token"`
+	Identifier      types.String `tfsdk:"identifier"`
 	PartnerToken    types.String `tfsdk:"partner_token"`
 	AccessKey       types.String `tfsdk:"access_key"`
 	SecretKey       types.String `tfsdk:"secret_key"`
@@ -75,6 +76,7 @@ func (r *integrationResourceModel) loadAPI(domain string, integration *buddy.Int
 	r.GroupId = types.Int64Value(int64(integration.GroupId))
 	r.HtmlUrl = types.StringValue(integration.HtmlUrl)
 	r.IntegrationId = types.StringValue(integration.HashId)
+	r.Identifier = types.StringValue(integration.Identifier)
 	// rest of the attributes are not returned by api
 }
 
@@ -98,6 +100,15 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "The workspace's URL handle",
 				Required:            true,
 				Validators:          util.StringValidatorsDomain(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"identifier": schema.StringAttribute{
+				MarkdownDescription: "The integration's identifier",
+				Optional:            true,
+				Computed:            true,
+				Validators:          util.StringValidatorIdentifier(),
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -300,6 +311,9 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 		Name:  data.Name.ValueStringPointer(),
 		Type:  data.Type.ValueStringPointer(),
 		Scope: data.Scope.ValueStringPointer(),
+	}
+	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
+		ops.Identifier = data.Identifier.ValueStringPointer()
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.ProjectName = data.ProjectName.ValueStringPointer()

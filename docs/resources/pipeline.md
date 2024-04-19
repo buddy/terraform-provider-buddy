@@ -82,7 +82,7 @@ resource "buddy_pipeline" "schedule" {
   delay                       = 10
   paused                      = true
   git_config_ref              = "FIXED"
-  git_config                  = {
+  git_config = {
     project = "project_name"
     branch  = "branch_name"
     path    = "path/to/definition.yml"

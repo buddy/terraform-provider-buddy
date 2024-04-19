@@ -49,6 +49,7 @@ data "buddy_integrations" "amazon" {
 Read-Only:
 
 - `html_url` (String)
+- `identifier` (String)
 - `integration_id` (String)
 - `name` (String)
 - `type` (String)

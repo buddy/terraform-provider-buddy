@@ -23,6 +23,7 @@ resource "buddy_integration" "aws" {
   scope      = "ADMIN"
   access_key = "key"
   secret_key = "secret"
+  identifier = "my_id"
 
   role_assumption {
     arn = "arn1"
@@ -312,6 +313,7 @@ resource "buddy_integration" "google_service_account_oidc" {
 - `google_config` (String) The integration's google config. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `google_project` (String) The integration's google project. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `group_id` (Number) The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`
+- `identifier` (String) The integration's identifier
 - `partner_token` (String, Sensitive) The integration's partner token. Provide for: `SHOPIFY`
 - `password` (String, Sensitive) The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`
 - `project_name` (String) The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`, `PRIVATE_IN_PROJECT`

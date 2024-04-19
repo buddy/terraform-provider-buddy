@@ -13,6 +13,7 @@ import (
 type integrationModel struct {
 	HtmlUrl       types.String `tfsdk:"html_url"`
 	IntegrationId types.String `tfsdk:"integration_id"`
+	Identifier    types.String `tfsdk:"identifier"`
 	Name          types.String `tfsdk:"name"`
 	Type          types.String `tfsdk:"type"`
 }
@@ -21,6 +22,7 @@ func integrationModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
 		"html_url":       types.StringType,
 		"integration_id": types.StringType,
+		"identifier":     types.StringType,
 		"name":           types.StringType,
 		"type":           types.StringType,
 	}
@@ -30,6 +32,7 @@ func (i *integrationModel) loadAPI(integration *buddy.Integration) {
 	i.HtmlUrl = types.StringValue(integration.HtmlUrl)
 	i.IntegrationId = types.StringValue(integration.HashId)
 	i.Name = types.StringValue(integration.Name)
+	i.Identifier = types.StringValue(integration.Identifier)
 	i.Type = types.StringValue(integration.Type)
 }
 
@@ -39,6 +42,9 @@ func SourceIntegrationModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"integration_id": schema.StringAttribute{
+			Computed: true,
+		},
+		"identifier": schema.StringAttribute{
 			Computed: true,
 		},
 		"name": schema.StringAttribute{
