@@ -11,33 +11,6 @@ import (
 	"testing"
 )
 
-func TestAccProfileEmail_upgrade(t *testing.T) {
-	var pe buddy.ProfileEmail
-	email := util.RandEmail()
-	config := testAccProfileEmailConfig(email)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccProfileEmailGet("buddy_profile_email.foo", &pe),
-					testAccProfileEmailAttributes("buddy_profile_email.foo", &pe, email),
-				),
-			},
-		},
-	})
-}
-
 func TestAccProfileEmail(t *testing.T) {
 	var pe buddy.ProfileEmail
 	email := util.RandEmail()

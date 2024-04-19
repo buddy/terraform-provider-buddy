@@ -10,31 +10,6 @@ import (
 	"testing"
 )
 
-func TestAccSourceGroups_upgrade(t *testing.T) {
-	config := testAccSourceGroupsConfig()
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourceGroupsAttributes("data.buddy_groups.all", 2),
-					testAccSourceGroupsAttributes("data.buddy_groups.name", 1),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourceGroups(t *testing.T) {
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {

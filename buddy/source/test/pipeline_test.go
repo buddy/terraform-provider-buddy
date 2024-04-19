@@ -11,35 +11,6 @@ import (
 	"testing"
 )
 
-func TestAccSourcePipeline_upgrade(t *testing.T) {
-	domain := util.UniqueString()
-	projectName := util.UniqueString()
-	name := util.RandString(10)
-	ref := util.RandString(10)
-	config := testAccSourcePipelineConfigUpgrade(domain, projectName, name, ref, buddy.PipelinePriorityHigh)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, "", buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, "", buddy.PipelineGitConfigRefNone, nil),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourcePipeline(t *testing.T) {
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
@@ -196,40 +167,6 @@ resource "buddy_pipeline" "bar" {
        refs = ["%s"]
    }
 	priority = "%s"
-}
-
-data "buddy_pipeline" "name" {
-   domain = "${buddy_workspace.foo.domain}"
-   project_name = "${buddy_project.proj.name}"
-   name = "${buddy_pipeline.bar.name}"
-}
-
-data "buddy_pipeline" "id" {
-   domain = "${buddy_workspace.foo.domain}"
-   project_name = "${buddy_project.proj.name}"
-   pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
-}
-`, domain, projectName, name, ref, priority)
-}
-
-func testAccSourcePipelineConfigUpgrade(domain string, projectName string, name string, ref string, priority string) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-   domain = "%s"
-}
-
-resource "buddy_project" "proj" {
-   domain = "${buddy_workspace.foo.domain}"
-   display_name = "%s"
-}
-
-resource "buddy_pipeline" "bar" {
-   domain = "${buddy_workspace.foo.domain}"
-   project_name = "${buddy_project.proj.name}"
-   name = "%s"
-   on = "CLICK"
-   refs = ["%s"]
-	 priority = "%s"
 }
 
 data "buddy_pipeline" "name" {

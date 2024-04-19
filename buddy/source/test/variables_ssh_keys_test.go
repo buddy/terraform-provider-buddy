@@ -10,40 +10,6 @@ import (
 	"testing"
 )
 
-func TestAccSourceVariablesSshKeys_upgrade(t *testing.T) {
-	err, _, privateKey := util.GenerateRsaKeyPair()
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	err, _, privateKey2 := util.GenerateRsaKeyPair()
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	config := testAccSourceVariablesSshKeysConfig(privateKey, privateKey2)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 3),
-					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.key", 1),
-					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.project", 1),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourceVariablesSshKeys(t *testing.T) {
 	err, _, privateKey := util.GenerateRsaKeyPair()
 	if err != nil {

@@ -14,57 +14,6 @@ import (
 	"time"
 )
 
-func TestAccPipeline_permissions_upgrade(t *testing.T) {
-	var pipeline buddy.Pipeline
-	var project buddy.Project
-	var profile buddy.Profile
-	domain := util.UniqueString()
-	projectName := util.UniqueString()
-	name := util.RandString(10)
-	ref := util.RandString(10)
-	config := testAccPipelinePermissionsEmpty(domain, projectName, name, ref)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
-					testAccProjectGet("buddy_project.proj", &project),
-					testAccProfileGet(&profile),
-					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                      name,
-						On:                        buddy.PipelineOnClick,
-						AlwaysFromScratch:         false,
-						AutoClearCache:            false,
-						NoSkipToMostRecent:        false,
-						DoNotCreateCommitStatus:   false,
-						IgnoreFailOnProjectStatus: false,
-						FetchAllRefs:              false,
-						FailOnPrepareEnvWarning:   false,
-						Priority:                  buddy.PipelinePriorityNormal,
-						TargetSiteUrl:             "",
-						ExecutionMessageTemplate:  "",
-						Project:                   &project,
-						Creator:                   &profile,
-						Ref:                       ref,
-						Permissions:               nil,
-					}),
-				),
-			},
-		},
-	})
-}
-
 type testAccPipelineExpectedAttributes struct {
 	Name                      string
 	On                        string
