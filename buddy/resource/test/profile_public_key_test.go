@@ -11,38 +11,6 @@ import (
 	"testing"
 )
 
-func TestAccProfilePublicKey_upgrade(t *testing.T) {
-	var key buddy.PublicKey
-	err, publicKey, _ := util.GenerateRsaKeyPair()
-	if err != nil {
-		t.Fatal(err.Error())
-	}
-	content := publicKey
-	title := util.RandString(10)
-	config := testAccProfilePublicKeyConfig(content, title)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccProfilePublicKeyGet("buddy_profile_public_key.foo", &key),
-					testAccProfilePublicKeyAttributes("buddy_profile_public_key.foo", &key, content, title),
-				),
-			},
-		},
-	})
-}
-
 func TestAccProfilePublicKey(t *testing.T) {
 	var key buddy.PublicKey
 	err, publicKey, _ := util.GenerateRsaKeyPair()

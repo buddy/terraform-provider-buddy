@@ -5,6 +5,7 @@ resource "buddy_integration" "aws" {
   scope      = "ADMIN"
   access_key = "key"
   secret_key = "secret"
+  identifier = "my_id"
 
   role_assumption {
     arn = "arn1"

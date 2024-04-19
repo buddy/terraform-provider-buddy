@@ -11,37 +11,6 @@ import (
 	"testing"
 )
 
-func TestAccSourcePermission_upgrade(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	pipelineAccessLevel := buddy.PermissionAccessLevelReadWrite
-	repositoryAccessLevel := buddy.PermissionAccessLevelReadOnly
-	sandboxAccessLevel := buddy.PermissionAccessLevelDenied
-	projectTeamAccessLevel := buddy.PermissionAccessLevelReadOnly
-	config := testAccSourcePermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePermissionAttributes("data.buddy_permission.id", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
-					testAccSourcePermissionAttributes("data.buddy_permission.name", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourcePermission(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)

@@ -242,6 +242,12 @@ func StringValidatorsDomain() []validator.String {
 	}
 }
 
+func StringValidatorIdentifier() []validator.String {
+	return []validator.String{
+		stringvalidator.RegexMatches(regexp.MustCompile(`(?i)^[a-z]\w*$`), "identifier is not valid"),
+	}
+}
+
 func StringValidatorsEmail() []validator.String {
 	return []validator.String{
 		stringvalidator.RegexMatches(regexp.MustCompile(`(?i)^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$`), "email is not valid"),

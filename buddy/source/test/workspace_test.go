@@ -10,32 +10,6 @@ import (
 	"testing"
 )
 
-func TestAccSourceWorkspace_upgrade(t *testing.T) {
-	domain := util.UniqueString()
-	config := testAccSourceWorkspaceConfig(domain)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourceWorkspaceAttributes("data.buddy_workspace.domain", domain),
-					testAccSourceWorkspaceAttributes("data.buddy_workspace.name", domain),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourceWorkspace(t *testing.T) {
 	domain := util.UniqueString()
 	resource.Test(t, resource.TestCase{

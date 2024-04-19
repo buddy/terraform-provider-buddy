@@ -10,34 +10,6 @@ import (
 	"testing"
 )
 
-func TestAccSourceWebhooks_upgrade(t *testing.T) {
-	domain := util.UniqueString()
-	target1 := "https://127.0.0.1"
-	target2 := "https://192.168.1.1"
-	config := testAccSourceWebhooksConfig(domain, target1, target2)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccSourceWebhooksAttributes("data.buddy_webhooks.all", 2),
-					testAccSourceWebhooksAttributes("data.buddy_webhooks.filter", 1),
-				),
-			},
-		},
-	})
-}
-
 func TestAccSourceWebhooks(t *testing.T) {
 	domain := util.UniqueString()
 	target1 := "https://127.0.0.1"

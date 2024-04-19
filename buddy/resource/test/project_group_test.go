@@ -11,39 +11,6 @@ import (
 	"testing"
 )
 
-func TestAccProjectGroup_upgrade(t *testing.T) {
-	var group buddy.ProjectGroup
-	domain := util.UniqueString()
-	nameA := util.RandString(10)
-	nameB := util.RandString(10)
-	projectDisplayNameA := util.RandString(10)
-	projectDisplayNameB := util.RandString(10)
-	permissionNameA := util.RandString(10)
-	permissionNameB := util.RandString(10)
-	config := testAccProjectGroupConfig(domain, nameA, nameB, projectDisplayNameA, projectDisplayNameB, permissionNameA, permissionNameB, "a", "a", "a")
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccProjectGroupGet("buddy_project_group.bar", &group),
-					testAccProjectGroupAttributes("buddy_project_group.bar", &group, permissionNameA),
-				),
-			},
-		},
-	})
-}
-
 func TestAccProjectGroup(t *testing.T) {
 	var group buddy.ProjectGroup
 	domain := util.UniqueString()

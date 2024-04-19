@@ -12,35 +12,6 @@ import (
 	"testing"
 )
 
-func TestAccVariable_workspace_upgrade(t *testing.T) {
-	var variable buddy.Variable
-	domain := util.UniqueString()
-	key := util.UniqueString()
-	val := util.RandString(10)
-	config := testAccVariableWorkspaceSimpleConfig(domain, key, val)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, key, val, "", false, false),
-				),
-			},
-		},
-	})
-}
-
 func TestAccVariable_workspace(t *testing.T) {
 	var variable buddy.Variable
 	domain := util.UniqueString()

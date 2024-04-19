@@ -31,6 +31,7 @@ type integrationSourceModel struct {
 	Domain        types.String `tfsdk:"domain"`
 	Name          types.String `tfsdk:"name"`
 	IntegrationId types.String `tfsdk:"integration_id"`
+	Identifier    types.String `tfsdk:"identifier"`
 	Type          types.String `tfsdk:"type"`
 	HtmlUrl       types.String `tfsdk:"html_url"`
 }
@@ -40,6 +41,7 @@ func (s *integrationSourceModel) loadAPI(domain string, integration *buddy.Integ
 	s.Domain = types.StringValue(domain)
 	s.Name = types.StringValue(integration.Name)
 	s.IntegrationId = types.StringValue(integration.HashId)
+	s.Identifier = types.StringValue(integration.Identifier)
 	s.Type = types.StringValue(integration.Type)
 	s.HtmlUrl = types.StringValue(integration.HtmlUrl)
 }
@@ -90,6 +92,10 @@ func (s *integrationSource) Schema(_ context.Context, _ datasource.SchemaRequest
 						path.MatchRoot("integration_id"),
 					}...),
 				},
+			},
+			"identifier": schema.StringAttribute{
+				MarkdownDescription: "The integration's identifier",
+				Computed:            true,
 			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "The integration's type",

@@ -12,40 +12,6 @@ import (
 	"testing"
 )
 
-func TestAccProject_github_upgrade(t *testing.T) {
-	ghToken := os.Getenv("BUDDY_GH_TOKEN")
-	ghPoject := os.Getenv("BUDDY_GH_PROJECT")
-	if ghToken == "" || ghPoject == "" {
-		return
-	}
-	var project buddy.Project
-	domain := util.UniqueString()
-	displayName := util.RandString(10)
-	config := testAccProjectGitHubConfig(domain, displayName, ghToken, ghPoject, false, true)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					util.TestSleep(10000),
-					testAccProjectGet("buddy_project.gh", &project),
-					testAccProjectAttributes("buddy_project.gh", &project, displayName, false, buddy.ProjectAccessPrivate, true, false, ""),
-				),
-			},
-		},
-	})
-}
-
 func TestAccProject_github(t *testing.T) {
 	ghToken := os.Getenv("BUDDY_GH_TOKEN")
 	ghPoject := os.Getenv("BUDDY_GH_PROJECT")

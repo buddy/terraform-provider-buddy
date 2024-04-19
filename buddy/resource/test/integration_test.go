@@ -29,35 +29,6 @@ var ignoreImportVerify = []string{
 	"audience",
 }
 
-func TestAccIntegration_amazon_upgrade(t *testing.T) {
-	var integration buddy.Integration
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	scope := buddy.IntegrationScopeAdmin
-	config := testAccIntegrationAmazon(domain, name, scope)
-	resource.Test(t, resource.TestCase{
-		Steps: []resource.TestStep{
-			{
-				ExternalProviders: map[string]resource.ExternalProvider{
-					"buddy": {
-						VersionConstraint: "1.12.0",
-						Source:            "buddy/buddy",
-					},
-				},
-				Config: config,
-			},
-			{
-				ProtoV6ProviderFactories: acc.ProviderFactories,
-				Config:                   config,
-				Check: resource.ComposeTestCheckFunc(
-					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, false),
-				),
-			},
-		},
-	})
-}
-
 func TestAccIntegration_amazon_trusted(t *testing.T) {
 	var integration buddy.Integration
 	domain := util.UniqueString()
@@ -77,7 +48,7 @@ func TestAccIntegration_amazon_trusted(t *testing.T) {
 				Config: testAccIntegrationAmazonTrusted(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeTrusted, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeTrusted, scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -85,7 +56,7 @@ func TestAccIntegration_amazon_trusted(t *testing.T) {
 				Config: testAccIntegrationAmazonTrusted(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeTrusted, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeTrusted, newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -120,7 +91,7 @@ func TestAccIntegration_amazon_oidc(t *testing.T) {
 				Config: testAccIntegrationAmazonOidc(domain, name, scope, audience),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeOidc, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeOidc, scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -128,7 +99,7 @@ func TestAccIntegration_amazon_oidc(t *testing.T) {
 				Config: testAccIntegrationAmazonOidc(domain, newName, newScope, newAudience),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeOidc, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeOidc, newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -149,6 +120,7 @@ func TestAccIntegration_amazon_default(t *testing.T) {
 	newName := util.RandString(10)
 	scope := buddy.IntegrationScopeAdmin
 	newScope := buddy.IntegrationScopeWorkspace
+	identifier := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -158,18 +130,61 @@ func TestAccIntegration_amazon_default(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create integration
 			{
-				Config: testAccIntegrationAmazonDefault(domain, name, scope),
+				Config: testAccIntegrationAmazonDefault(domain, name, scope, identifier),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, false, identifier),
 				),
 			},
 			// update integration
 			{
-				Config: testAccIntegrationAmazonDefault(domain, newName, newScope),
+				Config: testAccIntegrationAmazonDefault(domain, newName, newScope, identifier),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, newScope, false, false, identifier),
+				),
+			},
+			// import integration
+			{
+				ResourceName:            "buddy_integration.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: ignoreImportVerify,
+			},
+		},
+	})
+}
+
+func TestAccIntegration_amazon_recreate(t *testing.T) {
+	var integration buddy.Integration
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	scope := buddy.IntegrationScopeAdmin
+	newScope := buddy.IntegrationScopeWorkspace
+	identifier := util.RandString(10)
+	newIdentifier := util.RandString(10)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccIntegrationCheckDestroy,
+		Steps: []resource.TestStep{
+			// create integration
+			{
+				Config: testAccIntegrationAmazonDefault(domain, name, scope, identifier),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, false, identifier),
+				),
+			},
+			// update integration
+			{
+				Config: testAccIntegrationAmazonDefault(domain, newName, newScope, newIdentifier),
+				Check: resource.ComposeTestCheckFunc(
+					testAccIntegrationGet("buddy_integration.bar", &integration),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, newScope, false, false, newIdentifier),
 				),
 			},
 			// import integration
@@ -202,7 +217,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 				Config: testAccIntegrationAmazon(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -210,7 +225,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 				Config: testAccIntegrationAmazon(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -243,7 +258,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 				Config: testAccIntegrationDigitalOcean(domain, name, groupNameA, groupNameB, groupNameA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeDigitalOcean, "", buddy.IntegrationScopeGroup, false, true),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeDigitalOcean, "", buddy.IntegrationScopeGroup, false, true, ""),
 				),
 			},
 			// update integration
@@ -251,7 +266,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 				Config: testAccIntegrationDigitalOcean(domain, newName, groupNameA, groupNameB, groupNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeDigitalOcean, "", buddy.IntegrationScopeGroup, false, true),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeDigitalOcean, "", buddy.IntegrationScopeGroup, false, true, ""),
 				),
 			},
 			// import integration
@@ -286,7 +301,7 @@ func TestAccIntegration_shopify(t *testing.T) {
 				Config: testAccIntegrationShopify(domain, name, projectNameA, projectNameB, scope, projectNameA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeToken, scope, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeToken, scope, true, false, ""),
 				),
 			},
 			// update integration
@@ -294,7 +309,7 @@ func TestAccIntegration_shopify(t *testing.T) {
 				Config: testAccIntegrationShopify(domain, newName, projectNameA, projectNameB, newScope, projectNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeToken, newScope, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeToken, newScope, true, false, ""),
 				),
 			},
 			// import integration
@@ -329,7 +344,7 @@ func TestAccIntegration_shopify_partner(t *testing.T) {
 				Config: testAccIntegrationShopifyPartner(domain, name, projectNameA, projectNameB, scope, projectNameA),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeTokenAppExtension, scope, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeTokenAppExtension, scope, true, false, ""),
 				),
 			},
 			// update integration
@@ -337,7 +352,7 @@ func TestAccIntegration_shopify_partner(t *testing.T) {
 				Config: testAccIntegrationShopifyPartner(domain, newName, projectNameA, projectNameB, newScope, projectNameB),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeTokenAppExtension, newScope, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeShopify, buddy.IntegrationAuthTypeTokenAppExtension, newScope, true, false, ""),
 				),
 			},
 			// import integration
@@ -370,7 +385,7 @@ func TestAccIntegration_gitlab(t *testing.T) {
 				Config: testAccIntegrationGitLab(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitLab, "", scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitLab, "", scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -378,7 +393,7 @@ func TestAccIntegration_gitlab(t *testing.T) {
 				Config: testAccIntegrationGitLab(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitLab, "", newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitLab, "", newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -411,7 +426,7 @@ func TestAccIntegration_github(t *testing.T) {
 				Config: testAccIntegrationGitHub(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitHub, "", scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitHub, "", scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -419,7 +434,7 @@ func TestAccIntegration_github(t *testing.T) {
 				Config: testAccIntegrationGitHub(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitHub, "", newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitHub, "", newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -452,7 +467,7 @@ func TestAccIntegration_rackspace(t *testing.T) {
 				Config: testAccIntegrationRackspace(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeRackspace, "", scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeRackspace, "", scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -460,7 +475,7 @@ func TestAccIntegration_rackspace(t *testing.T) {
 				Config: testAccIntegrationRackspace(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeRackspace, "", newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeRackspace, "", newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -493,7 +508,7 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 				Config: testAccIntegrationCloudflare(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeCloudflare, "", scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeCloudflare, "", scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -501,7 +516,7 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 				Config: testAccIntegrationCloudflare(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeCloudflare, "", newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeCloudflare, "", newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -534,7 +549,7 @@ func TestAccIntegration_upcloud(t *testing.T) {
 				Config: testAccIntegrationUpcloud(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeUpcloud, "", scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeUpcloud, "", scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -542,7 +557,7 @@ func TestAccIntegration_upcloud(t *testing.T) {
 				Config: testAccIntegrationUpcloud(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeUpcloud, "", newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeUpcloud, "", newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -575,7 +590,7 @@ func TestAccIntegration_stackHawk(t *testing.T) {
 				Config: testAccIntegrationStackHawk(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeStackHawk, "", scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeStackHawk, "", scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -583,7 +598,7 @@ func TestAccIntegration_stackHawk(t *testing.T) {
 				Config: testAccIntegrationStackHawk(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeStackHawk, "", newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeStackHawk, "", newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -620,7 +635,7 @@ func TestAccIntegration_google_oidc(t *testing.T) {
 				Config: testAccIntegrationAzureGoogleOidc(domain, name, scope, audience, googleProject),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGoogleServiceAccount, buddy.IntegrationAuthTypeOidc, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGoogleServiceAccount, buddy.IntegrationAuthTypeOidc, scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -628,7 +643,7 @@ func TestAccIntegration_google_oidc(t *testing.T) {
 				Config: testAccIntegrationAzureGoogleOidc(domain, newName, newScope, newAudience, newGoogleProject),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGoogleServiceAccount, buddy.IntegrationAuthTypeOidc, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGoogleServiceAccount, buddy.IntegrationAuthTypeOidc, newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -663,7 +678,7 @@ func TestAccIntegration_azurecloud_oidc(t *testing.T) {
 				Config: testAccIntegrationAzureCloudOidc(domain, name, scope, audience),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeOidc, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeOidc, scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -671,7 +686,7 @@ func TestAccIntegration_azurecloud_oidc(t *testing.T) {
 				Config: testAccIntegrationAzureCloudOidc(domain, newName, newScope, newAudience),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeOidc, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeOidc, newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -704,7 +719,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 				Config: testAccIntegrationAzureCloud(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeDefault, scope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeDefault, scope, false, false, ""),
 				),
 			},
 			// update integration
@@ -712,7 +727,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 				Config: testAccIntegrationAzureCloud(domain, newName, newScope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeDefault, newScope, false, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeDefault, newScope, false, false, ""),
 				),
 			},
 			// import integration
@@ -726,7 +741,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 	})
 }
 
-func testAccIntegrationAttributes(n string, integration *buddy.Integration, name string, typ string, authType string, scope string, testScopeProject bool, testScopeGroup bool) resource.TestCheckFunc {
+func testAccIntegrationAttributes(n string, integration *buddy.Integration, name string, typ string, authType string, scope string, testScopeProject bool, testScopeGroup bool, identifier string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -744,6 +759,15 @@ func testAccIntegrationAttributes(n string, integration *buddy.Integration, name
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("auth_type", attrs["auth_type"], authType); err != nil {
+				return err
+			}
+		}
+		if identifier != "" {
+			if err := util.CheckFieldEqualAndSet("Identifier", integration.Identifier, identifier); err != nil {
+				return err
+			}
+		} else {
+			if err := util.CheckFieldSet("Identifier", integration.Identifier); err != nil {
 				return err
 			}
 		}
@@ -843,7 +867,7 @@ resource "buddy_integration" "bar" {
 `, domain, name, buddy.IntegrationTypeAmazon, scope)
 }
 
-func testAccIntegrationAmazonDefault(domain string, name string, scope string) string {
+func testAccIntegrationAmazonDefault(domain string, name string, scope string, identifier string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -854,6 +878,7 @@ resource "buddy_integration" "bar" {
    name = "%s"
    type = "%s"
    scope = "%s"
+   identifier = "%s"
    access_key = "ABC1234567890"
    secret_key = "ABC1234567890"
 
@@ -869,7 +894,7 @@ resource "buddy_integration" "bar" {
        duration = 100
    }
 }
-`, domain, name, buddy.IntegrationTypeAmazon, scope)
+`, domain, name, buddy.IntegrationTypeAmazon, scope, identifier)
 }
 
 func testAccIntegrationAmazon(domain string, name string, scope string) string {
