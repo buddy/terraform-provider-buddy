@@ -29,6 +29,19 @@ resource "buddy_integration" "aws_trusted" {
     arn         = "arn1"
     external_id = "123"
   }
+
+  permissions {
+    others = "DENIED"
+    admins = "MANAGE"
+    user {
+      id           = 1
+      access_level = "USE_ONLY"
+    }
+    group {
+      id           = 2
+      access_level = "MANAGE"
+    }
+  }
 }
 
 resource "buddy_integration" "aws_oidc" {
@@ -42,6 +55,9 @@ resource "buddy_integration" "aws_oidc" {
   role_assumption {
     arn = "arn1"
   }
+
+  all_pipelines_allowed = false
+  allowed_pipelines     = [1, 2, 3]
 }
 
 resource "buddy_integration" "do_private" {

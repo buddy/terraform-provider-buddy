@@ -14,7 +14,7 @@ func TestAccSourceIntegration(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	typ := buddy.IntegrationTypeAmazon
-	scope := buddy.IntegrationScopeAdmin
+	scope := buddy.IntegrationScopeWorkspace
 	identifier := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {

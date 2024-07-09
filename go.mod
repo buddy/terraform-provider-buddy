@@ -4,7 +4,7 @@ go 1.21
 
 require (
 	github.com/bflad/tfproviderlint v0.29.0
-	github.com/buddy/api-go-sdk v1.17.0
+	github.com/buddy/api-go-sdk v1.18.0
 	github.com/golangci/golangci-lint v1.57.2
 	github.com/hashicorp/terraform-plugin-docs v0.18.0
 	github.com/hashicorp/terraform-plugin-framework v1.7.0
