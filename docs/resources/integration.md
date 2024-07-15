@@ -16,6 +16,7 @@ Token scopes required: `INTEGRATION_ADD`, `INTEGRATION_MANAGE`, `INTEGRATION_INF
 ## Example Usage
 
 ```terraform
+# todo change integration examples
 resource "buddy_integration" "aws" {
   domain     = "mydomain"
   name       = "ec2 access"
@@ -47,6 +48,19 @@ resource "buddy_integration" "aws_trusted" {
     arn         = "arn1"
     external_id = "123"
   }
+
+  permissions {
+    others = "DENIED"
+    admins = "MANAGE"
+    user {
+      id = 1
+      access_level = "USE_ONLY"
+    }
+    group {
+      id = 2
+      access_level = "MANAGE"
+    }
+  }
 }
 
 resource "buddy_integration" "aws_oidc" {
@@ -60,6 +74,9 @@ resource "buddy_integration" "aws_oidc" {
   role_assumption {
     arn = "arn1"
   }
+
+  all_pipelines_allowed = false
+  allowed_pipelines = [1, 2, 3]
 }
 
 resource "buddy_integration" "do_private" {
@@ -285,26 +302,16 @@ resource "buddy_integration" "google_service_account_oidc" {
 - `name` (String) The integration's name
 - `scope` (String) The integration's scope. Allowed:
 
-`PRIVATE` - only creator of the integration can use it
-
 `WORKSPACE` - all workspace members can use the integration
 
-`ADMIN` - only workspace administrators can use the integration
-
-`GROUP` - only group members can use the integration
-
 `PROJECT` - only project members can use the integration
-
-`PRIVATE_IN_PROJECT` - only creator of the integration in specified project can use it
-
-`ADMIN_IN_PROJECT` - only workspace administrators in specified project can use the integration
-
-`GROUP_IN_PROJECT` - only group members in specified project can use the integration
 - `type` (String) The integration's type. Allowed: `DIGITAL_OCEAN`, `AMAZON`, `SHOPIFY`, `PUSHOVER`, `RACKSPACE`, `CLOUDFLARE`, `NEW_RELIC`, `SENTRY`, `ROLLBAR`, `DATADOG`, `DO_SPACES`, `HONEYBADGER`, `VULTR`, `SENTRY_ENTERPRISE`, `LOGGLY`, `FIREBASE`, `UPCLOUD`, `GHOST_INSPECTOR`, `AZURE_CLOUD`, `DOCKER_HUB`, `GOOGLE_SERVICE_ACCOUNT`, `GIT_HUB`, `GIT_LAB`, `STACK_HAWK`
 
 ### Optional
 
 - `access_key` (String, Sensitive) The integration's access key. Provide for: `DO_SPACES`, `AMAZON`, `PUSHOVER`
+- `all_pipelines_allowed` (Boolean) Defines whether or not integration can be used in all pipelines
+- `allowed_pipelines` (Set of Number) List of pipeline IDs that is allowed to use the integration
 - `api_key` (String, Sensitive) The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`, `STACK_HAWK`
 - `app_id` (String) The integration's application's ID. Provide for: `AZURE_CLOUD`
 - `audience` (String) The integration's audience. Provide for OIDC with: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`
@@ -312,11 +319,11 @@ resource "buddy_integration" "google_service_account_oidc" {
 - `email` (String, Sensitive) The integration's email. Provide for: `CLOUDFLARE`
 - `google_config` (String) The integration's google config. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `google_project` (String) The integration's google project. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
-- `group_id` (Number) The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`
 - `identifier` (String) The integration's identifier
 - `partner_token` (String, Sensitive) The integration's partner token. Provide for: `SHOPIFY`
 - `password` (String, Sensitive) The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`
-- `project_name` (String) The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`, `PRIVATE_IN_PROJECT`
+- `permissions` (Block Set) The integration's permissions (see [below for nested schema](#nestedblock--permissions))
+- `project_name` (String) The project's name. Provide along with scopes: `PROJECT`
 - `role_assumption` (Block List) The integration's AWS role to assume. Provide for: `AMAZON` (see [below for nested schema](#nestedblock--role_assumption))
 - `secret_key` (String, Sensitive) The integration's secret key. Provide for: `DO_SPACES`, `AMAZON`
 - `shop` (String) The integration's shop. Provide for: `SHOPIFY`
@@ -329,6 +336,41 @@ resource "buddy_integration" "google_service_account_oidc" {
 - `html_url` (String) The integration's URL
 - `id` (String) The Terraform resource identifier for this item
 - `integration_id` (String) The integration's ID
+
+<a id="nestedblock--permissions"></a>
+### Nested Schema for `permissions`
+
+Optional:
+
+- `admins` (String)
+- `group` (Block Set) (see [below for nested schema](#nestedblock--permissions--group))
+- `others` (String)
+- `user` (Block Set) (see [below for nested schema](#nestedblock--permissions--user))
+
+<a id="nestedblock--permissions--group"></a>
+### Nested Schema for `permissions.group`
+
+Required:
+
+- `access_level` (String)
+
+Read-Only:
+
+- `id` (Number) The ID of this resource.
+
+
+<a id="nestedblock--permissions--user"></a>
+### Nested Schema for `permissions.user`
+
+Required:
+
+- `access_level` (String)
+
+Read-Only:
+
+- `id` (Number) The ID of this resource.
+
+
 
 <a id="nestedblock--role_assumption"></a>
 ### Nested Schema for `role_assumption`

@@ -4,6 +4,7 @@ import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -29,32 +30,34 @@ type integrationResource struct {
 }
 
 type integrationResourceModel struct {
-	ID              types.String `tfsdk:"id"`
-	Domain          types.String `tfsdk:"domain"`
-	Name            types.String `tfsdk:"name"`
-	Type            types.String `tfsdk:"type"`
-	Scope           types.String `tfsdk:"scope"`
-	ProjectName     types.String `tfsdk:"project_name"`
-	GroupId         types.Int64  `tfsdk:"group_id"`
-	Username        types.String `tfsdk:"username"`
-	Shop            types.String `tfsdk:"shop"`
-	Token           types.String `tfsdk:"token"`
-	Identifier      types.String `tfsdk:"identifier"`
-	PartnerToken    types.String `tfsdk:"partner_token"`
-	AccessKey       types.String `tfsdk:"access_key"`
-	SecretKey       types.String `tfsdk:"secret_key"`
-	Audience        types.String `tfsdk:"audience"`
-	AuthType        types.String `tfsdk:"auth_type"`
-	AppId           types.String `tfsdk:"app_id"`
-	TenantId        types.String `tfsdk:"tenant_id"`
-	Password        types.String `tfsdk:"password"`
-	ApiKey          types.String `tfsdk:"api_key"`
-	Email           types.String `tfsdk:"email"`
-	RoleAssumptions types.List   `tfsdk:"role_assumption"`
-	GoogleConfig    types.String `tfsdk:"google_config"`
-	GoogleProject   types.String `tfsdk:"google_project"`
-	IntegrationId   types.String `tfsdk:"integration_id"`
-	HtmlUrl         types.String `tfsdk:"html_url"`
+	ID                  types.String `tfsdk:"id"`
+	Domain              types.String `tfsdk:"domain"`
+	Name                types.String `tfsdk:"name"`
+	Type                types.String `tfsdk:"type"`
+	Scope               types.String `tfsdk:"scope"`
+	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
+	AllowedPipelines    types.Set    `tfsdk:"allowed_pipelines"`
+	ProjectName         types.String `tfsdk:"project_name"`
+	Username            types.String `tfsdk:"username"`
+	Shop                types.String `tfsdk:"shop"`
+	Token               types.String `tfsdk:"token"`
+	Identifier          types.String `tfsdk:"identifier"`
+	PartnerToken        types.String `tfsdk:"partner_token"`
+	AccessKey           types.String `tfsdk:"access_key"`
+	SecretKey           types.String `tfsdk:"secret_key"`
+	Audience            types.String `tfsdk:"audience"`
+	AuthType            types.String `tfsdk:"auth_type"`
+	AppId               types.String `tfsdk:"app_id"`
+	TenantId            types.String `tfsdk:"tenant_id"`
+	Password            types.String `tfsdk:"password"`
+	ApiKey              types.String `tfsdk:"api_key"`
+	Email               types.String `tfsdk:"email"`
+	Permissions         types.Set    `tfsdk:"permissions"`
+	RoleAssumptions     types.List   `tfsdk:"role_assumption"`
+	GoogleConfig        types.String `tfsdk:"google_config"`
+	GoogleProject       types.String `tfsdk:"google_project"`
+	IntegrationId       types.String `tfsdk:"integration_id"`
+	HtmlUrl             types.String `tfsdk:"html_url"`
 }
 
 func (r *integrationResourceModel) decomposeId() (string, string, error) {
@@ -65,19 +68,32 @@ func (r *integrationResourceModel) decomposeId() (string, string, error) {
 	return domain, iid, nil
 }
 
-func (r *integrationResourceModel) loadAPI(domain string, integration *buddy.Integration) {
+func (r *integrationResourceModel) loadAPI(ctx context.Context, domain string, integration *buddy.Integration) diag.Diagnostics {
+	var diags diag.Diagnostics
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, integration.HashId))
 	r.Domain = types.StringValue(domain)
 	r.Name = types.StringValue(integration.Name)
 	r.Type = types.StringValue(integration.Type)
 	r.AuthType = types.StringValue(integration.AuthType)
 	r.Scope = types.StringValue(integration.Scope)
-	r.ProjectName = types.StringValue(integration.ProjectName)
-	r.GroupId = types.Int64Value(int64(integration.GroupId))
+	r.AllPipelinesAllowed = types.BoolValue(integration.AllPipelinesAllowed)
+	ids := make([]int64, len(integration.AllowedPipelines))
+	for i, v := range integration.AllowedPipelines {
+		ids[i] = int64(v.Id)
+	}
+	allowedPipelines, d := types.SetValueFrom(ctx, types.Int64Type, &ids)
+	diags.Append(d...)
+	r.AllowedPipelines = allowedPipelines
+	if integration.Scope == buddy.IntegrationScopeProject {
+		r.ProjectName = types.StringValue(integration.ProjectName)
+	} else {
+		r.ProjectName = types.StringNull()
+	}
 	r.HtmlUrl = types.StringValue(integration.HtmlUrl)
 	r.IntegrationId = types.StringValue(integration.HashId)
 	r.Identifier = types.StringValue(integration.Identifier)
 	// rest of the attributes are not returned by api
+	return diags
 }
 
 func (r *integrationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -110,7 +126,7 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Computed:            true,
 				Validators:          util.StringValidatorIdentifier(),
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.RequiresReplaceIfConfigured(),
 				},
 			},
 			"name": schema.StringAttribute{
@@ -153,37 +169,37 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 					buddy.IntegrationTypeStackHawk,
 				)},
 			},
+			"all_pipelines_allowed": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not integration can be used in all pipelines",
+				Optional:            true,
+				Computed:            true,
+			},
+			"allowed_pipelines": schema.SetAttribute{
+				ElementType:         types.Int64Type,
+				MarkdownDescription: "List of pipeline IDs that is allowed to use the integration",
+				Optional:            true,
+				Computed:            true,
+			},
 			"scope": schema.StringAttribute{
 				MarkdownDescription: "The integration's scope. Allowed:\n\n" +
-					"`PRIVATE` - only creator of the integration can use it\n\n" +
 					"`WORKSPACE` - all workspace members can use the integration\n\n" +
-					"`ADMIN` - only workspace administrators can use the integration\n\n" +
-					"`GROUP` - only group members can use the integration\n\n" +
-					"`PROJECT` - only project members can use the integration\n\n" +
-					"`PRIVATE_IN_PROJECT` - only creator of the integration in specified project can use it\n\n" +
-					"`ADMIN_IN_PROJECT` - only workspace administrators in specified project can use the integration\n\n" +
-					"`GROUP_IN_PROJECT` - only group members in specified project can use the integration",
+					"`PROJECT` - only project members can use the integration",
 				Required: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
 				Validators: []validator.String{stringvalidator.OneOf(
-					buddy.IntegrationScopePrivate,
 					buddy.IntegrationScopeWorkspace,
-					buddy.IntegrationScopeAdmin,
-					buddy.IntegrationScopeGroup,
 					buddy.IntegrationScopeProject,
-					buddy.IntegrationScopePrivateInProject,
-					buddy.IntegrationScopeAdminInProject,
-					buddy.IntegrationScopeGroupInProject,
 				)},
 			},
 			"project_name": schema.StringAttribute{
-				MarkdownDescription: "The project's name. Provide along with scopes: `PROJECT`, `ADMIN_IN_PROJECT`, `GROUP_IN_PROJECT`, `PRIVATE_IN_PROJECT`",
-				Optional:            true,
-				Computed:            true,
-			},
-			"group_id": schema.Int64Attribute{
-				MarkdownDescription: "The group's ID. Provide along with scopes: `GROUP`, `GROUP_IN_PROJECT`",
-				Optional:            true,
-				Computed:            true,
+				MarkdownDescription: "The project's name. Provide along with scopes: `PROJECT`",
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplaceIfConfigured(),
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"username": schema.StringAttribute{
 				MarkdownDescription: "The integration's username. Provide for: `UPCLOUD`, `RACKSPACE`, `DOCKER_HUB`",
@@ -270,6 +286,45 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 		},
 		Blocks: map[string]schema.Block{
+			"permissions": schema.SetNestedBlock{
+				MarkdownDescription: "The integration's permissions",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"admins": schema.StringAttribute{
+							Optional: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									buddy.IntegrationPermissionManage,
+									buddy.IntegrationPermissionUseOnly,
+									buddy.IntegrationPermissionDenied,
+								),
+							},
+						},
+						"others": schema.StringAttribute{
+							Optional: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									buddy.IntegrationPermissionManage,
+									buddy.IntegrationPermissionUseOnly,
+									buddy.IntegrationPermissionDenied,
+								),
+							},
+						},
+					},
+					Blocks: map[string]schema.Block{
+						"user": schema.SetNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Attributes: util.IntegrationPermissionsAccessModelAttributes(),
+							},
+						},
+						"group": schema.SetNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Attributes: util.IntegrationPermissionsAccessModelAttributes(),
+							},
+						},
+					},
+				},
+			},
 			"role_assumption": schema.ListNestedBlock{
 				MarkdownDescription: "The integration's AWS role to assume. Provide for: `AMAZON`",
 				NestedObject: schema.NestedBlockObject{
@@ -312,14 +367,36 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 		Type:  data.Type.ValueStringPointer(),
 		Scope: data.Scope.ValueStringPointer(),
 	}
+	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
+		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
+	}
+	if !data.AllowedPipelines.IsNull() && !data.AllowedPipelines.IsUnknown() {
+		ids, d := util.Int64SetToApi(ctx, &data.AllowedPipelines)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		allowedPipelines := make([]*buddy.AllowedPipeline, len(*ids))
+		for i, v := range *ids {
+			allowedPipelines[i] = &buddy.AllowedPipeline{
+				Id: v,
+			}
+		}
+		ops.AllowedPipelines = &allowedPipelines
+	}
 	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
 	}
+	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
+		permissions, d := util.IntegrationPermissionsModelToApi(ctx, &data.Permissions)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Permissions = permissions
+	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.ProjectName = data.ProjectName.ValueStringPointer()
-	}
-	if !data.GroupId.IsNull() && !data.GroupId.IsUnknown() {
-		ops.GroupId = util.PointerInt(data.GroupId.ValueInt64())
 	}
 	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		ops.Username = data.Username.ValueStringPointer()
@@ -384,7 +461,10 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create integration", err))
 		return
 	}
-	data.loadAPI(domain, integration)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, integration)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -408,7 +488,10 @@ func (r *integrationResource) Read(ctx context.Context, req resource.ReadRequest
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get integration", err))
 		return
 	}
-	data.loadAPI(domain, integration)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, integration)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -428,11 +511,33 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 		Type:  data.Type.ValueStringPointer(),
 		Scope: data.Scope.ValueStringPointer(),
 	}
+	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
+		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
+	}
+	if !data.AllowedPipelines.IsNull() && !data.AllowedPipelines.IsUnknown() {
+		ids, d := util.Int64SetToApi(ctx, &data.AllowedPipelines)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		allowedPipelines := make([]*buddy.AllowedPipeline, len(*ids))
+		for i, v := range *ids {
+			allowedPipelines[i] = &buddy.AllowedPipeline{
+				Id: v,
+			}
+		}
+		ops.AllowedPipelines = &allowedPipelines
+	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.ProjectName = data.ProjectName.ValueStringPointer()
 	}
-	if !data.GroupId.IsNull() && !data.GroupId.IsUnknown() {
-		ops.GroupId = util.PointerInt(data.GroupId.ValueInt64())
+	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
+		permissions, d := util.IntegrationPermissionsModelToApi(ctx, &data.Permissions)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Permissions = permissions
 	}
 	if !data.Username.IsNull() && !data.Username.IsUnknown() {
 		ops.Username = data.Username.ValueStringPointer()
@@ -497,7 +602,10 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("update integration", err))
 		return
 	}
-	data.loadAPI(domain, integration)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, integration)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

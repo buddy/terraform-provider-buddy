@@ -100,5 +100,5 @@ data "buddy_integrations" "type" {
    type = "AMAZON"
    depends_on = [buddy_integration.a, buddy_integration.b]
 }
-`, util.UniqueString(), buddy.IntegrationTypeAmazon, buddy.IntegrationScopeAdmin, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeWorkspace)
+`, util.UniqueString(), buddy.IntegrationTypeAmazon, buddy.IntegrationScopeWorkspace, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeWorkspace)
 }
