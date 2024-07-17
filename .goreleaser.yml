@@ -1,4 +1,5 @@
 project_name: terraform-provider-buddy
+version: 2
 builds:
   - env:
       - CGO_ENABLED=0
@@ -47,5 +48,3 @@ release:
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'
-changelog:
-  skip: true

@@ -1,3 +1,6 @@
+# Release v1.20.1 (2024-07-09)
+* goreleaser fix
+
 # Release v1.20.0 (2024-07-09)
 * Changes in resource integration
 * [BREAKING] Removes scopes other than `WORKSPACE`, `PROJECT`
