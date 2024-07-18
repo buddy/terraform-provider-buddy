@@ -28,6 +28,7 @@ type testAccPipelineExpectedAttributes struct {
 	CloneDepth                int
 	Cron                      string
 	Paused                    bool
+	PauseOnRepeatedFailures   int
 	Priority                  string
 	IgnoreFailOnProjectStatus bool
 	ExecutionMessageTemplate  string
@@ -400,8 +401,10 @@ func TestAccPipeline_schedule(t *testing.T) {
 	newStartDate := time.Now().UTC().Add(5 * time.Hour).Format(time.RFC3339)
 	priority := buddy.PipelinePriorityLow
 	newPriority := buddy.PipelinePriorityHigh
+	pausedFailures := 78
 	delay := 5
 	newDelay := 7
+	newPausedFailures := 1
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -411,7 +414,7 @@ func TestAccPipeline_schedule(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigSchedule(domain, projectName, name, startDate, delay, true, priority),
+				Config: testAccPipelineConfigSchedule(domain, projectName, name, startDate, delay, true, priority, pausedFailures),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -427,12 +430,13 @@ func TestAccPipeline_schedule(t *testing.T) {
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  true,
+						PauseOnRepeatedFailures: pausedFailures,
 					}),
 				),
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigSchedule(domain, projectName, newName, newStartDate, newDelay, false, newPriority),
+				Config: testAccPipelineConfigSchedule(domain, projectName, newName, newStartDate, newDelay, false, newPriority, newPausedFailures),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -448,6 +452,7 @@ func TestAccPipeline_schedule(t *testing.T) {
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
+						PauseOnRepeatedFailures: newPausedFailures,
 					}),
 				),
 			},
@@ -496,6 +501,7 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  true,
+						PauseOnRepeatedFailures: 100,
 					}),
 				),
 			},
@@ -516,6 +522,7 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
+						PauseOnRepeatedFailures: 100,
 					}),
 				),
 			},
@@ -752,7 +759,7 @@ resource "buddy_project" "remote_proj2" {
 `, domain, projectName, remoteProjectName, remoteProjectName2)
 }
 
-func testAccPipelineConfigSchedule(domain string, projectName string, name string, startDate string, delay int, paused bool, priority string) string {
+func testAccPipelineConfigSchedule(domain string, projectName string, name string, startDate string, delay int, paused bool, priority string, pausedFailures int) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -772,10 +779,11 @@ resource "buddy_pipeline" "bar" {
 	delay = %d
 	paused = %t
 	priority = "%s"
+  pause_on_repeated_failures = %d
 	fail_on_prepare_env_warning = true
 	fetch_all_refs = true
 }
-`, domain, projectName, name, startDate, delay, paused, priority)
+`, domain, projectName, name, startDate, delay, paused, priority, pausedFailures)
 }
 
 func TestAccPipeline_event(t *testing.T) {
@@ -1261,6 +1269,7 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		attrsDoNotCreateCommitStatus, _ := strconv.ParseBool(attrs["do_not_create_commit_status"])
 		attrsIgnoreFailOnProjectStatus, _ := strconv.ParseBool(attrs["ignore_fail_on_project_status"])
 		attrsDelay, _ := strconv.Atoi(attrs["delay"])
+		attrsPausedFailures, _ := strconv.Atoi(attrs["pause_on_repeated_failures"])
 		attrsCloneDepth, _ := strconv.Atoi(attrs["clone_depth"])
 		attrsPaused, _ := strconv.ParseBool(attrs["paused"])
 		attrsCreatorMemberId, _ := strconv.Atoi(attrs["creator.0.member_id"])
@@ -1344,6 +1353,14 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				return err
 			}
 			if err := util.CheckIntFieldEqualAndSet("Delay", pipeline.Delay, want.Delay); err != nil {
+				return err
+			}
+		}
+		if want.PauseOnRepeatedFailures != 0 {
+			if err := util.CheckIntFieldEqualAndSet("pause_on_repeated_failures", attrsPausedFailures, want.PauseOnRepeatedFailures); err != nil {
+				return err
+			}
+			if err := util.CheckIntFieldEqualAndSet("PauseOnRepeatedFailures", pipeline.PauseOnRepeatedFailures, want.PauseOnRepeatedFailures); err != nil {
 				return err
 			}
 		}
