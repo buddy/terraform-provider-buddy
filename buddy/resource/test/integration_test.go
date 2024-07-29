@@ -970,6 +970,7 @@ resource "buddy_integration" "bar" {
    name = "%s"
    type = "%s"
    scope = "%s"
+	 auth_type = "TRUSTED"
 
    role_assumption {
        arn = "arn1"
