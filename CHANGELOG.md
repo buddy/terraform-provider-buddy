@@ -1,3 +1,6 @@
+# Release v1.21.0 (2024-07-18)
+* Adds `pause_on_repeated_failures` to pipeline
+
 # Release v1.20.1 (2024-07-09)
 * goreleaser fix
 

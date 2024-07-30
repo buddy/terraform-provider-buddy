@@ -62,6 +62,7 @@ type pipelineResourceModel struct {
 	CloneDepth                types.Int64  `tfsdk:"clone_depth"`
 	Cron                      types.String `tfsdk:"cron"`
 	Paused                    types.Bool   `tfsdk:"paused"`
+	PauseOnRepeatedFailures   types.Int64  `tfsdk:"pause_on_repeated_failures"`
 	IgnoreFailOnProjectStatus types.Bool   `tfsdk:"ignore_fail_on_project_status"`
 	ExecutionMessageTemplate  types.String `tfsdk:"execution_message_template"`
 	Worker                    types.String `tfsdk:"worker"`
@@ -120,6 +121,7 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.StartDate = types.StringValue(pipeline.StartDate)
 	r.Delay = types.Int64Value(int64(pipeline.Delay))
 	r.Paused = types.BoolValue(pipeline.Paused)
+	r.PauseOnRepeatedFailures = types.Int64Value(int64(pipeline.PauseOnRepeatedFailures))
 	r.Cron = types.StringValue(pipeline.Cron)
 	r.Disabled = types.BoolValue(pipeline.Disabled)
 	r.DisablingReason = types.StringValue(pipeline.DisabledReason)
@@ -343,6 +345,15 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				MarkdownDescription: "Is the pipeline's run paused. Restricted to `on: SCHEDULE`",
 				Optional:            true,
 				Computed:            true,
+			},
+			"pause_on_repeated_failures": schema.Int64Attribute{
+				MarkdownDescription: "The pipeine's max failed executions before it is paused. Restricted to `on: SCHEDULE`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.Int64{
+					int64validator.AtMost(100),
+					int64validator.AtLeast(1),
+				},
 			},
 			"ignore_fail_on_project_status": schema.BoolAttribute{
 				MarkdownDescription: "If set to true the status of a given pipeline will be ignored on the projects' dashboard",
@@ -624,6 +635,9 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.Paused.IsNull() && !data.Paused.IsUnknown() {
 		ops.Paused = data.Paused.ValueBoolPointer()
 	}
+	if !data.PauseOnRepeatedFailures.IsNull() && !data.PauseOnRepeatedFailures.IsUnknown() {
+		ops.PauseOnRepeatedFailures = util.PointerInt(data.PauseOnRepeatedFailures.ValueInt64())
+	}
 	if !data.IgnoreFailOnProjectStatus.IsNull() && !data.IgnoreFailOnProjectStatus.IsUnknown() {
 		ops.IgnoreFailOnProjectStatus = data.IgnoreFailOnProjectStatus.ValueBoolPointer()
 	}
@@ -804,6 +818,9 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	if !data.Delay.IsNull() && !data.Delay.IsUnknown() {
 		ops.Delay = util.PointerInt(data.Delay.ValueInt64())
+	}
+	if !data.PauseOnRepeatedFailures.IsNull() && !data.PauseOnRepeatedFailures.IsUnknown() {
+		ops.PauseOnRepeatedFailures = util.PointerInt(data.PauseOnRepeatedFailures.ValueInt64())
 	}
 	if !data.CloneDepth.IsNull() && !data.CloneDepth.IsUnknown() {
 		ops.CloneDepth = util.PointerInt(data.CloneDepth.ValueInt64())
