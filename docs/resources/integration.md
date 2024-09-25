@@ -16,7 +16,6 @@ Token scopes required: `INTEGRATION_ADD`, `INTEGRATION_MANAGE`, `INTEGRATION_INF
 ## Example Usage
 
 ```terraform
-# todo change integration examples
 resource "buddy_integration" "aws" {
   domain     = "mydomain"
   name       = "ec2 access"
@@ -53,11 +52,11 @@ resource "buddy_integration" "aws_trusted" {
     others = "DENIED"
     admins = "MANAGE"
     user {
-      id = 1
+      id           = 1
       access_level = "USE_ONLY"
     }
     group {
-      id = 2
+      id           = 2
       access_level = "MANAGE"
     }
   }
@@ -76,7 +75,7 @@ resource "buddy_integration" "aws_oidc" {
   }
 
   all_pipelines_allowed = false
-  allowed_pipelines = [1, 2, 3]
+  allowed_pipelines     = [1, 2, 3]
 }
 
 resource "buddy_integration" "do_private" {

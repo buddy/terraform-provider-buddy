@@ -17,6 +17,8 @@ func TestAccSourcePipeline(t *testing.T) {
 	name := util.RandString(10)
 	ref := util.RandString(10)
 	reason := util.RandString(10)
+	prBranch := util.RandString(10)
+	prEvent := buddy.PipelinePullRequestEventClosed
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -28,12 +30,12 @@ func TestAccSourcePipeline(t *testing.T) {
 			{
 				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
 						Branch:  "main",
 						Path:    "def.yml",
 					}),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
 						Branch:  "main",
 						Path:    "def.yml",
@@ -44,16 +46,24 @@ func TestAccSourcePipeline(t *testing.T) {
 			{
 				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, buddy.PipelinePriorityHigh, reason),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, true, reason, buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", buddy.PipelinePriorityHigh, true, reason, buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, true, reason, buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, true, reason, buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 			// event
 			{
 				Config: testAccSourcePipelineConfigEvent(domain, projectName, name, ref, buddy.PipelinePriorityLow),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, "", ref, buddy.PipelinePriorityLow, false, "", buddy.PipelineGitConfigRefDynamic, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, "", ref, buddy.PipelinePriorityLow, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, "", ref, "", "", buddy.PipelinePriorityLow, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, "", ref, "", "", buddy.PipelinePriorityLow, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+				),
+			},
+			// pr event
+			{
+				Config: testAccSourcePipelineConfigPullRequest(domain, projectName, name, prBranch, prEvent),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, "", "", prBranch, prEvent, buddy.PipelinePriorityLow, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, "", "", prBranch, prEvent, buddy.PipelinePriorityLow, false, "", buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 		},
@@ -93,7 +103,7 @@ func testAccPipelineGitConfig(attrs map[string]string, gitConfigRef string, gitC
 	return nil
 }
 
-func testAccSourcePipelineAttributes(n string, name string, on string, ref string, eventRef string, priority string, disabled bool, disabledReason string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) resource.TestCheckFunc {
+func testAccSourcePipelineAttributes(n string, name string, on string, ref string, eventRef string, prBranch string, prEvent string, priority string, disabled bool, disabledReason string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -129,6 +139,20 @@ func testAccSourcePipelineAttributes(n string, name string, on string, ref strin
 			if err := util.CheckFieldEqualAndSet("event.0.refs.0", attrs["event.0.refs.0"], eventRef); err != nil {
 				return err
 			}
+			if err := util.CheckFieldEqualAndSet("event.0.type", attrs["event.0.type"], buddy.PipelineEventTypePush); err != nil {
+				return err
+			}
+		}
+		if prBranch != "" && prEvent != "" {
+			if err := util.CheckFieldEqualAndSet("event.0.branches.0", attrs["event.0.branches.0"], prBranch); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("event.0.events.0", attrs["event.0.events.0"], prEvent); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("event.0.type", attrs["event.0.type"], buddy.PipelineEventTypePullRequest); err != nil {
+				return err
+			}
 		}
 		if disabled {
 			if err := util.CheckBoolFieldEqual("disabled", attrsDisabled, disabled); err != nil {
@@ -143,6 +167,43 @@ func testAccSourcePipelineAttributes(n string, name string, on string, ref strin
 		}
 		return nil
 	}
+}
+
+func testAccSourcePipelineConfigPullRequest(domain string, projectName string, name string, branch string, event string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   on = "EVENT"
+   event {
+       type = "PULL_REQUEST"
+       branches = ["%s"]
+			 events = ["%s"]
+   }
+}
+
+data "buddy_pipeline" "name" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "${buddy_pipeline.bar.name}"
+}
+
+data "buddy_pipeline" "id" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
+}
+`, domain, projectName, name, branch, event)
 }
 
 func testAccSourcePipelineConfigEvent(domain string, projectName string, name string, ref string, priority string) string {

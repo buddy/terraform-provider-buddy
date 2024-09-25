@@ -201,6 +201,7 @@ resource "buddy_pipeline" "conditions" {
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `on` (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
+- `pause_on_repeated_failures` (Number) The pipeine's max failed executions before it is paused. Restricted to `on: SCHEDULE`
 - `paused` (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
 - `permissions` (Block Set) The pipeline's permissions (see [below for nested schema](#nestedblock--permissions))
 - `priority` (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
@@ -231,8 +232,13 @@ resource "buddy_pipeline" "conditions" {
 
 Required:
 
-- `refs` (Set of String)
 - `type` (String)
+
+Optional:
+
+- `branches` (Set of String)
+- `events` (Set of String)
+- `refs` (Set of String)
 
 
 <a id="nestedatt--git_config"></a>

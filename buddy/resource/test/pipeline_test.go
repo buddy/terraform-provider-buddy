@@ -786,6 +786,83 @@ resource "buddy_pipeline" "bar" {
 `, domain, projectName, name, startDate, delay, paused, priority, pausedFailures)
 }
 
+func TestAccPipeline_event_pull_request(t *testing.T) {
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	branch := util.RandString(10)
+	newBranch := util.RandString(10)
+	prEvent := buddy.PipelinePullRequestEventClosed
+	newPrEvent := buddy.PipelinePullRequestEventEdited
+	eventType := buddy.PipelineEventTypePullRequest
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
+		Steps: []resource.TestStep{
+			// create pipeline
+			{
+				Config: testAccPipelineConfigEventPullRequest(domain, projectName, name, eventType, branch, prEvent),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    name,
+						On:                      buddy.PipelineOnEvent,
+						Project:                 &project,
+						Creator:                 &profile,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
+							Type:     eventType,
+							Branches: []string{branch},
+							Events:   []string{prEvent},
+						},
+					}),
+				),
+			},
+			// update pipeline
+			{
+				Config: testAccPipelineConfigEventPullRequest(domain, projectName, newName, eventType, newBranch, newPrEvent),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    newName,
+						On:                      buddy.PipelineOnEvent,
+						Project:                 &project,
+						Creator:                 &profile,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
+							Type:     eventType,
+							Branches: []string{newBranch},
+							Events:   []string{newPrEvent},
+						},
+					}),
+				),
+			},
+			// import
+			{
+				ResourceName:            "buddy_pipeline.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"event"},
+			},
+		},
+	})
+}
+
 func TestAccPipeline_event(t *testing.T) {
 	var pipeline buddy.Pipeline
 	var project buddy.Project
@@ -1538,11 +1615,26 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 			if err := util.CheckFieldEqualAndSet("event.0.type", attrs["event.0.type"], want.Event.Type); err != nil {
 				return err
 			}
-			if err := util.CheckFieldEqualAndSet("Events[0].Refs[0]", pipeline.Events[0].Refs[0], want.Event.Refs[0]); err != nil {
-				return err
-			}
-			if err := util.CheckFieldEqualAndSet("event.0.refs.0", attrs["event.0.refs.0"], want.Event.Refs[0]); err != nil {
-				return err
+			if want.Event.Type == buddy.PipelineEventTypePullRequest {
+				if err := util.CheckFieldEqualAndSet("Events[0].Branches[0]", pipeline.Events[0].Branches[0], want.Event.Branches[0]); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("event.0.branches.0", attrs["event.0.branches.0"], want.Event.Branches[0]); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("Events[0].Events[0]", pipeline.Events[0].Events[0], want.Event.Events[0]); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("event.0.events.0", attrs["event.0.events.0"], want.Event.Events[0]); err != nil {
+					return err
+				}
+			} else {
+				if err := util.CheckFieldEqualAndSet("Events[0].Refs[0]", pipeline.Events[0].Refs[0], want.Event.Refs[0]); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("event.0.refs.0", attrs["event.0.refs.0"], want.Event.Refs[0]); err != nil {
+					return err
+				}
 			}
 		}
 		if len(want.TriggerConditions) > 0 {
@@ -1662,6 +1754,31 @@ func testAccPipelineGet(n string, pipeline *buddy.Pipeline) resource.TestCheckFu
 		*pipeline = *p
 		return nil
 	}
+}
+
+func testAccPipelineConfigEventPullRequest(domain string, projectName string, name string, eventType string, branch string, prEvent string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "EVENT" 
+    event {
+        type = "%s"
+        branches = ["%s"]
+				events = ["%s"]
+    }
+}
+`, domain, projectName, name, eventType, branch, prEvent)
 }
 
 func testAccPipelineConfigEvent(domain string, projectName string, name string, eventType string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string, user string, group string) string {

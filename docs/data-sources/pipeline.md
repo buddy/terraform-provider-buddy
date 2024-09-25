@@ -68,6 +68,8 @@ data "buddy_pipeline" "by_id" {
 
 Read-Only:
 
+- `branches` (Set of String)
+- `events` (Set of String)
 - `refs` (Set of String)
 - `type` (String)
 
