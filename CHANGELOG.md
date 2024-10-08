@@ -1,3 +1,6 @@
+# Release v1.22.0 (2024-09-25)
+* Adds new events to pipeline
+
 # Release v1.21.0 (2024-07-18)
 * Adds `pause_on_repeated_failures` to pipeline
 

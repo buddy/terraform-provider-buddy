@@ -126,15 +126,7 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 		"event": sourceschema.SetNestedAttribute{
 			Computed: true,
 			NestedObject: sourceschema.NestedAttributeObject{
-				Attributes: map[string]sourceschema.Attribute{
-					"type": sourceschema.StringAttribute{
-						Computed: true,
-					},
-					"refs": sourceschema.SetAttribute{
-						Computed:    true,
-						ElementType: types.StringType,
-					},
-				},
+				Attributes: SourceEventModelAttributes(),
 			},
 		},
 		"tags": sourceschema.SetAttribute{
@@ -163,14 +155,7 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 		"remote_parameter": sourceschema.SetNestedAttribute{
 			Computed: true,
 			NestedObject: sourceschema.NestedAttributeObject{
-				Attributes: map[string]sourceschema.Attribute{
-					"key": sourceschema.StringAttribute{
-						Computed: true,
-					},
-					"value": sourceschema.StringAttribute{
-						Computed: true,
-					},
-				},
+				Attributes: SourceRemoteParameterModelAttributes(),
 			},
 		},
 	}
