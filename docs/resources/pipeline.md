@@ -17,13 +17,14 @@ Token scopes required: `WORKSPACE`, `EXECUTION_MANAGE`, `EXECUTION_INFO`
 
 ```terraform
 resource "buddy_pipeline" "click" {
-  domain              = "mydomain"
-  project_name        = "myproject"
-  name                = "click"
-  on                  = "CLICK"
-  refs                = ["main"]
-  always_from_scratch = true
-  git_config_ref      = "NONE"
+  domain                   = "mydomain"
+  project_name             = "myproject"
+  name                     = "click"
+  on                       = "CLICK"
+  refs                     = ["main"]
+  always_from_scratch      = true
+  concurrent_pipeline_runs = true
+  git_config_ref           = "NONE"
   permissions {
     others = "DENIED"
     user {
@@ -34,12 +35,13 @@ resource "buddy_pipeline" "click" {
 }
 
 resource "buddy_pipeline" "event_push" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "event_push"
-  on             = "EVENT"
-  priority       = "HIGH"
-  fetch_all_refs = true
+  domain               = "mydomain"
+  project_name         = "myproject"
+  name                 = "event_push"
+  on                   = "EVENT"
+  priority             = "HIGH"
+  fetch_all_refs       = true
+  description_required = true
 
   event {
     type = "PUSH"
@@ -82,7 +84,7 @@ resource "buddy_pipeline" "schedule" {
   delay                       = 10
   paused                      = true
   git_config_ref              = "FIXED"
-  git_config = {
+  git_config                  = {
     project = "project_name"
     branch  = "branch_name"
     path    = "path/to/definition.yml"
@@ -186,22 +188,26 @@ resource "buddy_pipeline" "conditions" {
 - `always_from_scratch` (Boolean) Defines whether or not to upload everything from scratch on every run
 - `auto_clear_cache` (Boolean) Defines whether or not to automatically clear cache before running the pipeline
 - `clone_depth` (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits
+- `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
 - `cron` (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
 - `definition_source` (String) The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`
 - `delay` (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
-- `disabled` (Boolean) Defines wheter or not the pipeline can be run
+- `description_required` (Boolean) Defines whether or not pipeline's execution must be commented
+- `disabled` (Boolean) Defines whether or not the pipeline can be run
 - `disabling_reason` (String) The pipeline's disabling reason
 - `do_not_create_commit_status` (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
 - `event` (Block Set) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
 - `execution_message_template` (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
 - `fail_on_prepare_env_warning` (Boolean) Defines either or not run should fail if any warning occurs in prepare environment
 - `fetch_all_refs` (Boolean) Defines whether or not fetch all refs from repository
+- `filesystem_changeset_base` (String) Defines pipeline's filesystem changeset
+- `git_changeset_base` (String) Defines pipeline's GIT changeset
 - `git_config` (Object) The pipeline's GIT configuration spec for `git_config_ref` = `FIXED` (see [below for nested schema](#nestedatt--git_config))
 - `git_config_ref` (String) The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `on` (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
-- `pause_on_repeated_failures` (Number) The pipeine's max failed executions before it is paused. Restricted to `on: SCHEDULE`
+- `pause_on_repeated_failures` (Number) The pipeline's max failed executions before it is paused. Restricted to `on: SCHEDULE`
 - `paused` (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
 - `permissions` (Block Set) The pipeline's permissions (see [below for nested schema](#nestedblock--permissions))
 - `priority` (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`

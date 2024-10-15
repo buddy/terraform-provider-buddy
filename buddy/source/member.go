@@ -166,7 +166,7 @@ func (s *memberSource) Read(ctx context.Context, req datasource.ReadRequest, res
 		}
 		members, _, err = s.client.MemberService.GetListAll(domain)
 		if err != nil {
-			resp.Diagnostics.Append(util.NewDiagnosticApiError("get membmers", err))
+			resp.Diagnostics.Append(util.NewDiagnosticApiError("get members", err))
 			return
 		}
 		for _, m := range members.Members {

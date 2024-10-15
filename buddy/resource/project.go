@@ -118,7 +118,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Required:            true,
 			},
 			"without_repository": schema.BoolAttribute{
-				MarkdownDescription: "Defines wheter or not create GIT repository",
+				MarkdownDescription: "Defines whether or not create GIT repository",
 				Optional:            true,
 			},
 			"integration_id": schema.StringAttribute{
@@ -157,7 +157,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:            true,
 			},
 			"fetch_submodules": schema.BoolAttribute{
-				MarkdownDescription: "Defines wheter or not fetch submodules in repository",
+				MarkdownDescription: "Defines whether or not fetch submodules in repository",
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.Bool{
@@ -285,7 +285,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				MarkdownDescription: "The project's Git default branch",
 				Computed:            true,
 			},
-			// for compatibility it's a set
+			// for compatibility, it's a set
 			"created_by": schema.SetNestedAttribute{
 				MarkdownDescription: "The project's creator",
 				Computed:            true,

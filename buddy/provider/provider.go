@@ -146,7 +146,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewProjectResource,
 		buddyresource.NewProjectGroupResource,
 		buddyresource.NewProjectMemberResource,
-		buddyresource.NewSsoResoruce,
+		buddyresource.NewSsoResource,
 		buddyresource.NewVariableResource,
 		buddyresource.NewVariableSshResource,
 		buddyresource.NewWebhookResource,

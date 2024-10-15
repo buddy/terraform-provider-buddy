@@ -79,12 +79,12 @@ resource "buddy_project" "custom_ssh" {
 - `custom_repo_url` (String) The project's custom repository URL. Needed when cloning from a custom repository
 - `custom_repo_user` (String) The project's custom repository user. Needed when cloning from a custom repository
 - `external_project_id` (String) The project's external project ID. Needed when cloning from GitHub, GitLab or BitBucket
-- `fetch_submodules` (Boolean) Defines wheter or not fetch submodules in repository
+- `fetch_submodules` (Boolean) Defines whether or not fetch submodules in repository
 - `fetch_submodules_env_key` (String) The project's environmental key name for fetching submodules
 - `git_lab_project_id` (String) The project's GitLab project ID. Needed when cloning from a GitLab
 - `integration_id` (String) The project's integration ID. Needed when cloning from a GitHub, GitLab or BitBucket
 - `update_default_branch_from_external` (Boolean) Defines whether or not update default branch from external repository (GitHub, GitLab, BitBucket)
-- `without_repository` (Boolean) Defines wheter or not create GIT repository
+- `without_repository` (Boolean) Defines whether or not create GIT repository
 
 ### Read-Only
 

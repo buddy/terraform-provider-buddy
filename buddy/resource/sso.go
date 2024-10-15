@@ -22,7 +22,7 @@ var (
 	_ resource.ResourceWithImportState = &ssoResource{}
 )
 
-func NewSsoResoruce() resource.Resource {
+func NewSsoResource() resource.Resource {
 	return &ssoResource{}
 }
 

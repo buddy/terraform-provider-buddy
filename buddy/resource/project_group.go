@@ -117,7 +117,7 @@ func (r *projectGroupResource) Schema(_ context.Context, _ resource.SchemaReques
 				MarkdownDescription: "The group's name",
 				Computed:            true,
 			},
-			// for compatibility it's a set
+			// for compatibility, it's a set
 			"permission": schema.SetNestedAttribute{
 				MarkdownDescription: "The group's permission in the project",
 				Computed:            true,

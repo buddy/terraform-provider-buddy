@@ -18,6 +18,10 @@ type testAccPipelineExpectedAttributes struct {
 	Name                      string
 	On                        string
 	AlwaysFromScratch         bool
+	DescriptionRequired       bool
+	ConcurrentPipelineRuns    bool
+	GitChangesetBase          string
+	FilesystemChangesetBase   string
 	FailOnPrepareEnvWarning   bool
 	FetchAllRefs              bool
 	AutoClearCache            bool
@@ -405,6 +409,10 @@ func TestAccPipeline_schedule(t *testing.T) {
 	delay := 5
 	newDelay := 7
 	newPausedFailures := 1
+	gitChangeSet := buddy.PipelineGitChangeSetBasePullRequest
+	newGitChangeSet := buddy.PipelineGitChangeSetBaseLatestRunMatchingRef
+	filesystemChangeSet := buddy.PipelineFilesystemChangeSetBaseDateModified
+	newFilesystemChangeSet := buddy.PipelineFilesystemChangeSetBaseContents
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -414,7 +422,7 @@ func TestAccPipeline_schedule(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigSchedule(domain, projectName, name, startDate, delay, true, priority, pausedFailures),
+				Config: testAccPipelineConfigSchedule(domain, projectName, name, startDate, delay, true, priority, pausedFailures, true, true, gitChangeSet, filesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -427,16 +435,20 @@ func TestAccPipeline_schedule(t *testing.T) {
 						StartDate:               startDate,
 						Delay:                   delay,
 						Priority:                priority,
+						GitChangesetBase:        gitChangeSet,
+						FilesystemChangesetBase: filesystemChangeSet,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  true,
 						PauseOnRepeatedFailures: pausedFailures,
+						DescriptionRequired:     true,
+						ConcurrentPipelineRuns:  true,
 					}),
 				),
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigSchedule(domain, projectName, newName, newStartDate, newDelay, false, newPriority, newPausedFailures),
+				Config: testAccPipelineConfigSchedule(domain, projectName, newName, newStartDate, newDelay, false, newPriority, newPausedFailures, false, false, newGitChangeSet, newFilesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -449,9 +461,13 @@ func TestAccPipeline_schedule(t *testing.T) {
 						StartDate:               newStartDate,
 						Delay:                   newDelay,
 						Priority:                newPriority,
+						GitChangesetBase:        newGitChangeSet,
+						FilesystemChangesetBase: newFilesystemChangeSet,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
+						DescriptionRequired:     false,
+						ConcurrentPipelineRuns:  false,
 						PauseOnRepeatedFailures: newPausedFailures,
 					}),
 				),
@@ -759,7 +775,7 @@ resource "buddy_project" "remote_proj2" {
 `, domain, projectName, remoteProjectName, remoteProjectName2)
 }
 
-func testAccPipelineConfigSchedule(domain string, projectName string, name string, startDate string, delay int, paused bool, priority string, pausedFailures int) string {
+func testAccPipelineConfigSchedule(domain string, projectName string, name string, startDate string, delay int, paused bool, priority string, pausedFailures int, descRequired bool, concurrentRuns bool, gitChangesetBase string, filesystemChangesetBase string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -772,18 +788,22 @@ resource "buddy_project" "proj" {
 
 resource "buddy_pipeline" "bar" {
 	domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "SCHEDULE"
+  project_name = "${buddy_project.proj.name}"
+  name = "%s"
+  on = "SCHEDULE"
 	start_date = "%s"
 	delay = %d
 	paused = %t
 	priority = "%s"
   pause_on_repeated_failures = %d
+  description_required = %t
+  concurrent_pipeline_runs = %t
+  git_changeset_base = "%s"
+  filesystem_changeset_base = "%s"
 	fail_on_prepare_env_warning = true
 	fetch_all_refs = true
 }
-`, domain, projectName, name, startDate, delay, paused, priority, pausedFailures)
+`, domain, projectName, name, startDate, delay, paused, priority, pausedFailures, descRequired, concurrentRuns, gitChangesetBase, filesystemChangesetBase)
 }
 
 func TestAccPipeline_event_pull_request(t *testing.T) {
@@ -1338,6 +1358,8 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		}
 		attrs := rs.Primary.Attributes
 		attrsPipelineId, _ := strconv.Atoi(attrs["pipeline_id"])
+		attrsConcurrentPipelineRuns, _ := strconv.ParseBool(attrs["concurrent_pipeline_runs"])
+		attrsDescriptionRequired, _ := strconv.ParseBool(attrs["description_required"])
 		attrsAlwaysFromScratch, _ := strconv.ParseBool(attrs["always_from_scratch"])
 		attrsFailOnPrepareEnvWarning, _ := strconv.ParseBool(attrs["fail_on_prepare_env_warning"])
 		attrsFetchAllRefs, _ := strconv.ParseBool(attrs["fetch_all_refs"])
@@ -1381,10 +1403,22 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		if err := util.CheckFieldEqualAndSet("on", attrs["on"], want.On); err != nil {
 			return err
 		}
+		if err := util.CheckBoolFieldEqual("DescriptionRequired", pipeline.DescriptionRequired, want.DescriptionRequired); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("ConcurrentPipelineRuns", pipeline.ConcurrentPipelineRuns, want.ConcurrentPipelineRuns); err != nil {
+			return err
+		}
 		if err := util.CheckBoolFieldEqual("AlwaysFromScratch", pipeline.AlwaysFromScratch, want.AlwaysFromScratch); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("always_from_scratch", attrsAlwaysFromScratch, want.AlwaysFromScratch); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("description_required", attrsDescriptionRequired, want.DescriptionRequired); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("concurrent_pipeline_runs", attrsConcurrentPipelineRuns, want.ConcurrentPipelineRuns); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("fail_on_prepare_env_warning", attrsFailOnPrepareEnvWarning, want.FailOnPrepareEnvWarning); err != nil {
@@ -1474,6 +1508,22 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("ExecutionMessageTemplate", pipeline.ExecutionMessageTemplate, want.ExecutionMessageTemplate); err != nil {
+				return err
+			}
+		}
+		if want.GitChangesetBase != "" {
+			if err := util.CheckFieldEqualAndSet("git_changeset_base", attrs["git_changeset_base"], want.GitChangesetBase); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("GitChangesetBase", pipeline.GitChangesetBase, want.GitChangesetBase); err != nil {
+				return err
+			}
+		}
+		if want.FilesystemChangesetBase != "" {
+			if err := util.CheckFieldEqualAndSet("filesystem_changeset_base", attrs["filesystem_changeset_base"], want.FilesystemChangesetBase); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("FilesystemChangesetBase", pipeline.FilesystemChangesetBase, want.FilesystemChangesetBase); err != nil {
 				return err
 			}
 		}

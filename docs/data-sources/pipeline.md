@@ -44,10 +44,14 @@ data "buddy_pipeline" "by_id" {
 
 ### Read-Only
 
+- `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
 - `definition_source` (String) The pipeline's definition source
-- `disabled` (Boolean) Defines wheter or not the pipeline can be run
+- `description_required` (Boolean) Defines whether or not pipeline's execution must be commented
+- `disabled` (Boolean) Defines whether or not the pipeline can be run
 - `disabling_reason` (String) The pipeline's disabling reason
 - `event` (Attributes Set) The pipeline's list of events (see [below for nested schema](#nestedatt--event))
+- `filesystem_changeset_base` (String) Defines pipeline's filesystem changeset
+- `git_changeset_base` (String) Defines pipeline's GIT changeset
 - `git_config` (Object) The pipeline's GIT configuration spec for `git_config_ref` = `FIXED` (see [below for nested schema](#nestedatt--git_config))
 - `git_config_ref` (String) The pipeline's GIT configuration type
 - `html_url` (String) The pipeline's URL

@@ -30,28 +30,32 @@ type pipelineSource struct {
 }
 
 type pipelineSourceModel struct {
-	ID                    types.String `tfsdk:"id"`
-	Domain                types.String `tfsdk:"domain"`
-	ProjectName           types.String `tfsdk:"project_name"`
-	Name                  types.String `tfsdk:"name"`
-	PipelineId            types.Int64  `tfsdk:"pipeline_id"`
-	Priority              types.String `tfsdk:"priority"`
-	HtmlUrl               types.String `tfsdk:"html_url"`
-	On                    types.String `tfsdk:"on"`
-	LastExecutionStatus   types.String `tfsdk:"last_execution_status"`
-	LastExecutionRevision types.String `tfsdk:"last_execution_revision"`
-	Disabled              types.Bool   `tfsdk:"disabled"`
-	DisablingReason       types.String `tfsdk:"disabling_reason"`
-	Refs                  types.Set    `tfsdk:"refs"`
-	Event                 types.Set    `tfsdk:"event"`
-	Tags                  types.Set    `tfsdk:"tags"`
-	GitConfigRef          types.String `tfsdk:"git_config_ref"`
-	GitConfig             types.Object `tfsdk:"git_config"`
-	DefinitionSource      types.String `tfsdk:"definition_source"`
-	RemoteProjectName     types.String `tfsdk:"remote_project_name"`
-	RemoteBranch          types.String `tfsdk:"remote_branch"`
-	RemotePath            types.String `tfsdk:"remote_path"`
-	RemoteParameter       types.Set    `tfsdk:"remote_parameter"`
+	ID                      types.String `tfsdk:"id"`
+	Domain                  types.String `tfsdk:"domain"`
+	ProjectName             types.String `tfsdk:"project_name"`
+	Name                    types.String `tfsdk:"name"`
+	PipelineId              types.Int64  `tfsdk:"pipeline_id"`
+	Priority                types.String `tfsdk:"priority"`
+	HtmlUrl                 types.String `tfsdk:"html_url"`
+	On                      types.String `tfsdk:"on"`
+	LastExecutionStatus     types.String `tfsdk:"last_execution_status"`
+	LastExecutionRevision   types.String `tfsdk:"last_execution_revision"`
+	Disabled                types.Bool   `tfsdk:"disabled"`
+	DisablingReason         types.String `tfsdk:"disabling_reason"`
+	Refs                    types.Set    `tfsdk:"refs"`
+	Event                   types.Set    `tfsdk:"event"`
+	Tags                    types.Set    `tfsdk:"tags"`
+	ConcurrentPipelineRuns  types.Bool   `tfsdk:"concurrent_pipeline_runs"`
+	DescriptionRequired     types.Bool   `tfsdk:"description_required"`
+	GitChangesetBase        types.String `tfsdk:"git_changeset_base"`
+	FilesystemChangesetBase types.String `tfsdk:"filesystem_changeset_base"`
+	GitConfigRef            types.String `tfsdk:"git_config_ref"`
+	GitConfig               types.Object `tfsdk:"git_config"`
+	DefinitionSource        types.String `tfsdk:"definition_source"`
+	RemoteProjectName       types.String `tfsdk:"remote_project_name"`
+	RemoteBranch            types.String `tfsdk:"remote_branch"`
+	RemotePath              types.String `tfsdk:"remote_path"`
+	RemoteParameter         types.Set    `tfsdk:"remote_parameter"`
 }
 
 func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projectName string, pipeline *buddy.Pipeline) diag.Diagnostics {
@@ -66,6 +70,10 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	s.On = types.StringValue(pipeline.On)
 	s.LastExecutionRevision = types.StringValue(pipeline.LastExecutionRevision)
 	s.LastExecutionStatus = types.StringValue(pipeline.LastExecutionStatus)
+	s.FilesystemChangesetBase = types.StringValue(pipeline.FilesystemChangesetBase)
+	s.GitChangesetBase = types.StringValue(pipeline.GitChangesetBase)
+	s.DescriptionRequired = types.BoolValue(pipeline.DescriptionRequired)
+	s.ConcurrentPipelineRuns = types.BoolValue(pipeline.ConcurrentPipelineRuns)
 	s.Disabled = types.BoolValue(pipeline.Disabled)
 	s.DisablingReason = types.StringValue(pipeline.DisabledReason)
 	r, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
@@ -163,11 +171,27 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 				Computed:            true,
 			},
 			"disabled": schema.BoolAttribute{
-				MarkdownDescription: "Defines wheter or not the pipeline can be run",
+				MarkdownDescription: "Defines whether or not the pipeline can be run",
 				Computed:            true,
 			},
 			"disabling_reason": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's disabling reason",
+				Computed:            true,
+			},
+			"description_required": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not pipeline's execution must be commented",
+				Computed:            true,
+			},
+			"concurrent_pipeline_runs": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not pipeline can be run concurrently",
+				Computed:            true,
+			},
+			"git_changeset_base": schema.StringAttribute{
+				MarkdownDescription: "Defines pipeline's GIT changeset",
+				Computed:            true,
+			},
+			"filesystem_changeset_base": schema.StringAttribute{
+				MarkdownDescription: "Defines pipeline's filesystem changeset",
 				Computed:            true,
 			},
 			"refs": schema.SetAttribute{
