@@ -1,3 +1,10 @@
+# Release v1.23.0 (2024-10-15)
+* Adds new props to pipeline
+* concurrent_pipeline_runs
+* description_required
+* git_changeset_base
+* filesystem_changeset_base
+
 # Release v1.22.0 (2024-09-25)
 * Adds new events to pipeline
 

@@ -44,6 +44,8 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 		attrs := rs.Primary.Attributes
 		attrsPipelinesCount, _ := strconv.Atoi(attrs["pipelines.#"])
 		attrsPipelineId, _ := strconv.Atoi(attrs["pipelines.0.pipeline_id"])
+		attrsDescRequired, _ := strconv.ParseBool(attrs["pipelines.0.description_required"])
+		attrsConcurrentRun, _ := strconv.ParseBool(attrs["pipelines.0.concurrent_pipeline_runs"])
 		if err := util.CheckIntFieldEqual("pipelines.#", attrsPipelinesCount, count); err != nil {
 			return err
 		}
@@ -61,6 +63,18 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 				if err := util.CheckFieldEqualAndSet("pipelines.0.refs.0", attrs["pipelines.0.refs.0"], ref); err != nil {
 					return err
 				}
+			}
+			if err := util.CheckFieldEqualAndSet("pipelines.0.git_changeset_base", attrs["pipelines.0.git_changeset_base"], buddy.PipelineGitChangeSetBaseLatestRun); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("pipelines.0.filesystem_changeset_base", attrs["pipelines.0.filesystem_changeset_base"], buddy.PipelineFilesystemChangeSetBaseDateModified); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual("pipelines.0.description_required", attrsDescRequired, false); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual("pipelines.0.concurrent_pipeline_runs", attrsConcurrentRun, false); err != nil {
+				return err
 			}
 			if err := util.CheckFieldSet("pipelines.0.html_url", attrs["pipelines.0.html_url"]); err != nil {
 				return err

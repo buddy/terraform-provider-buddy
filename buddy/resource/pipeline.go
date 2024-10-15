@@ -51,6 +51,10 @@ type pipelineResourceModel struct {
 	Priority                  types.String `tfsdk:"priority"`
 	FetchAllRefs              types.Bool   `tfsdk:"fetch_all_refs"`
 	AlwaysFromScratch         types.Bool   `tfsdk:"always_from_scratch"`
+	ConcurrentPipelineRuns    types.Bool   `tfsdk:"concurrent_pipeline_runs"`
+	DescriptionRequired       types.Bool   `tfsdk:"description_required"`
+	GitChangesetBase          types.String `tfsdk:"git_changeset_base"`
+	FilesystemChangesetBase   types.String `tfsdk:"filesystem_changeset_base"`
 	Disabled                  types.Bool   `tfsdk:"disabled"`
 	DisablingReason           types.String `tfsdk:"disabling_reason"`
 	FailOnPrepareEnvWarning   types.Bool   `tfsdk:"fail_on_prepare_env_warning"`
@@ -108,6 +112,10 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	diags.Append(d...)
 	r.Creator = creator
 	r.AlwaysFromScratch = types.BoolValue(pipeline.AlwaysFromScratch)
+	r.DescriptionRequired = types.BoolValue(pipeline.DescriptionRequired)
+	r.GitChangesetBase = types.StringValue(pipeline.GitChangesetBase)
+	r.FilesystemChangesetBase = types.StringValue(pipeline.FilesystemChangesetBase)
+	r.ConcurrentPipelineRuns = types.BoolValue(pipeline.ConcurrentPipelineRuns)
 	r.IgnoreFailOnProjectStatus = types.BoolValue(pipeline.IgnoreFailOnProjectStatus)
 	r.NoSkipToMostRecent = types.BoolValue(pipeline.NoSkipToMostRecent)
 	r.AutoClearCache = types.BoolValue(pipeline.AutoClearCache)
@@ -269,8 +277,41 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 				Computed:            true,
 			},
+			"concurrent_pipeline_runs": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not pipeline can be run concurrently",
+				Optional:            true,
+				Computed:            true,
+			},
+			"description_required": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not pipeline's execution must be commented",
+				Optional:            true,
+				Computed:            true,
+			},
+			"git_changeset_base": schema.StringAttribute{
+				MarkdownDescription: "Defines pipeline's GIT changeset",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.PipelineGitChangeSetBaseLatestRun,
+						buddy.PipelineGitChangeSetBaseLatestRunMatchingRef,
+						buddy.PipelineGitChangeSetBasePullRequest,
+					),
+				},
+			},
+			"filesystem_changeset_base": schema.StringAttribute{
+				MarkdownDescription: "Defines pipeline's filesystem changeset",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.PipelineFilesystemChangeSetBaseDateModified,
+						buddy.PipelineFilesystemChangeSetBaseContents,
+					),
+				},
+			},
 			"disabled": schema.BoolAttribute{
-				MarkdownDescription: "Defines wheter or not the pipeline can be run",
+				MarkdownDescription: "Defines whether or not the pipeline can be run",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -347,7 +388,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:            true,
 			},
 			"pause_on_repeated_failures": schema.Int64Attribute{
-				MarkdownDescription: "The pipeine's max failed executions before it is paused. Restricted to `on: SCHEDULE`",
+				MarkdownDescription: "The pipeline's max failed executions before it is paused. Restricted to `on: SCHEDULE`",
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.Int64{
@@ -605,6 +646,18 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.On.IsNull() && !data.On.IsUnknown() {
 		ops.On = data.On.ValueStringPointer()
 	}
+	if !data.DescriptionRequired.IsNull() && !data.DescriptionRequired.IsUnknown() {
+		ops.DescriptionRequired = data.DescriptionRequired.ValueBoolPointer()
+	}
+	if !data.GitChangesetBase.IsNull() && !data.GitChangesetBase.IsUnknown() {
+		ops.GitChangesetBase = data.GitChangesetBase.ValueStringPointer()
+	}
+	if !data.FilesystemChangesetBase.IsNull() && !data.FilesystemChangesetBase.IsUnknown() {
+		ops.FilesystemChangesetBase = data.FilesystemChangesetBase.ValueStringPointer()
+	}
+	if !data.ConcurrentPipelineRuns.IsNull() && !data.ConcurrentPipelineRuns.IsUnknown() {
+		ops.ConcurrentPipelineRuns = data.ConcurrentPipelineRuns.ValueBoolPointer()
+	}
 	if !data.AlwaysFromScratch.IsNull() && !data.AlwaysFromScratch.IsUnknown() {
 		ops.AlwaysFromScratch = data.AlwaysFromScratch.ValueBoolPointer()
 	}
@@ -794,6 +847,18 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	if !data.AlwaysFromScratch.IsNull() && !data.AlwaysFromScratch.IsUnknown() {
 		ops.AlwaysFromScratch = data.AlwaysFromScratch.ValueBoolPointer()
+	}
+	if !data.ConcurrentPipelineRuns.IsNull() && !data.ConcurrentPipelineRuns.IsUnknown() {
+		ops.ConcurrentPipelineRuns = data.ConcurrentPipelineRuns.ValueBoolPointer()
+	}
+	if !data.DescriptionRequired.IsNull() && !data.DescriptionRequired.IsUnknown() {
+		ops.DescriptionRequired = data.DescriptionRequired.ValueBoolPointer()
+	}
+	if !data.FilesystemChangesetBase.IsNull() && !data.FilesystemChangesetBase.IsUnknown() {
+		ops.FilesystemChangesetBase = data.FilesystemChangesetBase.ValueStringPointer()
+	}
+	if !data.GitChangesetBase.IsNull() && !data.GitChangesetBase.IsUnknown() {
+		ops.GitChangesetBase = data.GitChangesetBase.ValueStringPointer()
 	}
 	if !data.Priority.IsNull() && !data.Priority.IsUnknown() {
 		ops.Priority = data.Priority.ValueStringPointer()

@@ -1,11 +1,12 @@
 resource "buddy_pipeline" "click" {
-  domain              = "mydomain"
-  project_name        = "myproject"
-  name                = "click"
-  on                  = "CLICK"
-  refs                = ["main"]
-  always_from_scratch = true
-  git_config_ref      = "NONE"
+  domain                   = "mydomain"
+  project_name             = "myproject"
+  name                     = "click"
+  on                       = "CLICK"
+  refs                     = ["main"]
+  always_from_scratch      = true
+  concurrent_pipeline_runs = true
+  git_config_ref           = "NONE"
   permissions {
     others = "DENIED"
     user {
@@ -16,12 +17,13 @@ resource "buddy_pipeline" "click" {
 }
 
 resource "buddy_pipeline" "event_push" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "event_push"
-  on             = "EVENT"
-  priority       = "HIGH"
-  fetch_all_refs = true
+  domain               = "mydomain"
+  project_name         = "myproject"
+  name                 = "event_push"
+  on                   = "EVENT"
+  priority             = "HIGH"
+  fetch_all_refs       = true
+  description_required = true
 
   event {
     type = "PUSH"

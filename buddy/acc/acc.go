@@ -25,7 +25,7 @@ func PreCheck(t *testing.T) {
 		t.Fatal("BUDDY_TOKEN must be set for acceptance tests")
 	}
 	if baseUrl := os.Getenv("BUDDY_BASE_URL"); baseUrl == "" {
-		t.Fatal("BUDDY_BASE_URL must be set for acceptace tests")
+		t.Fatal("BUDDY_BASE_URL must be set for acceptance tests")
 	}
 }
 

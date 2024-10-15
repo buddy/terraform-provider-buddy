@@ -56,10 +56,14 @@ data "buddy_pipelines" "with_name_ended" {
 
 Read-Only:
 
+- `concurrent_pipeline_runs` (Boolean)
 - `definition_source` (String)
+- `description_required` (Boolean)
 - `disabled` (Boolean)
 - `disabling_reason` (String)
 - `event` (Attributes Set) (see [below for nested schema](#nestedatt--pipelines--event))
+- `filesystem_changeset_base` (String)
+- `git_changeset_base` (String)
 - `git_config` (Object) (see [below for nested schema](#nestedatt--pipelines--git_config))
 - `git_config_ref` (String)
 - `html_url` (String)
