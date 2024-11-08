@@ -1,3 +1,6 @@
+# Release v1.24.0 (2024-11-08)
+* Fix variable import
+
 # Release v1.23.0 (2024-10-15)
 * Adds new props to pipeline
 * concurrent_pipeline_runs

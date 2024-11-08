@@ -42,7 +42,7 @@ type variableSourceModel struct {
 	Value       types.String `tfsdk:"value"`
 }
 
-func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable) {
+func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable, variableOps *buddy.VariableGetListQuery) {
 	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
 	s.Domain = types.StringValue(domain)
 	s.Key = types.StringValue(variable.Key)
@@ -51,6 +51,27 @@ func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable) {
 	s.Settable = types.BoolValue(variable.Settable)
 	s.Description = types.StringValue(variable.Description)
 	s.Value = types.StringValue(variable.Value)
+	if variable.Project != nil {
+		s.ProjectName = types.StringValue(variable.Project.Name)
+	} else if variableOps != nil && variableOps.ProjectName != "" {
+		s.ProjectName = types.StringValue(variableOps.ProjectName)
+	} else {
+		s.ProjectName = types.StringNull()
+	}
+	if variable.Pipeline != nil {
+		s.PipelineId = types.Int64Value(int64(variable.Pipeline.Id))
+	} else if variableOps != nil && variableOps.PipelineId != 0 {
+		s.PipelineId = types.Int64Value(int64(variableOps.PipelineId))
+	} else {
+		s.PipelineId = types.Int64Null()
+	}
+	if variable.Action != nil {
+		s.ActionId = types.Int64Value(int64(variable.Action.Id))
+	} else if variableOps != nil && variableOps.ActionId != 0 {
+		s.ActionId = types.Int64Value(int64(variableOps.ActionId))
+	} else {
+		s.ActionId = types.Int64Null()
+	}
 }
 
 func (s *variableSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -103,6 +124,7 @@ func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The variable's project name",
 				Optional:            true,
+				Computed:            true,
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(path.Expressions{
 						path.MatchRoot("key"),
@@ -112,6 +134,7 @@ func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's pipeline ID",
 				Optional:            true,
+				Computed:            true,
 				Validators: []validator.Int64{
 					int64validator.AlsoRequires(path.Expressions{
 						path.MatchRoot("key"),
@@ -121,6 +144,7 @@ func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's action ID",
 				Optional:            true,
+				Computed:            true,
 				Validators: []validator.Int64{
 					int64validator.AlsoRequires(path.Expressions{
 						path.MatchRoot("key"),
@@ -155,6 +179,7 @@ func (s *variableSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		return
 	}
 	domain := data.Domain.ValueString()
+	ops := buddy.VariableGetListQuery{}
 	var variable *buddy.Variable
 	var err error
 	if !data.VariableId.IsNull() && !data.VariableId.IsUnknown() {
@@ -175,7 +200,6 @@ func (s *variableSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		}
 	} else {
 		key := data.Key.ValueString()
-		ops := buddy.VariableGetListQuery{}
 		if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 			ops.ProjectName = data.ProjectName.ValueString()
 		}
@@ -205,6 +229,6 @@ func (s *variableSource) Read(ctx context.Context, req datasource.ReadRequest, r
 			return
 		}
 	}
-	data.loadAPI(domain, variable)
+	data.loadAPI(domain, variable, &ops)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

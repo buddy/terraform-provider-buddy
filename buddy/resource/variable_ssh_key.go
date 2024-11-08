@@ -67,6 +67,21 @@ func (r *variableSshKeyResourceModel) loadAPI(domain string, variable *buddy.Var
 	r.Checksum = types.StringValue(variable.Checksum)
 	r.KeyFingerprint = types.StringValue(variable.KeyFingerprint)
 	r.PublicValue = types.StringValue(variable.PublicValue)
+	if variable.Project != nil {
+		r.ProjectName = types.StringValue(variable.Project.Name)
+	} else {
+		r.ProjectName = types.StringNull()
+	}
+	if variable.Pipeline != nil {
+		r.PipelineId = types.Int64Value(int64(variable.Pipeline.Id))
+	} else {
+		r.PipelineId = types.Int64Null()
+	}
+	if variable.Action != nil {
+		r.ActionId = types.Int64Value(int64(variable.Action.Id))
+	} else {
+		r.ActionId = types.Int64Null()
+	}
 }
 
 func (r *variableSshKeyResourceModel) decomposeId() (string, int, error) {
@@ -139,6 +154,7 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The variable's project name",
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -146,6 +162,7 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's pipeline ID",
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -153,6 +170,7 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's action ID",
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
