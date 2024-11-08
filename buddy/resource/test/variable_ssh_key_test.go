@@ -41,7 +41,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceSimpleConfig(domain, key, filePlace, filePath, fileChmod, privateKey),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, key, privateKey, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey, filePlace, filePath, fileChmod, ""),
 				),
 			},
 			// update variable value
@@ -49,7 +49,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceSimpleConfig(domain, key, filePlace, filePath, fileChmod, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, key, privateKey2, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey2, filePlace, filePath, fileChmod, ""),
 				),
 			},
 			// update variable key
@@ -57,7 +57,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceSimpleConfig(domain, newKey, filePlace, filePath, fileChmod, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, newKey, privateKey2, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, ""),
 				),
 			},
 			// update options
@@ -65,7 +65,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, desc, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, newKey, privateKey2, filePlace, filePath, fileChmod, desc),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, desc),
 				),
 			},
 			// import
@@ -108,7 +108,7 @@ func TestAccVariableSshKey_project(t *testing.T) {
 				Config: testAccVariableSshKeyProjectComplexConfig(domain, projectName, key, filePlace, filePath, fileChmod, "", privateKey),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, key, privateKey, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, projectName, key, privateKey, filePlace, filePath, fileChmod, ""),
 				),
 			},
 			// update variable
@@ -116,7 +116,7 @@ func TestAccVariableSshKey_project(t *testing.T) {
 				Config: testAccVariableSshKeyProjectComplexConfig(domain, projectName, key, filePlace, filePath, fileChmod, desc, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, key, privateKey2, filePlace, filePath, fileChmod, desc),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, projectName, key, privateKey2, filePlace, filePath, fileChmod, desc),
 				),
 			},
 			// import
@@ -124,13 +124,13 @@ func TestAccVariableSshKey_project(t *testing.T) {
 				ResourceName:            "buddy_variable_ssh_key.bar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"value", "project_name"},
+				ImportStateVerifyIgnore: []string{"value"},
 			},
 		},
 	})
 }
 
-func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain string, key string, val string, filePlace string, filePath string, fileChmod string, description string) resource.TestCheckFunc {
+func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain string, projectName string, key string, val string, filePlace string, filePath string, fileChmod string, description string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -140,6 +140,14 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 		attrsVariableId, _ := strconv.Atoi(attrs["variable_id"])
 		attrsEncrypted, _ := strconv.ParseBool(attrs["encrypted"])
 		attrsSettable, _ := strconv.ParseBool(attrs["settable"])
+		if projectName != "" {
+			if err := util.CheckFieldEqualAndSet("Project.Name", variable.Project.Name, projectName); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("project_name", attrs["project_name"], projectName); err != nil {
+				return err
+			}
+		}
 		if err := util.CheckFieldEqualAndSet("Key", variable.Key, key); err != nil {
 			return err
 		}

@@ -48,7 +48,7 @@ type variableSshKeySourceModel struct {
 	FilePlace      types.String `tfsdk:"file_place"`
 }
 
-func (s *variableSshKeySourceModel) loadAPI(domain string, variable *buddy.Variable) {
+func (s *variableSshKeySourceModel) loadAPI(domain string, variable *buddy.Variable, ops *buddy.VariableGetListQuery) {
 	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(variable.Id)))
 	s.Domain = types.StringValue(domain)
 	s.Key = types.StringValue(variable.Key)
@@ -63,6 +63,27 @@ func (s *variableSshKeySourceModel) loadAPI(domain string, variable *buddy.Varia
 	s.FileChmod = types.StringValue(variable.FileChmod)
 	s.FilePath = types.StringValue(variable.FilePath)
 	s.FilePlace = types.StringValue(variable.FilePlace)
+	if variable.Project != nil {
+		s.ProjectName = types.StringValue(variable.Project.Name)
+	} else if ops != nil && ops.ProjectName != "" {
+		s.ProjectName = types.StringValue(ops.ProjectName)
+	} else {
+		s.ProjectName = types.StringNull()
+	}
+	if variable.Pipeline != nil {
+		s.PipelineId = types.Int64Value(int64(variable.Pipeline.Id))
+	} else if ops != nil && ops.PipelineId != 0 {
+		s.PipelineId = types.Int64Value(int64(ops.PipelineId))
+	} else {
+		s.PipelineId = types.Int64Null()
+	}
+	if variable.Action != nil {
+		s.ActionId = types.Int64Value(int64(variable.Action.Id))
+	} else if ops != nil && ops.ActionId != 0 {
+		s.ActionId = types.Int64Value(int64(ops.ActionId))
+	} else {
+		s.ActionId = types.Int64Null()
+	}
 }
 
 func (s *variableSshKeySource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -115,6 +136,7 @@ func (s *variableSshKeySource) Schema(_ context.Context, _ datasource.SchemaRequ
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The variable's project name",
 				Optional:            true,
+				Computed:            true,
 				Validators: []validator.String{
 					stringvalidator.AlsoRequires(path.Expressions{
 						path.MatchRoot("key"),
@@ -124,6 +146,7 @@ func (s *variableSshKeySource) Schema(_ context.Context, _ datasource.SchemaRequ
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's pipeline ID",
 				Optional:            true,
+				Computed:            true,
 				Validators: []validator.Int64{
 					int64validator.AlsoRequires(path.Expressions{
 						path.MatchRoot("key"),
@@ -133,6 +156,7 @@ func (s *variableSshKeySource) Schema(_ context.Context, _ datasource.SchemaRequ
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's action ID",
 				Optional:            true,
+				Computed:            true,
 				Validators: []validator.Int64{
 					int64validator.AlsoRequires(path.Expressions{
 						path.MatchRoot("key"),
@@ -191,6 +215,7 @@ func (s *variableSshKeySource) Read(ctx context.Context, req datasource.ReadRequ
 		return
 	}
 	domain := data.Domain.ValueString()
+	ops := buddy.VariableGetListQuery{}
 	var variable *buddy.Variable
 	var err error
 	if !data.VariableId.IsNull() && !data.VariableId.IsUnknown() {
@@ -211,7 +236,6 @@ func (s *variableSshKeySource) Read(ctx context.Context, req datasource.ReadRequ
 		}
 	} else {
 		key := data.Key.ValueString()
-		ops := buddy.VariableGetListQuery{}
 		if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 			ops.ProjectName = data.ProjectName.ValueString()
 		}
@@ -241,6 +265,6 @@ func (s *variableSshKeySource) Read(ctx context.Context, req datasource.ReadRequ
 			return
 		}
 	}
-	data.loadAPI(domain, variable)
+	data.loadAPI(domain, variable, &ops)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

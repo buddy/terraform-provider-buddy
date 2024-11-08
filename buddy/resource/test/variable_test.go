@@ -33,7 +33,7 @@ func TestAccVariable_workspace(t *testing.T) {
 				Config: testAccVariableWorkspaceSimpleConfig(domain, key, val),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, key, val, "", false, false),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", key, val, "", false, false),
 				),
 			},
 			// update variable value
@@ -41,7 +41,7 @@ func TestAccVariable_workspace(t *testing.T) {
 				Config: testAccVariableWorkspaceSimpleConfig(domain, key, newValue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, key, newValue, "", false, false),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", key, newValue, "", false, false),
 				),
 			},
 			// update variable key
@@ -49,7 +49,7 @@ func TestAccVariable_workspace(t *testing.T) {
 				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, false, true, desc),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, newKey, newValue, desc, false, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, desc, false, true),
 				),
 			},
 			// update options
@@ -57,7 +57,7 @@ func TestAccVariable_workspace(t *testing.T) {
 				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, true, true, newDesc),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, newKey, newValue, newDesc, true, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, newDesc, true, true),
 				),
 			},
 			// import
@@ -92,7 +92,7 @@ func TestAccVariable_project(t *testing.T) {
 				Config: testAccVariableProjectComplexConfig(domain, projectName, key, val, true, true, desc),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, key, val, desc, true, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, projectName, key, val, desc, true, true),
 				),
 			},
 			// update variable
@@ -100,7 +100,7 @@ func TestAccVariable_project(t *testing.T) {
 				Config: testAccVariableProjectComplexConfig(domain, projectName, key, newValue, false, false, newDesc),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, key, newValue, newDesc, false, false),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, projectName, key, newValue, newDesc, false, false),
 				),
 			},
 			// import
@@ -108,13 +108,13 @@ func TestAccVariable_project(t *testing.T) {
 				ResourceName:            "buddy_variable.bar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"value", "project_name"},
+				ImportStateVerifyIgnore: []string{"value"},
 			},
 		},
 	})
 }
 
-func testAccVariableAttributes(n string, variable *buddy.Variable, domain string, key string, val string, description string, encrypted bool, settable bool) resource.TestCheckFunc {
+func testAccVariableAttributes(n string, variable *buddy.Variable, domain string, projectName string, key string, val string, description string, encrypted bool, settable bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -134,6 +134,11 @@ func testAccVariableAttributes(n string, variable *buddy.Variable, domain string
 		} else {
 			if !strings.HasPrefix(variable.Value, "secure!") {
 				return util.ErrorFieldFormatted("Value", variable.Value, "secure!")
+			}
+		}
+		if projectName != "" {
+			if err := util.CheckFieldEqualAndSet("Project.Name", variable.Project.Name, projectName); err != nil {
+				return err
 			}
 		}
 		if err := util.CheckBoolFieldEqual("Encrypted", variable.Encrypted, encrypted); err != nil {
@@ -164,6 +169,11 @@ func testAccVariableAttributes(n string, variable *buddy.Variable, domain string
 		} else {
 			if !strings.HasPrefix(attrs["value_processed"], "secure!") {
 				return util.ErrorFieldFormatted("value_processed", attrs["value_processed"], "secure!")
+			}
+		}
+		if projectName != "" {
+			if err := util.CheckFieldEqualAndSet("project_name", attrs["project_name"], projectName); err != nil {
+				return err
 			}
 		}
 		if err := util.CheckBoolFieldEqual("encrypted", attrsEncrypted, encrypted); err != nil {

@@ -65,6 +65,21 @@ func (r *variableResourceModel) loadAPI(domain string, variable *buddy.Variable)
 	r.Description = types.StringValue(variable.Description)
 	r.ValueProcessed = types.StringValue(variable.Value)
 	r.VariableId = types.Int64Value(int64(variable.Id))
+	if variable.Project != nil {
+		r.ProjectName = types.StringValue(variable.Project.Name)
+	} else {
+		r.ProjectName = types.StringNull()
+	}
+	if variable.Pipeline != nil {
+		r.PipelineId = types.Int64Value(int64(variable.Pipeline.Id))
+	} else {
+		r.PipelineId = types.Int64Null()
+	}
+	if variable.Action != nil {
+		r.ActionId = types.Int64Value(int64(variable.Action.Id))
+	} else {
+		r.ActionId = types.Int64Null()
+	}
 }
 
 func (r *variableResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -112,6 +127,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The variable's project name",
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -119,6 +135,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's pipeline ID",
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -126,6 +143,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's action ID",
 				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
