@@ -88,6 +88,9 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 			if err := util.CheckFieldEqualAndSet("pipelines.0.priority", attrs["pipelines.0.priority"], buddy.PipelinePriorityNormal); err != nil {
 				return err
 			}
+			if err := util.CheckFieldEqualAndSet("pipelines.0.cpu", attrs["pipelines.0.cpu"], buddy.PipelineCpuX64); err != nil {
+				return err
+			}
 			if err := util.CheckFieldEqualAndSet("pipelines.0.git_config_ref", attrs["pipelines.0.git_config_ref"], buddy.PipelineGitConfigRefNone); err != nil {
 				return err
 			}

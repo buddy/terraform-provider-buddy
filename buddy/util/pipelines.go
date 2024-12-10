@@ -15,6 +15,7 @@ type pipelineModel struct {
 	PipelineId              types.Int64  `tfsdk:"pipeline_id"`
 	HtmlUrl                 types.String `tfsdk:"html_url"`
 	On                      types.String `tfsdk:"on"`
+	Cpu                     types.String `tfsdk:"cpu"`
 	Priority                types.String `tfsdk:"priority"`
 	Disabled                types.Bool   `tfsdk:"disabled"`
 	DisablingReason         types.String `tfsdk:"disabling_reason"`
@@ -42,6 +43,7 @@ func pipelineModelAttrs() map[string]attr.Type {
 		"pipeline_id":               types.Int64Type,
 		"html_url":                  types.StringType,
 		"on":                        types.StringType,
+		"cpu":                       types.StringType,
 		"priority":                  types.StringType,
 		"disabled":                  types.BoolType,
 		"disabling_reason":          types.StringType,
@@ -70,6 +72,7 @@ func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) d
 	p.PipelineId = types.Int64Value(int64(pipeline.Id))
 	p.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
 	p.On = types.StringValue(pipeline.On)
+	p.Cpu = types.StringValue(pipeline.Cpu)
 	p.Priority = types.StringValue(pipeline.Priority)
 	p.Disabled = types.BoolValue(pipeline.Disabled)
 	p.DisablingReason = types.StringValue(pipeline.DisabledReason)
@@ -114,6 +117,9 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"on": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"cpu": sourceschema.StringAttribute{
 			Computed: true,
 		},
 		"priority": sourceschema.StringAttribute{

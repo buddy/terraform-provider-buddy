@@ -57,6 +57,7 @@ data "buddy_pipelines" "with_name_ended" {
 Read-Only:
 
 - `concurrent_pipeline_runs` (Boolean)
+- `cpu` (String)
 - `definition_source` (String)
 - `description_required` (Boolean)
 - `disabled` (Boolean)

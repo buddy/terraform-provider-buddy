@@ -1,3 +1,6 @@
+# Release v1.24.1 (2024-12-10)
+* Adds cpu to pipeline
+
 # Release v1.24.0 (2024-11-08)
 * Fix variable import
 
