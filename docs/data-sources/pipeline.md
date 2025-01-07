@@ -45,6 +45,7 @@ data "buddy_pipeline" "by_id" {
 ### Read-Only
 
 - `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
+- `cpu` (String) The pipeline's cpu
 - `definition_source` (String) The pipeline's definition source
 - `description_required` (Boolean) Defines whether or not pipeline's execution must be commented
 - `disabled` (Boolean) Defines whether or not the pipeline can be run

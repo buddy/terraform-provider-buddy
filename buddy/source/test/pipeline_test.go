@@ -23,6 +23,7 @@ func TestAccSourcePipeline(t *testing.T) {
 	filesystemChangeSet := buddy.PipelineFilesystemChangeSetBaseContents
 	newGitChangeSet := buddy.PipelineGitChangeSetBaseLatestRunMatchingRef
 	newFilesystemChangeSet := buddy.PipelineFilesystemChangeSetBaseDateModified
+	cpu := buddy.PipelineCpuArm
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -32,14 +33,14 @@ func TestAccSourcePipeline(t *testing.T) {
 		Steps: []resource.TestStep{
 			// click
 			{
-				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet),
+				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh, cpu, true, true, gitChangeSet, filesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, cpu, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
 						Branch:  "main",
 						Path:    "def.yml",
 					}),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, cpu, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
 						Branch:  "main",
 						Path:    "def.yml",
@@ -50,24 +51,24 @@ func TestAccSourcePipeline(t *testing.T) {
 			{
 				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, buddy.PipelinePriorityHigh, reason),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnClick, cpu, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnClick, cpu, ref, "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 			// event
 			{
 				Config: testAccSourcePipelineConfigEvent(domain, projectName, name, ref, buddy.PipelinePriorityLow),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, "", ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, "", ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, cpu, "", ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, cpu, "", ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
 				),
 			},
 			// pr event
 			{
 				Config: testAccSourcePipelineConfigPullRequest(domain, projectName, name, prBranch, prEvent, false, false, newGitChangeSet, newFilesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, "", "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, "", "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, buddy.PipelineOnEvent, cpu, "", "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, buddy.PipelineOnEvent, cpu, "", "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 		},
@@ -107,7 +108,7 @@ func testAccPipelineGitConfig(attrs map[string]string, gitConfigRef string, gitC
 	return nil
 }
 
-func testAccSourcePipelineAttributes(n string, name string, on string, ref string, eventRef string, prBranch string, prEvent string, priority string, descriptionRequired bool, concurrentPipelineRuns bool, gitChangesetBase string, filesystemChangesetBase string, disabled bool, disabledReason string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) resource.TestCheckFunc {
+func testAccSourcePipelineAttributes(n string, name string, on string, cpu string, ref string, eventRef string, prBranch string, prEvent string, priority string, descriptionRequired bool, concurrentPipelineRuns bool, gitChangesetBase string, filesystemChangesetBase string, disabled bool, disabledReason string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -144,6 +145,9 @@ func testAccSourcePipelineAttributes(n string, name string, on string, ref strin
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("on", attrs["on"], on); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("cpu", attrs["cpu"], cpu); err != nil {
 			return err
 		}
 		if err := util.CheckFieldSet("last_execution_status", attrs["last_execution_status"]); err != nil {
@@ -270,7 +274,7 @@ data "buddy_pipeline" "id" {
 `, domain, projectName, name, ref, priority)
 }
 
-func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string) string {
+func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string, cpu string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -286,6 +290,7 @@ resource "buddy_pipeline" "bar" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    on = "CLICK"
+   cpu = "%s"
    refs = ["%s"]
 	 git_config_ref = "FIXED"
    git_config = {
@@ -311,7 +316,7 @@ data "buddy_pipeline" "id" {
    project_name = "${buddy_project.proj.name}"
    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
-`, domain, projectName, name, ref, projectName, priority, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase)
+`, domain, projectName, name, cpu, ref, projectName, priority, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase)
 }
 
 func testAccSourcePipelineConfigClickDisabled(domain string, projectName string, name string, ref string, priority string, reason string) string {

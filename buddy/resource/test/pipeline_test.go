@@ -39,6 +39,7 @@ type testAccPipelineExpectedAttributes struct {
 	TargetSiteUrl             string
 	Disabled                  bool
 	DisablingReason           string
+	Cpu                       string
 	Creator                   *buddy.Profile
 	Project                   *buddy.Project
 	Ref                       string
@@ -1087,6 +1088,8 @@ func TestAccPipeline_click(t *testing.T) {
 	newRef := util.RandString(10)
 	msgTemplate := util.RandString(10)
 	newMsgTemplate := util.RandString(10)
+	cpu := buddy.PipelineCpuArm
+	newCpu := buddy.PipelineCpuX64
 	targetUrl := "https://127.0.0.1"
 	newTargetUrl := "https://192.168.1.1"
 	cloneDepth := 1
@@ -1100,7 +1103,7 @@ func TestAccPipeline_click(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigClick(domain, projectName, name, true, false, true, false, true, false, true, msgTemplate, targetUrl, ref, cloneDepth),
+				Config: testAccPipelineConfigClick(domain, projectName, name, true, false, true, false, true, false, true, msgTemplate, targetUrl, ref, cloneDepth, cpu),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -1108,6 +1111,7 @@ func TestAccPipeline_click(t *testing.T) {
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
 						On:                        buddy.PipelineOnClick,
+						Cpu:                       cpu,
 						AlwaysFromScratch:         true,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        true,
@@ -1127,7 +1131,7 @@ func TestAccPipeline_click(t *testing.T) {
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigClick(domain, projectName, newName, false, true, false, true, false, true, false, newMsgTemplate, newTargetUrl, newRef, newCloneDepth),
+				Config: testAccPipelineConfigClick(domain, projectName, newName, false, true, false, true, false, true, false, newMsgTemplate, newTargetUrl, newRef, newCloneDepth, newCpu),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -1135,6 +1139,7 @@ func TestAccPipeline_click(t *testing.T) {
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      newName,
 						On:                        buddy.PipelineOnClick,
+						Cpu:                       newCpu,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            true,
 						NoSkipToMostRecent:        false,
@@ -1450,6 +1455,14 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		}
 		if err := util.CheckBoolFieldEqual("do_not_create_commit_status", attrsDoNotCreateCommitStatus, want.DoNotCreateCommitStatus); err != nil {
 			return err
+		}
+		if want.Cpu != "" {
+			if err := util.CheckFieldEqualAndSet("cpu", attrs["cpu"], want.Cpu); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("Cpu", pipeline.Cpu, want.Cpu); err != nil {
+				return err
+			}
 		}
 		if want.StartDate != "" {
 			if err := util.CheckDateFieldEqual("start_date", attrs["start_date"], want.StartDate); err != nil {
@@ -2183,7 +2196,7 @@ resource "buddy_pipeline" "bar" {
 `, domain, email, groupName, projectName, name, ref)
 }
 
-func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int) string {
+func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int, cpu string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -2210,8 +2223,9 @@ resource "buddy_pipeline" "bar" {
     target_site_url = "%s"
     refs = ["%s"]
     clone_depth = %d
+		cpu = "%s"
 }
-`, domain, projectName, name, alwaysFromScratch, failOnPrepareEnvWarning, fetchAllRefs, autoClearCache, noSkipToMostRecent, doNotCreateCommitStatus, ignoreFailOnProjectStatus, executionMessageTemplate, targetSiteUrl, ref, cloneDepth)
+`, domain, projectName, name, alwaysFromScratch, failOnPrepareEnvWarning, fetchAllRefs, autoClearCache, noSkipToMostRecent, doNotCreateCommitStatus, ignoreFailOnProjectStatus, executionMessageTemplate, targetSiteUrl, ref, cloneDepth, cpu)
 }
 
 func testAccPipelineCheckDestroy(s *terraform.State) error {

@@ -189,6 +189,7 @@ resource "buddy_pipeline" "conditions" {
 - `auto_clear_cache` (Boolean) Defines whether or not to automatically clear cache before running the pipeline
 - `clone_depth` (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits
 - `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
+- `cpu` (String) The pipeline's cpu. Allowed: `X64`, `ARM`
 - `cron` (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
 - `definition_source` (String) The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`
 - `delay` (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified

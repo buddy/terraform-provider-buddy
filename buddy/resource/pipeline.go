@@ -48,6 +48,7 @@ type pipelineResourceModel struct {
 	RemotePath                types.String `tfsdk:"remote_path"`
 	RemoteParameters          types.Set    `tfsdk:"remote_parameter"`
 	On                        types.String `tfsdk:"on"`
+	Cpu                       types.String `tfsdk:"cpu"`
 	Priority                  types.String `tfsdk:"priority"`
 	FetchAllRefs              types.Bool   `tfsdk:"fetch_all_refs"`
 	AlwaysFromScratch         types.Bool   `tfsdk:"always_from_scratch"`
@@ -96,6 +97,7 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.GitConfig = gitConfig
 	r.PipelineId = types.Int64Value(int64(pipeline.Id))
 	r.On = types.StringValue(pipeline.On)
+	r.Cpu = types.StringValue(pipeline.Cpu)
 	refs, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
 	diags.Append(d...)
 	r.Refs = refs
@@ -252,6 +254,17 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						buddy.PipelineOnClick,
 						buddy.PipelineOnEvent,
 						buddy.PipelineOnSchedule,
+					),
+				},
+			},
+			"cpu": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's cpu. Allowed: `X64`, `ARM`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.PipelineCpuX64,
+						buddy.PipelineCpuArm,
 					),
 				},
 			},
@@ -646,6 +659,9 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.On.IsNull() && !data.On.IsUnknown() {
 		ops.On = data.On.ValueStringPointer()
 	}
+	if !data.Cpu.IsNull() && !data.Cpu.IsUnknown() {
+		ops.Cpu = data.Cpu.ValueStringPointer()
+	}
 	if !data.DescriptionRequired.IsNull() && !data.DescriptionRequired.IsUnknown() {
 		ops.DescriptionRequired = data.DescriptionRequired.ValueBoolPointer()
 	}
@@ -844,6 +860,9 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	if !data.On.IsNull() && !data.On.IsUnknown() {
 		ops.On = data.On.ValueStringPointer()
+	}
+	if !data.Cpu.IsNull() && !data.Cpu.IsUnknown() {
+		ops.Cpu = data.Cpu.ValueStringPointer()
 	}
 	if !data.AlwaysFromScratch.IsNull() && !data.AlwaysFromScratch.IsUnknown() {
 		ops.AlwaysFromScratch = data.AlwaysFromScratch.ValueBoolPointer()
