@@ -74,17 +74,20 @@ resource "buddy_pipeline" "event_delete_ref" {
 }
 
 resource "buddy_pipeline" "schedule" {
-  domain                      = "mydomain"
-  project_name                = "myproject"
-  name                        = "schedule"
-  on                          = "SCHEDULE"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "schedule"
+  on           = "EVENT"
+  event {
+    type       = "SCHEDULE"
+    start_date = "2016-11-18T12:38:16.000Z"
+    delay      = 10
+  }
   priority                    = "LOW"
   fail_on_prepare_env_warning = true
-  start_date                  = "2016-11-18T12:38:16.000Z"
-  delay                       = 10
   paused                      = true
   git_config_ref              = "FIXED"
-  git_config = {
+  git_config                  = {
     project = "project_name"
     branch  = "branch_name"
     path    = "path/to/definition.yml"
@@ -92,11 +95,13 @@ resource "buddy_pipeline" "schedule" {
 }
 
 resource "buddy_pipeline" "schedule_cron" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "schedule_cron"
-  on             = "SCHEDULE"
-  cron           = "15 14 1 * *"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "schedule_cron"
+  on           = "EVENT"
+  event {
+    cron = "15 14 1 * *"
+  }
   git_config_ref = "DYNAMIC"
 }
 
@@ -153,7 +158,7 @@ resource "buddy_pipeline" "conditions" {
     condition = "DATETIME"
     hours     = [10]
     days      = [1, 20]
-    zone_id   = "America/Monterrey"
+    timezone  = "America/Monterrey"
   }
   trigger_condition {
     condition     = "TRIGGERING_USER_IS_NOT_IN_GROUP"
@@ -190,9 +195,7 @@ resource "buddy_pipeline" "conditions" {
 - `clone_depth` (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits
 - `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
 - `cpu` (String) The pipeline's cpu. Allowed: `X64`, `ARM`
-- `cron` (String) The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified
 - `definition_source` (String) The pipeline's definition source. Allowed: `LOCAL`, `REMOTE`
-- `delay` (Number) The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified
 - `description_required` (Boolean) Defines whether or not pipeline's execution must be commented
 - `disabled` (Boolean) Defines whether or not the pipeline can be run
 - `disabling_reason` (String) The pipeline's disabling reason
@@ -217,7 +220,6 @@ resource "buddy_pipeline" "conditions" {
 - `remote_parameter` (Block Set) The pipeline's remote definition parameters. Set it if `definition_source: REMOTE` (see [below for nested schema](#nestedblock--remote_parameter))
 - `remote_path` (String) The pipeline's remote definition path. Set it if `definition_source: REMOTE`
 - `remote_project_name` (String) The pipeline's remote definition project name. Set it if `definition_source: REMOTE`
-- `start_date` (String) The pipeline's start date. Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified. Format: `2016-11-18T12:38:16.000Z`
 - `tags` (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 - `target_site_url` (String) The pipeline's website target URL
 - `trigger_condition` (Block Set) The pipeline's list of trigger conditions (see [below for nested schema](#nestedblock--trigger_condition))
@@ -244,8 +246,12 @@ Required:
 Optional:
 
 - `branches` (Set of String)
+- `cron` (String)
+- `delay` (Number)
 - `events` (Set of String)
 - `refs` (Set of String)
+- `start_date` (String)
+- `timezone` (String)
 
 
 <a id="nestedatt--git_config"></a>
@@ -315,11 +321,11 @@ Optional:
 - `paths` (Set of String)
 - `pipeline_name` (String)
 - `project_name` (String)
+- `timezone` (String)
 - `trigger_group` (String)
 - `trigger_user` (String)
 - `variable_key` (String)
 - `variable_value` (String)
-- `zone_id` (String)
 
 
 <a id="nestedatt--creator"></a>

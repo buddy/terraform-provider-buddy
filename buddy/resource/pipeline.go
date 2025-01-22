@@ -62,10 +62,7 @@ type pipelineResourceModel struct {
 	AutoClearCache            types.Bool   `tfsdk:"auto_clear_cache"`
 	NoSkipToMostRecent        types.Bool   `tfsdk:"no_skip_to_most_recent"`
 	DoNotCreateCommitStatus   types.Bool   `tfsdk:"do_not_create_commit_status"`
-	StartDate                 types.String `tfsdk:"start_date"`
-	Delay                     types.Int64  `tfsdk:"delay"`
 	CloneDepth                types.Int64  `tfsdk:"clone_depth"`
-	Cron                      types.String `tfsdk:"cron"`
 	Paused                    types.Bool   `tfsdk:"paused"`
 	PauseOnRepeatedFailures   types.Int64  `tfsdk:"pause_on_repeated_failures"`
 	IgnoreFailOnProjectStatus types.Bool   `tfsdk:"ignore_fail_on_project_status"`
@@ -128,11 +125,8 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.RemotePath = types.StringValue(pipeline.RemotePath)
 	r.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
 	r.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
-	r.StartDate = types.StringValue(pipeline.StartDate)
-	r.Delay = types.Int64Value(int64(pipeline.Delay))
 	r.Paused = types.BoolValue(pipeline.Paused)
 	r.PauseOnRepeatedFailures = types.Int64Value(int64(pipeline.PauseOnRepeatedFailures))
-	r.Cron = types.StringValue(pipeline.Cron)
 	r.Disabled = types.BoolValue(pipeline.Disabled)
 	r.DisablingReason = types.StringValue(pipeline.DisabledReason)
 	r.CloneDepth = types.Int64Value(int64(pipeline.CloneDepth))
@@ -253,7 +247,6 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					stringvalidator.OneOf(
 						buddy.PipelineOnClick,
 						buddy.PipelineOnEvent,
-						buddy.PipelineOnSchedule,
 					),
 				},
 			},
@@ -353,47 +346,10 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 				Computed:            true,
 			},
-			"start_date": schema.StringAttribute{
-				MarkdownDescription: "The pipeline's start date. Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified. Format: `2016-11-18T12:38:16.000Z`",
-				Optional:            true,
-				Computed:            true,
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.Expressions{
-						path.MatchRoot("cron"),
-					}...),
-					stringvalidator.AlsoRequires(path.Expressions{
-						path.MatchRoot("delay"),
-					}...),
-				},
-			},
-			"delay": schema.Int64Attribute{
-				MarkdownDescription: "The pipeline's runs interval (in minutes). Required if the pipeline is set to `on: SCHEDULE` and no `cron` is specified",
-				Optional:            true,
-				Computed:            true,
-				Validators: []validator.Int64{
-					int64validator.ConflictsWith(path.Expressions{
-						path.MatchRoot("cron"),
-					}...),
-					int64validator.AlsoRequires(path.Expressions{
-						path.MatchRoot("start_date"),
-					}...),
-				},
-			},
 			"clone_depth": schema.Int64Attribute{
 				MarkdownDescription: "The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits",
 				Optional:            true,
 				Computed:            true,
-			},
-			"cron": schema.StringAttribute{
-				MarkdownDescription: "The pipeline's CRON expression. Required if the pipeline is set to `on: SCHEDULE` and neither `start_date` nor `delay` is specified",
-				Optional:            true,
-				Computed:            true,
-				Validators: []validator.String{
-					stringvalidator.ConflictsWith(path.Expressions{
-						path.MatchRoot("delay"),
-						path.MatchRoot("start_date"),
-					}...),
-				},
 			},
 			"paused": schema.BoolAttribute{
 				MarkdownDescription: "Is the pipeline's run paused. Restricted to `on: SCHEDULE`",
@@ -582,7 +538,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 							ElementType: types.Int64Type,
 							Optional:    true,
 						},
-						"zone_id": schema.StringAttribute{
+						"timezone": schema.StringAttribute{
 							Optional: true,
 						},
 						"project_name": schema.StringAttribute{
@@ -689,17 +645,8 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.DoNotCreateCommitStatus.IsNull() && !data.DoNotCreateCommitStatus.IsUnknown() {
 		ops.DoNotCreateCommitStatus = data.DoNotCreateCommitStatus.ValueBoolPointer()
 	}
-	if !data.StartDate.IsNull() && !data.StartDate.IsUnknown() {
-		ops.StartDate = data.StartDate.ValueStringPointer()
-	}
-	if !data.Delay.IsNull() && !data.Delay.IsUnknown() {
-		ops.Delay = util.PointerInt(data.Delay.ValueInt64())
-	}
 	if !data.CloneDepth.IsNull() && !data.CloneDepth.IsUnknown() {
 		ops.CloneDepth = util.PointerInt(data.CloneDepth.ValueInt64())
-	}
-	if !data.Cron.IsNull() && !data.Cron.IsUnknown() {
-		ops.Cron = data.Cron.ValueStringPointer()
 	}
 	if !data.Paused.IsNull() && !data.Paused.IsUnknown() {
 		ops.Paused = data.Paused.ValueBoolPointer()
@@ -897,20 +844,11 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	if !data.DoNotCreateCommitStatus.IsNull() && !data.DoNotCreateCommitStatus.IsUnknown() {
 		ops.DoNotCreateCommitStatus = data.DoNotCreateCommitStatus.ValueBoolPointer()
 	}
-	if !data.StartDate.IsNull() && !data.StartDate.IsUnknown() {
-		ops.StartDate = data.StartDate.ValueStringPointer()
-	}
-	if !data.Delay.IsNull() && !data.Delay.IsUnknown() {
-		ops.Delay = util.PointerInt(data.Delay.ValueInt64())
-	}
 	if !data.PauseOnRepeatedFailures.IsNull() && !data.PauseOnRepeatedFailures.IsUnknown() {
 		ops.PauseOnRepeatedFailures = util.PointerInt(data.PauseOnRepeatedFailures.ValueInt64())
 	}
 	if !data.CloneDepth.IsNull() && !data.CloneDepth.IsUnknown() {
 		ops.CloneDepth = util.PointerInt(data.CloneDepth.ValueInt64())
-	}
-	if !data.Cron.IsNull() && !data.Cron.IsUnknown() {
-		ops.Cron = data.Cron.ValueStringPointer()
 	}
 	if !data.Paused.IsNull() && !data.Paused.IsUnknown() {
 		ops.Paused = data.Paused.ValueBoolPointer()

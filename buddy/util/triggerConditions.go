@@ -14,7 +14,7 @@ type triggerConditionModel struct {
 	VariableValue types.String `tfsdk:"variable_value"`
 	Hours         types.Set    `tfsdk:"hours"`
 	Days          types.Set    `tfsdk:"days"`
-	ZoneId        types.String `tfsdk:"zone_id"`
+	Timezone      types.String `tfsdk:"timezone"`
 	ProjectName   types.String `tfsdk:"project_name"`
 	PipelineName  types.String `tfsdk:"pipeline_name"`
 	TriggerUser   types.String `tfsdk:"trigger_user"`
@@ -43,8 +43,8 @@ func TriggerConditionsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.P
 		if !v.ProjectName.IsNull() && !v.ProjectName.IsUnknown() {
 			tc.TriggerProjectName = v.ProjectName.ValueString()
 		}
-		if !v.ZoneId.IsNull() && !v.ZoneId.IsUnknown() {
-			tc.ZoneId = v.ZoneId.ValueString()
+		if !v.Timezone.IsNull() && !v.Timezone.IsUnknown() {
+			tc.Timezone = v.Timezone.ValueString()
 		}
 		if !v.VariableValue.IsNull() && !v.VariableValue.IsUnknown() {
 			tc.TriggerVariableValue = v.VariableValue.ValueString()

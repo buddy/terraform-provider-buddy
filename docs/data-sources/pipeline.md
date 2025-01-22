@@ -74,8 +74,12 @@ data "buddy_pipeline" "by_id" {
 Read-Only:
 
 - `branches` (Set of String)
+- `cron` (String)
+- `delay` (Number)
 - `events` (Set of String)
 - `refs` (Set of String)
+- `start_date` (String)
+- `timezone` (String)
 - `type` (String)
 
 
