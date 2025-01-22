@@ -27,10 +27,7 @@ type testAccPipelineExpectedAttributes struct {
 	AutoClearCache            bool
 	NoSkipToMostRecent        bool
 	DoNotCreateCommitStatus   bool
-	StartDate                 string
-	Delay                     int
 	CloneDepth                int
-	Cron                      string
 	Paused                    bool
 	PauseOnRepeatedFailures   int
 	Priority                  string
@@ -398,6 +395,7 @@ func TestAccPipeline_schedule(t *testing.T) {
 	var pipeline buddy.Pipeline
 	var project buddy.Project
 	var profile buddy.Profile
+	eventType := buddy.PipelineEventTypeSchedule
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
@@ -429,13 +427,16 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                    name,
-						On:                      buddy.PipelineOnSchedule,
-						Project:                 &project,
-						Creator:                 &profile,
-						StartDate:               startDate,
-						Delay:                   delay,
-						Priority:                priority,
+						Name:     name,
+						On:       buddy.PipelineOnEvent,
+						Project:  &project,
+						Creator:  &profile,
+						Priority: priority,
+						Event: &buddy.PipelineEvent{
+							Type:      eventType,
+							StartDate: startDate,
+							Delay:     delay,
+						},
 						GitChangesetBase:        gitChangeSet,
 						FilesystemChangesetBase: filesystemChangeSet,
 						FailOnPrepareEnvWarning: true,
@@ -455,12 +456,15 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                    newName,
-						On:                      buddy.PipelineOnSchedule,
-						Project:                 &project,
-						Creator:                 &profile,
-						StartDate:               newStartDate,
-						Delay:                   newDelay,
+						Name:    newName,
+						On:      buddy.PipelineOnEvent,
+						Project: &project,
+						Creator: &profile,
+						Event: &buddy.PipelineEvent{
+							Type:      eventType,
+							StartDate: newStartDate,
+							Delay:     newDelay,
+						},
 						Priority:                newPriority,
 						GitChangesetBase:        newGitChangeSet,
 						FilesystemChangesetBase: newFilesystemChangeSet,
@@ -475,9 +479,10 @@ func TestAccPipeline_schedule(t *testing.T) {
 			},
 			// import
 			{
-				ResourceName:      "buddy_pipeline.bar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "buddy_pipeline.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"event"},
 			},
 		},
 	})
@@ -487,12 +492,14 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 	var pipeline buddy.Pipeline
 	var project buddy.Project
 	var profile buddy.Profile
+	eventType := buddy.PipelineEventTypeSchedule
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
 	cron := "15 14 1 * *"
 	newCron := "0 22 * * 1-5"
+	newTimezone := "Europer/Warsaw"
 	reason := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -503,17 +510,20 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigScheduleCron(domain, projectName, name, cron, true),
+				Config: testAccPipelineConfigScheduleCron(domain, projectName, name, cron, "", true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                    name,
-						On:                      buddy.PipelineOnSchedule,
-						Project:                 &project,
-						Creator:                 &profile,
-						Cron:                    cron,
+						Name:    name,
+						On:      buddy.PipelineOnEvent,
+						Project: &project,
+						Creator: &profile,
+						Event: &buddy.PipelineEvent{
+							Type: eventType,
+							Cron: cron,
+						},
 						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
@@ -524,17 +534,21 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigScheduleCron(domain, projectName, newName, newCron, false),
+				Config: testAccPipelineConfigScheduleCron(domain, projectName, newName, newCron, newTimezone, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                    newName,
-						On:                      buddy.PipelineOnSchedule,
-						Project:                 &project,
-						Creator:                 &profile,
-						Cron:                    newCron,
+						Name:    newName,
+						On:      buddy.PipelineOnEvent,
+						Project: &project,
+						Creator: &profile,
+						Event: &buddy.PipelineEvent{
+							Type:     eventType,
+							Cron:     newCron,
+							Timezone: newTimezone,
+						},
 						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
@@ -551,11 +565,14 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                    newName,
-						On:                      buddy.PipelineOnSchedule,
-						Project:                 &project,
-						Creator:                 &profile,
-						Cron:                    newCron,
+						Name:    newName,
+						On:      buddy.PipelineOnEvent,
+						Project: &project,
+						Creator: &profile,
+						Event: &buddy.PipelineEvent{
+							Type: eventType,
+							Cron: newCron,
+						},
 						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
@@ -573,11 +590,14 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:                    newName,
-						On:                      buddy.PipelineOnSchedule,
-						Project:                 &project,
-						Creator:                 &profile,
-						Cron:                    newCron,
+						Name:    newName,
+						On:      buddy.PipelineOnEvent,
+						Project: &project,
+						Creator: &profile,
+						Event: &buddy.PipelineEvent{
+							Type: eventType,
+							Cron: newCron,
+						},
 						Priority:                buddy.PipelinePriorityNormal,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
@@ -589,15 +609,16 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 			},
 			// import
 			{
-				ResourceName:      "buddy_pipeline.bar",
-				ImportState:       true,
-				ImportStateVerify: true,
+				ResourceName:            "buddy_pipeline.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"event"},
 			},
 		},
 	})
 }
 
-func testAccPipelineConfigScheduleCron(domain string, projectName string, name string, cron string, paused bool) string {
+func testAccPipelineConfigScheduleCron(domain string, projectName string, name string, cron string, timezone string, paused bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -610,15 +631,19 @@ resource "buddy_project" "proj" {
 
 resource "buddy_pipeline" "bar" {
 	domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "SCHEDULE"
-	cron = "%s"
+  project_name = "${buddy_project.proj.name}"
+  name = "%s"
+  on = "EVENT"
+  event {
+    type = "SCHEDULE"
+    cron = "%s"
+    timezone = "%s"
+  }	
 	paused = %t
 	fail_on_prepare_env_warning = true
 	fetch_all_refs = true
 }
-`, domain, projectName, name, cron, paused)
+`, domain, projectName, name, cron, timezone, paused)
 }
 
 func testAccPipelineConfigScheduleCronDisabled(domain string, projectName string, name string, cron string, paused bool, disabled bool, reason string) string {
@@ -634,14 +659,17 @@ resource "buddy_project" "proj" {
 
 resource "buddy_pipeline" "bar" {
 	domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    on = "SCHEDULE"
-	cron = "%s"
+  project_name = "${buddy_project.proj.name}"
+  name = "%s"
+  on = "EVENT"
+  event {
+    type = "SCHEDULE"
+    cron = "%s"
+  }	
 	paused = %t
 	fail_on_prepare_env_warning = true
 	fetch_all_refs = true
-    disabled = %t
+  disabled = %t
 	disabling_reason = "%s"	
 }
 `, domain, projectName, name, cron, paused, disabled, reason)
@@ -788,21 +816,24 @@ resource "buddy_project" "proj" {
 }
 
 resource "buddy_pipeline" "bar" {
-	domain = "${buddy_workspace.foo.domain}"
-  project_name = "${buddy_project.proj.name}"
-  name = "%s"
-  on = "SCHEDULE"
-	start_date = "%s"
-	delay = %d
-	paused = %t
-	priority = "%s"
-  pause_on_repeated_failures = %d
-  description_required = %t
-  concurrent_pipeline_runs = %t
-  git_changeset_base = "%s"
-  filesystem_changeset_base = "%s"
-	fail_on_prepare_env_warning = true
-	fetch_all_refs = true
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    on = "EVENT"
+    event {
+      type = "SCHEDULE"
+      start_date = "%s"
+	    delay = %d
+    }	
+	  paused = %t
+	  priority = "%s"
+    pause_on_repeated_failures = %d
+    description_required = %t
+    concurrent_pipeline_runs = %t
+    git_changeset_base = "%s"
+    filesystem_changeset_base = "%s"
+	  fail_on_prepare_env_warning = true
+	  fetch_all_refs = true
 }
 `, domain, projectName, name, startDate, delay, paused, priority, pausedFailures, descRequired, concurrentRuns, gitChangesetBase, filesystemChangesetBase)
 }
@@ -970,7 +1001,7 @@ func TestAccPipeline_event(t *testing.T) {
 								TriggerCondition: buddy.PipelineTriggerConditionDateTime,
 								TriggerHours:     []int{tcHours},
 								TriggerDays:      []int{tcDays},
-								ZoneId:           tcZoneId,
+								Timezone:         tcZoneId,
 							},
 							{
 								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIs,
@@ -1043,7 +1074,7 @@ func TestAccPipeline_event(t *testing.T) {
 								TriggerCondition: buddy.PipelineTriggerConditionDateTime,
 								TriggerHours:     []int{newTcHours},
 								TriggerDays:      []int{newTcDays},
-								ZoneId:           newTcZoneId,
+								Timezone:         newTcZoneId,
 							},
 							{
 								TriggerCondition: buddy.PipelineTriggerConditionTriggeringUserIs,
@@ -1372,7 +1403,6 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		attrsNoSkipToMostRecent, _ := strconv.ParseBool(attrs["no_skip_to_most_recent"])
 		attrsDoNotCreateCommitStatus, _ := strconv.ParseBool(attrs["do_not_create_commit_status"])
 		attrsIgnoreFailOnProjectStatus, _ := strconv.ParseBool(attrs["ignore_fail_on_project_status"])
-		attrsDelay, _ := strconv.Atoi(attrs["delay"])
 		attrsPausedFailures, _ := strconv.Atoi(attrs["pause_on_repeated_failures"])
 		attrsCloneDepth, _ := strconv.Atoi(attrs["clone_depth"])
 		attrsPaused, _ := strconv.ParseBool(attrs["paused"])
@@ -1464,22 +1494,6 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				return err
 			}
 		}
-		if want.StartDate != "" {
-			if err := util.CheckDateFieldEqual("start_date", attrs["start_date"], want.StartDate); err != nil {
-				return err
-			}
-			if err := util.CheckFieldEqualAndSet("StartDate", pipeline.StartDate, want.StartDate); err != nil {
-				return err
-			}
-		}
-		if want.Delay != 0 {
-			if err := util.CheckIntFieldEqualAndSet("delay", attrsDelay, want.Delay); err != nil {
-				return err
-			}
-			if err := util.CheckIntFieldEqualAndSet("Delay", pipeline.Delay, want.Delay); err != nil {
-				return err
-			}
-		}
 		if want.PauseOnRepeatedFailures != 0 {
 			if err := util.CheckIntFieldEqualAndSet("pause_on_repeated_failures", attrsPausedFailures, want.PauseOnRepeatedFailures); err != nil {
 				return err
@@ -1493,14 +1507,6 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				return err
 			}
 			if err := util.CheckIntFieldEqualAndSet("CloneDepth", pipeline.CloneDepth, want.CloneDepth); err != nil {
-				return err
-			}
-		}
-		if want.Cron != "" {
-			if err := util.CheckFieldEqualAndSet("cron", attrs["cron"], want.Cron); err != nil {
-				return err
-			}
-			if err := util.CheckFieldEqualAndSet("Cron", pipeline.Cron, want.Cron); err != nil {
 				return err
 			}
 		}
@@ -1691,6 +1697,40 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				if err := util.CheckFieldEqualAndSet("event.0.events.0", attrs["event.0.events.0"], want.Event.Events[0]); err != nil {
 					return err
 				}
+			} else if want.Event.Type == buddy.PipelineEventTypeSchedule {
+				if want.Event.StartDate != "" {
+					if err := util.CheckDateFieldEqual("event.0.start_date", attrs["event.0.start_date"], want.Event.StartDate); err != nil {
+						return err
+					}
+					if err := util.CheckFieldEqualAndSet("Events[0].StartDate", pipeline.Events[0].StartDate, want.Event.StartDate); err != nil {
+						return err
+					}
+				}
+				if want.Event.Cron != "" {
+					if err := util.CheckFieldEqualAndSet("event.0.cron", attrs["event.0.cron"], want.Event.Cron); err != nil {
+						return err
+					}
+					if err := util.CheckFieldEqualAndSet("Events[0].Cron", pipeline.Events[0].Cron, want.Event.Cron); err != nil {
+						return err
+					}
+				}
+				if want.Event.Timezone != "" {
+					if err := util.CheckFieldEqualAndSet("event.0.timezone", attrs["event.0.timezone"], want.Event.Timezone); err != nil {
+						return err
+					}
+					if err := util.CheckFieldEqualAndSet("Events[0].Timezone", pipeline.Events[0].Timezone, want.Event.Timezone); err != nil {
+						return err
+					}
+				}
+				if want.Event.Delay > 0 {
+					attrsDelay, _ := strconv.Atoi(attrs["event.0.delay"])
+					if err := util.CheckIntFieldEqual("event.0.delay", attrsDelay, want.Event.Delay); err != nil {
+						return err
+					}
+					if err := util.CheckIntFieldEqual("Events[0].Delay", pipeline.Events[0].Delay, want.Event.Delay); err != nil {
+						return err
+					}
+				}
 			} else {
 				if err := util.CheckFieldEqualAndSet("Events[0].Refs[0]", pipeline.Events[0].Refs[0], want.Event.Refs[0]); err != nil {
 					return err
@@ -1769,10 +1809,10 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 					if err := util.CheckIntFieldEqualAndSet(fmt.Sprintf("trigger_condition.%d.days[0]", i), attrsTriggerConditionsDays, triggerCondition.TriggerDays[0]); err != nil {
 						return err
 					}
-					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].ZoneId", i), pipeline.TriggerConditions[i].ZoneId, triggerCondition.ZoneId); err != nil {
+					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].Timezone", i), pipeline.TriggerConditions[i].Timezone, triggerCondition.Timezone); err != nil {
 						return err
 					}
-					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("trigger_condition.%d.zone_id", i), attrs[fmt.Sprintf("trigger_condition.%d.zone_id", i)], triggerCondition.ZoneId); err != nil {
+					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("trigger_condition.%d.timezone", i), attrs[fmt.Sprintf("trigger_condition.%d.timezone", i)], triggerCondition.Timezone); err != nil {
 						return err
 					}
 				}
@@ -1927,7 +1967,7 @@ resource "buddy_pipeline" "bar" {
         condition = "DATETIME"
         hours = [%d]
         days = [%d]
-        zone_id = "%s"
+        timezone = "%s"
     }
 		trigger_condition {
 				condition = "TRIGGERING_USER_IS"

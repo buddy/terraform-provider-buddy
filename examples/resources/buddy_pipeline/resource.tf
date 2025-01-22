@@ -56,14 +56,17 @@ resource "buddy_pipeline" "event_delete_ref" {
 }
 
 resource "buddy_pipeline" "schedule" {
-  domain                      = "mydomain"
-  project_name                = "myproject"
-  name                        = "schedule"
-  on                          = "SCHEDULE"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "schedule"
+  on           = "EVENT"
+  event {
+    type       = "SCHEDULE"
+    start_date = "2016-11-18T12:38:16.000Z"
+    delay      = 10
+  }
   priority                    = "LOW"
   fail_on_prepare_env_warning = true
-  start_date                  = "2016-11-18T12:38:16.000Z"
-  delay                       = 10
   paused                      = true
   git_config_ref              = "FIXED"
   git_config = {
@@ -74,11 +77,13 @@ resource "buddy_pipeline" "schedule" {
 }
 
 resource "buddy_pipeline" "schedule_cron" {
-  domain         = "mydomain"
-  project_name   = "myproject"
-  name           = "schedule_cron"
-  on             = "SCHEDULE"
-  cron           = "15 14 1 * *"
+  domain       = "mydomain"
+  project_name = "myproject"
+  name         = "schedule_cron"
+  on           = "EVENT"
+  event {
+    cron = "15 14 1 * *"
+  }
   git_config_ref = "DYNAMIC"
 }
 
@@ -135,7 +140,7 @@ resource "buddy_pipeline" "conditions" {
     condition = "DATETIME"
     hours     = [10]
     days      = [1, 20]
-    zone_id   = "America/Monterrey"
+    timezone  = "America/Monterrey"
   }
   trigger_condition {
     condition     = "TRIGGERING_USER_IS_NOT_IN_GROUP"

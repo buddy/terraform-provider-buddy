@@ -3,6 +3,7 @@ package util
 import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
@@ -16,24 +17,36 @@ import (
 )
 
 type eventModel struct {
-	Type     types.String `tfsdk:"type"`
-	Refs     types.Set    `tfsdk:"refs"`
-	Branches types.Set    `tfsdk:"branches"`
-	Events   types.Set    `tfsdk:"events"`
+	Type      types.String `tfsdk:"type"`
+	Refs      types.Set    `tfsdk:"refs"`
+	Branches  types.Set    `tfsdk:"branches"`
+	Events    types.Set    `tfsdk:"events"`
+	StartDate types.String `tfsdk:"start_date"`
+	Delay     types.Int64  `tfsdk:"delay"`
+	Cron      types.String `tfsdk:"cron"`
+	Timezone  types.String `tfsdk:"timezone"`
 }
 
 func eventModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
-		"type":     types.StringType,
-		"refs":     types.SetType{ElemType: types.StringType},
-		"events":   types.SetType{ElemType: types.StringType},
-		"branches": types.SetType{ElemType: types.StringType},
+		"type":       types.StringType,
+		"refs":       types.SetType{ElemType: types.StringType},
+		"events":     types.SetType{ElemType: types.StringType},
+		"branches":   types.SetType{ElemType: types.StringType},
+		"start_date": types.StringType,
+		"delay":      types.Int64Type,
+		"cron":       types.StringType,
+		"timezone":   types.StringType,
 	}
 }
 
 func (e *eventModel) loadAPI(ctx context.Context, event *buddy.PipelineEvent) diag.Diagnostics {
 	var diags diag.Diagnostics
 	e.Type = types.StringValue(event.Type)
+	e.StartDate = types.StringValue(event.StartDate)
+	e.Delay = types.Int64Value(int64(event.Delay))
+	e.Cron = types.StringValue(event.Cron)
+	e.Timezone = types.StringValue(event.Timezone)
 	r, d1 := types.SetValueFrom(ctx, types.StringType, &event.Refs)
 	e.Refs = r
 	diags.Append(d1...)
@@ -49,6 +62,18 @@ func (e *eventModel) loadAPI(ctx context.Context, event *buddy.PipelineEvent) di
 func SourceEventModelAttributes() map[string]sourceschema.Attribute {
 	return map[string]sourceschema.Attribute{
 		"type": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"start_date": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"delay": sourceschema.Int64Attribute{
+			Computed: true,
+		},
+		"cron": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"timezone": sourceschema.StringAttribute{
 			Computed: true,
 		},
 		"refs": sourceschema.SetAttribute{
@@ -73,11 +98,46 @@ func ResourceEventModelAttributes() map[string]schema.Attribute {
 			Validators: []validator.String{
 				stringvalidator.OneOf(
 					buddy.PipelineEventTypePush,
+					buddy.PipelineEventTypeSchedule,
 					buddy.PipelineEventTypeCreateRef,
 					buddy.PipelineEventTypeDeleteRef,
 					buddy.PipelineEventTypePullRequest,
 				),
 			},
+		},
+		"start_date": schema.StringAttribute{
+			Optional: true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.Expressions{
+					path.MatchRelative().AtParent().AtName("cron"),
+				}...),
+				stringvalidator.AlsoRequires(path.Expressions{
+					path.MatchRelative().AtParent().AtName("delay"),
+				}...),
+			},
+		},
+		"delay": schema.Int64Attribute{
+			Optional: true,
+			Validators: []validator.Int64{
+				int64validator.ConflictsWith(path.Expressions{
+					path.MatchRelative().AtParent().AtName("cron"),
+				}...),
+				int64validator.AlsoRequires(path.Expressions{
+					path.MatchRelative().AtParent().AtName("start_date"),
+				}...),
+			},
+		},
+		"cron": schema.StringAttribute{
+			Optional: true,
+			Validators: []validator.String{
+				stringvalidator.ConflictsWith(path.Expressions{
+					path.MatchRelative().AtParent().AtName("delay"),
+					path.MatchRelative().AtParent().AtName("start_date"),
+				}...),
+			},
+		},
+		"timezone": schema.StringAttribute{
+			Optional: true,
 		},
 		"refs": schema.SetAttribute{
 			ElementType: types.StringType,
@@ -149,6 +209,18 @@ func EventsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.PipelineEven
 		pe := &buddy.PipelineEvent{}
 		if !v.Type.IsNull() && !v.Type.IsUnknown() {
 			pe.Type = v.Type.ValueString()
+		}
+		if !v.StartDate.IsNull() && !v.StartDate.IsUnknown() {
+			pe.StartDate = v.StartDate.ValueString()
+		}
+		if !v.Delay.IsNull() && !v.Delay.IsUnknown() {
+			pe.Delay = int(v.Delay.ValueInt64())
+		}
+		if !v.Cron.IsNull() && !v.Cron.IsUnknown() {
+			pe.Cron = v.Cron.ValueString()
+		}
+		if !v.Timezone.IsNull() && !v.Timezone.IsUnknown() {
+			pe.Timezone = v.Timezone.ValueString()
 		}
 		if !v.Refs.IsNull() && !v.Refs.IsUnknown() {
 			refs, d := StringSetToApi(ctx, &v.Refs)
