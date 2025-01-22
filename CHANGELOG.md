@@ -2,6 +2,7 @@
 * [Breaking] - cron, start_date and delay in pipeline are moved to event
 * [Breaking] - zone_id -> timezone in pipeline trigger condition
 
+
 # Release v1.24.1 (2024-12-10)
 * Adds cpu to pipeline
 
