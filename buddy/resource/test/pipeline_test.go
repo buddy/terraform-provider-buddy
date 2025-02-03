@@ -16,7 +16,6 @@ import (
 
 type testAccPipelineExpectedAttributes struct {
 	Name                      string
-	On                        string
 	AlwaysFromScratch         bool
 	DescriptionRequired       bool
 	ConcurrentPipelineRuns    bool
@@ -95,7 +94,6 @@ func TestAccPipeline_permissions(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        false,
@@ -123,7 +121,6 @@ func TestAccPipeline_permissions(t *testing.T) {
 					testAccMemberGet("buddy_member.a", &member),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        false,
@@ -160,7 +157,6 @@ func TestAccPipeline_permissions(t *testing.T) {
 					testAccGroupGet("buddy_group.g", &group),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        false,
@@ -202,7 +198,6 @@ func TestAccPipeline_permissions(t *testing.T) {
 					testAccGroupGet("buddy_group.g", &group),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        false,
@@ -237,7 +232,6 @@ func TestAccPipeline_permissions(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        buddy.PipelineOnClick,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
 						NoSkipToMostRecent:        false,
@@ -428,7 +422,6 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:     name,
-						On:       buddy.PipelineOnEvent,
 						Project:  &project,
 						Creator:  &profile,
 						Priority: priority,
@@ -457,7 +450,6 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:    newName,
-						On:      buddy.PipelineOnEvent,
 						Project: &project,
 						Creator: &profile,
 						Event: &buddy.PipelineEvent{
@@ -517,7 +509,6 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:    name,
-						On:      buddy.PipelineOnEvent,
 						Project: &project,
 						Creator: &profile,
 						Event: &buddy.PipelineEvent{
@@ -541,7 +532,6 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:    newName,
-						On:      buddy.PipelineOnEvent,
 						Project: &project,
 						Creator: &profile,
 						Event: &buddy.PipelineEvent{
@@ -566,7 +556,6 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:    newName,
-						On:      buddy.PipelineOnEvent,
 						Project: &project,
 						Creator: &profile,
 						Event: &buddy.PipelineEvent{
@@ -591,7 +580,6 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:    newName,
-						On:      buddy.PipelineOnEvent,
 						Project: &project,
 						Creator: &profile,
 						Event: &buddy.PipelineEvent{
@@ -633,7 +621,6 @@ resource "buddy_pipeline" "bar" {
 	domain = "${buddy_workspace.foo.domain}"
   project_name = "${buddy_project.proj.name}"
   name = "%s"
-  on = "EVENT"
   event {
     type = "SCHEDULE"
     cron = "%s"
@@ -661,7 +648,6 @@ resource "buddy_pipeline" "bar" {
 	domain = "${buddy_workspace.foo.domain}"
   project_name = "${buddy_project.proj.name}"
   name = "%s"
-  on = "EVENT"
   event {
     type = "SCHEDULE"
     cron = "%s"
@@ -678,7 +664,6 @@ resource "buddy_pipeline" "bar" {
 func testAccPipelineGetRemoteYaml(branch string) string {
 	return fmt.Sprintf(`
 - pipeline: "test"
-  on: "CLICK"
   refs:
   - "refs/heads/%s"
   actions:
@@ -735,8 +720,7 @@ resource "buddy_pipeline" "remote" {
 	project_name = "${buddy_project.proj.name}"
 	name = "%s"
 	definition_source = "LOCAL"
-	on = "CLICK"
-  	refs = ["refs/heads/%s"]
+  refs = ["refs/heads/%s"]
 }
 `, domain, projectName, remoteProjectName, remoteProjectName2, name, branch)
 }
@@ -819,7 +803,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "EVENT"
     event {
       type = "SCHEDULE"
       start_date = "%s"
@@ -867,7 +850,6 @@ func TestAccPipeline_event_pull_request(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    name,
-						On:                      buddy.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
@@ -890,7 +872,6 @@ func TestAccPipeline_event_pull_request(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      buddy.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
@@ -959,7 +940,6 @@ func TestAccPipeline_event(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    name,
-						On:                      buddy.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
@@ -1032,7 +1012,6 @@ func TestAccPipeline_event(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
-						On:                      buddy.PipelineOnEvent,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
@@ -1141,7 +1120,6 @@ func TestAccPipeline_click(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      name,
-						On:                        buddy.PipelineOnClick,
 						Cpu:                       cpu,
 						AlwaysFromScratch:         true,
 						AutoClearCache:            false,
@@ -1169,7 +1147,6 @@ func TestAccPipeline_click(t *testing.T) {
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                      newName,
-						On:                        buddy.PipelineOnClick,
 						Cpu:                       newCpu,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            true,
@@ -1430,12 +1407,6 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 			return err
 		}
 		if err := util.CheckIntFieldEqualAndSet("pipeline_id", attrsPipelineId, pipeline.Id); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("On", pipeline.On, want.On); err != nil {
-			return err
-		}
-		if err := util.CheckFieldEqualAndSet("on", attrs["on"], want.On); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("DescriptionRequired", pipeline.DescriptionRequired, want.DescriptionRequired); err != nil {
@@ -1874,7 +1845,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "EVENT" 
     event {
         type = "%s"
         branches = ["%s"]
@@ -1931,7 +1901,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "EVENT" 
     event {
         type = "%s"
         refs = ["%s"]
@@ -2004,7 +1973,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "CLICK"
 	refs = ["%s"]
 }
 `, domain, projectName, name, ref)
@@ -2045,7 +2013,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "CLICK"
 	refs = ["%s"]
 	permissions {
 		others = "%s"
@@ -2105,7 +2072,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "CLICK"
 	refs = ["%s"]
 	permissions {
 		others = "%s"
@@ -2169,7 +2135,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "CLICK"
 	refs = ["%s"]
 	permissions {
 		others = "%s"
@@ -2229,7 +2194,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "CLICK"
 	refs = ["%s"]
 	permissions {}
 }
@@ -2251,7 +2215,6 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-    on = "CLICK"
     always_from_scratch = %t
 	  fail_on_prepare_env_warning = %t
 	  fetch_all_refs = %t

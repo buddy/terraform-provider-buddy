@@ -37,7 +37,6 @@ type pipelineSourceModel struct {
 	PipelineId              types.Int64  `tfsdk:"pipeline_id"`
 	Priority                types.String `tfsdk:"priority"`
 	HtmlUrl                 types.String `tfsdk:"html_url"`
-	On                      types.String `tfsdk:"on"`
 	Cpu                     types.String `tfsdk:"cpu"`
 	LastExecutionStatus     types.String `tfsdk:"last_execution_status"`
 	LastExecutionRevision   types.String `tfsdk:"last_execution_revision"`
@@ -68,7 +67,6 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	s.PipelineId = types.Int64Value(int64(pipeline.Id))
 	s.Priority = types.StringValue(pipeline.Priority)
 	s.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
-	s.On = types.StringValue(pipeline.On)
 	s.Cpu = types.StringValue(pipeline.Cpu)
 	s.LastExecutionRevision = types.StringValue(pipeline.LastExecutionRevision)
 	s.LastExecutionStatus = types.StringValue(pipeline.LastExecutionStatus)
@@ -158,10 +156,6 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"html_url": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's URL",
-				Computed:            true,
-			},
-			"on": schema.StringAttribute{
-				MarkdownDescription: "The pipeline's trigger mode",
 				Computed:            true,
 			},
 			"cpu": schema.StringAttribute{

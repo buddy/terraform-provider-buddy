@@ -20,7 +20,6 @@ resource "buddy_pipeline" "click" {
   domain                   = "mydomain"
   project_name             = "myproject"
   name                     = "click"
-  on                       = "CLICK"
   refs                     = ["main"]
   always_from_scratch      = true
   concurrent_pipeline_runs = true
@@ -38,7 +37,6 @@ resource "buddy_pipeline" "event_push" {
   domain               = "mydomain"
   project_name         = "myproject"
   name                 = "event_push"
-  on                   = "EVENT"
   priority             = "HIGH"
   fetch_all_refs       = true
   description_required = true
@@ -53,7 +51,6 @@ resource "buddy_pipeline" "event_create_ref" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "event_create_ref"
-  on           = "EVENT"
 
   event {
     type = "CREATE_REF"
@@ -65,7 +62,6 @@ resource "buddy_pipeline" "event_delete_ref" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "event_delete_ref"
-  on           = "EVENT"
 
   event {
     type = "DELETE_REF"
@@ -77,7 +73,6 @@ resource "buddy_pipeline" "schedule" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "schedule"
-  on           = "EVENT"
   event {
     type       = "SCHEDULE"
     start_date = "2016-11-18T12:38:16.000Z"
@@ -87,7 +82,7 @@ resource "buddy_pipeline" "schedule" {
   fail_on_prepare_env_warning = true
   paused                      = true
   git_config_ref              = "FIXED"
-  git_config                  = {
+  git_config = {
     project = "project_name"
     branch  = "branch_name"
     path    = "path/to/definition.yml"
@@ -98,7 +93,6 @@ resource "buddy_pipeline" "schedule_cron" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "schedule_cron"
-  on           = "EVENT"
   event {
     cron = "15 14 1 * *"
   }
@@ -124,7 +118,6 @@ resource "buddy_pipeline" "conditions" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "conditions"
-  on           = "CLICK"
   refs         = ["main"]
 
   trigger_condition {
@@ -200,7 +193,7 @@ resource "buddy_pipeline" "conditions" {
 - `disabled` (Boolean) Defines whether or not the pipeline can be run
 - `disabling_reason` (String) The pipeline's disabling reason
 - `do_not_create_commit_status` (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
-- `event` (Block Set) The pipeline's list of events. Set it if `on: EVENT` (see [below for nested schema](#nestedblock--event))
+- `event` (Block Set) The pipeline's list of events (see [below for nested schema](#nestedblock--event))
 - `execution_message_template` (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
 - `fail_on_prepare_env_warning` (Boolean) Defines either or not run should fail if any warning occurs in prepare environment
 - `fetch_all_refs` (Boolean) Defines whether or not fetch all refs from repository
@@ -210,12 +203,11 @@ resource "buddy_pipeline" "conditions" {
 - `git_config_ref` (String) The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
-- `on` (String) The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`
-- `pause_on_repeated_failures` (Number) The pipeline's max failed executions before it is paused. Restricted to `on: SCHEDULE`
-- `paused` (Boolean) Is the pipeline's run paused. Restricted to `on: SCHEDULE`
+- `pause_on_repeated_failures` (Number) The pipeline's max failed executions before it is paused. Restricted to schedule
+- `paused` (Boolean) Is the pipeline's run paused. Restricted schedule
 - `permissions` (Block Set) The pipeline's permissions (see [below for nested schema](#nestedblock--permissions))
 - `priority` (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
-- `refs` (Set of String) The pipeline's list of refs. Set it if `on: CLICK`
+- `refs` (Set of String) The pipeline's list of refs for manual mode
 - `remote_branch` (String) The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`
 - `remote_parameter` (Block Set) The pipeline's remote definition parameters. Set it if `definition_source: REMOTE` (see [below for nested schema](#nestedblock--remote_parameter))
 - `remote_path` (String) The pipeline's remote definition path. Set it if `definition_source: REMOTE`

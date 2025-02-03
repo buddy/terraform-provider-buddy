@@ -59,7 +59,6 @@ data "buddy_pipeline" "by_id" {
 - `id` (String) The Terraform resource identifier for this item
 - `last_execution_revision` (String) The pipeline's last run revision
 - `last_execution_status` (String) The pipeline's last run status
-- `on` (String) The pipeline's trigger mode
 - `priority` (String) The pipeline's priority
 - `refs` (Set of String) The pipeline's list of refs
 - `remote_branch` (String) The pipeline's remote definition branch name

@@ -71,7 +71,6 @@ Read-Only:
 - `last_execution_revision` (String)
 - `last_execution_status` (String)
 - `name` (String)
-- `on` (String)
 - `pipeline_id` (Number)
 - `priority` (String)
 - `refs` (Set of String)
