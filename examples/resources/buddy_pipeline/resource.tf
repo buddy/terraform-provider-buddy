@@ -2,7 +2,6 @@ resource "buddy_pipeline" "click" {
   domain                   = "mydomain"
   project_name             = "myproject"
   name                     = "click"
-  on                       = "CLICK"
   refs                     = ["main"]
   always_from_scratch      = true
   concurrent_pipeline_runs = true
@@ -20,7 +19,6 @@ resource "buddy_pipeline" "event_push" {
   domain               = "mydomain"
   project_name         = "myproject"
   name                 = "event_push"
-  on                   = "EVENT"
   priority             = "HIGH"
   fetch_all_refs       = true
   description_required = true
@@ -35,7 +33,6 @@ resource "buddy_pipeline" "event_create_ref" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "event_create_ref"
-  on           = "EVENT"
 
   event {
     type = "CREATE_REF"
@@ -47,7 +44,6 @@ resource "buddy_pipeline" "event_delete_ref" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "event_delete_ref"
-  on           = "EVENT"
 
   event {
     type = "DELETE_REF"
@@ -59,7 +55,6 @@ resource "buddy_pipeline" "schedule" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "schedule"
-  on           = "EVENT"
   event {
     type       = "SCHEDULE"
     start_date = "2016-11-18T12:38:16.000Z"
@@ -80,7 +75,6 @@ resource "buddy_pipeline" "schedule_cron" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "schedule_cron"
-  on           = "EVENT"
   event {
     cron = "15 14 1 * *"
   }
@@ -106,7 +100,6 @@ resource "buddy_pipeline" "conditions" {
   domain       = "mydomain"
   project_name = "myproject"
   name         = "conditions"
-  on           = "CLICK"
   refs         = ["main"]
 
   trigger_condition {

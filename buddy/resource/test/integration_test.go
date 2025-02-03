@@ -1000,14 +1000,12 @@ resource "buddy_pipeline" "a" {
    domain = "${buddy_workspace.foo.domain}"
    project_name = "${buddy_project.p.name}"
    name = "a"
-   on = "CLICK"
 }
 
 resource "buddy_pipeline" "b" {
    domain = "${buddy_workspace.foo.domain}"
    project_name = "${buddy_project.p.name}"
    name = "b"
-   on = "CLICK"
 }
 
 resource "buddy_integration" "bar" {

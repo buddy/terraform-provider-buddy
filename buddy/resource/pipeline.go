@@ -47,7 +47,6 @@ type pipelineResourceModel struct {
 	RemoteBranch              types.String `tfsdk:"remote_branch"`
 	RemotePath                types.String `tfsdk:"remote_path"`
 	RemoteParameters          types.Set    `tfsdk:"remote_parameter"`
-	On                        types.String `tfsdk:"on"`
 	Cpu                       types.String `tfsdk:"cpu"`
 	Priority                  types.String `tfsdk:"priority"`
 	FetchAllRefs              types.Bool   `tfsdk:"fetch_all_refs"`
@@ -93,7 +92,6 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	diags.Append(d...)
 	r.GitConfig = gitConfig
 	r.PipelineId = types.Int64Value(int64(pipeline.Id))
-	r.On = types.StringValue(pipeline.On)
 	r.Cpu = types.StringValue(pipeline.Cpu)
 	refs, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
 	diags.Append(d...)
@@ -239,17 +237,6 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 				Computed:            true,
 			},
-			"on": schema.StringAttribute{
-				MarkdownDescription: "The pipeline's trigger mode. Required when not using remote definition. Allowed: `CLICK`, `EVENT`, `SCHEDULE`",
-				Optional:            true,
-				Computed:            true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						buddy.PipelineOnClick,
-						buddy.PipelineOnEvent,
-					),
-				},
-			},
 			"cpu": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's cpu. Allowed: `X64`, `ARM`",
 				Optional:            true,
@@ -352,12 +339,12 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:            true,
 			},
 			"paused": schema.BoolAttribute{
-				MarkdownDescription: "Is the pipeline's run paused. Restricted to `on: SCHEDULE`",
+				MarkdownDescription: "Is the pipeline's run paused. Restricted schedule",
 				Optional:            true,
 				Computed:            true,
 			},
 			"pause_on_repeated_failures": schema.Int64Attribute{
-				MarkdownDescription: "The pipeline's max failed executions before it is paused. Restricted to `on: SCHEDULE`",
+				MarkdownDescription: "The pipeline's max failed executions before it is paused. Restricted to schedule",
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.Int64{
@@ -427,7 +414,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"refs": schema.SetAttribute{
 				ElementType:         types.StringType,
-				MarkdownDescription: "The pipeline's list of refs. Set it if `on: CLICK`",
+				MarkdownDescription: "The pipeline's list of refs for manual mode",
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.Set{
@@ -445,7 +432,7 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 		Blocks: map[string]schema.Block{
 			// singular form for compatibility
 			"event": schema.SetNestedBlock{
-				MarkdownDescription: "The pipeline's list of events. Set it if `on: EVENT`",
+				MarkdownDescription: "The pipeline's list of events",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: util.ResourceEventModelAttributes(),
 				},
@@ -611,9 +598,6 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 		ops.Events = events
-	}
-	if !data.On.IsNull() && !data.On.IsUnknown() {
-		ops.On = data.On.ValueStringPointer()
 	}
 	if !data.Cpu.IsNull() && !data.Cpu.IsUnknown() {
 		ops.Cpu = data.Cpu.ValueStringPointer()
@@ -804,9 +788,6 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 			return
 		}
 		ops.TriggerConditions = tc
-	}
-	if !data.On.IsNull() && !data.On.IsUnknown() {
-		ops.On = data.On.ValueStringPointer()
 	}
 	if !data.Cpu.IsNull() && !data.Cpu.IsUnknown() {
 		ops.Cpu = data.Cpu.ValueStringPointer()
