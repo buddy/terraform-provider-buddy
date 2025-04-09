@@ -285,6 +285,12 @@ func StringSetToApi(ctx context.Context, s *types.Set) (*[]string, diag.Diagnost
 	return &arr, d
 }
 
+func StringListToApi(ctx context.Context, s *types.List) (*[]string, diag.Diagnostics) {
+	var arr []string
+	d := s.ElementsAs(ctx, &arr, false)
+	return &arr, d
+}
+
 func Int64SetToApi(ctx context.Context, s *types.Set) (*[]int, diag.Diagnostics) {
 	var arr []int64
 	d := s.ElementsAs(ctx, &arr, false)
