@@ -27,6 +27,8 @@ type pipelineModel struct {
 	GitConfig               types.Object `tfsdk:"git_config"`
 	ConcurrentPipelineRuns  types.Bool   `tfsdk:"concurrent_pipeline_runs"`
 	DescriptionRequired     types.Bool   `tfsdk:"description_required"`
+	ManageVariablesByYaml   types.Bool   `tfsdk:"manage_variables_by_yaml"`
+	ManagePermissionsByYaml types.Bool   `tfsdk:"manage_permissions_by_yaml"`
 	GitChangesetBase        types.String `tfsdk:"git_changeset_base"`
 	FilesystemChangesetBase types.String `tfsdk:"filesystem_changeset_base"`
 	DefinitionSource        types.String `tfsdk:"definition_source"`
@@ -38,29 +40,31 @@ type pipelineModel struct {
 
 func pipelineModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
-		"name":                      types.StringType,
-		"pipeline_id":               types.Int64Type,
-		"html_url":                  types.StringType,
-		"cpu":                       types.StringType,
-		"priority":                  types.StringType,
-		"disabled":                  types.BoolType,
-		"disabling_reason":          types.StringType,
-		"last_execution_status":     types.StringType,
-		"last_execution_revision":   types.StringType,
-		"refs":                      types.SetType{ElemType: types.StringType},
-		"tags":                      types.SetType{ElemType: types.StringType},
-		"event":                     types.SetType{ElemType: types.ObjectType{AttrTypes: eventModelAttrs()}},
-		"concurrent_pipeline_runs":  types.BoolType,
-		"description_required":      types.BoolType,
-		"git_changeset_base":        types.StringType,
-		"filesystem_changeset_base": types.StringType,
-		"git_config_ref":            types.StringType,
-		"git_config":                types.ObjectType{AttrTypes: GitConfigModelAttrs()},
-		"definition_source":         types.StringType,
-		"remote_project_name":       types.StringType,
-		"remote_branch":             types.StringType,
-		"remote_path":               types.StringType,
-		"remote_parameter":          types.SetType{ElemType: types.ObjectType{AttrTypes: remoteParameterModelAttrs()}},
+		"name":                       types.StringType,
+		"pipeline_id":                types.Int64Type,
+		"html_url":                   types.StringType,
+		"cpu":                        types.StringType,
+		"priority":                   types.StringType,
+		"disabled":                   types.BoolType,
+		"disabling_reason":           types.StringType,
+		"last_execution_status":      types.StringType,
+		"last_execution_revision":    types.StringType,
+		"refs":                       types.SetType{ElemType: types.StringType},
+		"tags":                       types.SetType{ElemType: types.StringType},
+		"event":                      types.SetType{ElemType: types.ObjectType{AttrTypes: eventModelAttrs()}},
+		"concurrent_pipeline_runs":   types.BoolType,
+		"description_required":       types.BoolType,
+		"manage_variables_by_yaml":   types.BoolType,
+		"manage_permissions_by_yaml": types.BoolType,
+		"git_changeset_base":         types.StringType,
+		"filesystem_changeset_base":  types.StringType,
+		"git_config_ref":             types.StringType,
+		"git_config":                 types.ObjectType{AttrTypes: GitConfigModelAttrs()},
+		"definition_source":          types.StringType,
+		"remote_project_name":        types.StringType,
+		"remote_branch":              types.StringType,
+		"remote_path":                types.StringType,
+		"remote_parameter":           types.SetType{ElemType: types.ObjectType{AttrTypes: remoteParameterModelAttrs()}},
 	}
 }
 
@@ -77,6 +81,8 @@ func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) d
 	p.LastExecutionRevision = types.StringValue(pipeline.LastExecutionRevision)
 	p.ConcurrentPipelineRuns = types.BoolValue(pipeline.ConcurrentPipelineRuns)
 	p.DescriptionRequired = types.BoolValue(pipeline.DescriptionRequired)
+	p.ManagePermissionsByYaml = types.BoolValue(pipeline.ManagePermissionsByYaml)
+	p.ManageVariablesByYaml = types.BoolValue(pipeline.ManageVariablesByYaml)
 	p.GitChangesetBase = types.StringValue(pipeline.GitChangesetBase)
 	p.FilesystemChangesetBase = types.StringValue(pipeline.FilesystemChangesetBase)
 	r, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
@@ -129,6 +135,12 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"description_required": sourceschema.BoolAttribute{
+			Computed: true,
+		},
+		"manage_variables_by_yaml": sourceschema.BoolAttribute{
+			Computed: true,
+		},
+		"manage_permissions_by_yaml": sourceschema.BoolAttribute{
 			Computed: true,
 		},
 		"git_changeset_base": sourceschema.StringAttribute{

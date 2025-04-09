@@ -1,3 +1,6 @@
+# Release v1.27.0 (2025-04-09)
+* Adds manage_variables_by_yaml, manage_permissions_by_yaml to pipeline
+
 # Release v1.26.0 (2025-02-04)
 * [Breaking] - 'on' in pipeline is removed
 

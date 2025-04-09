@@ -68,6 +68,8 @@ type pipelineResourceModel struct {
 	ExecutionMessageTemplate  types.String `tfsdk:"execution_message_template"`
 	Worker                    types.String `tfsdk:"worker"`
 	TargetSiteUrl             types.String `tfsdk:"target_site_url"`
+	ManageVariablesByYaml     types.Bool   `tfsdk:"manage_variables_by_yaml"`
+	ManagePermissionsByYaml   types.Bool   `tfsdk:"manage_permissions_by_yaml"`
 	LastExecutionStatus       types.String `tfsdk:"last_execution_status"`
 	LastExecutionRevision     types.String `tfsdk:"last_execution_revision"`
 	CreateDate                types.String `tfsdk:"create_date"`
@@ -130,6 +132,8 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.CloneDepth = types.Int64Value(int64(pipeline.CloneDepth))
 	r.ExecutionMessageTemplate = types.StringValue(pipeline.ExecutionMessageTemplate)
 	r.TargetSiteUrl = types.StringValue(pipeline.TargetSiteUrl)
+	r.ManagePermissionsByYaml = types.BoolValue(pipeline.ManagePermissionsByYaml)
+	r.ManageVariablesByYaml = types.BoolValue(pipeline.ManageVariablesByYaml)
 	return diags
 }
 
@@ -368,6 +372,16 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"target_site_url": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's website target URL",
+				Optional:            true,
+				Computed:            true,
+			},
+			"manage_variables_by_yaml": schema.BoolAttribute{
+				MarkdownDescription: "If set to true pipeline variables will be managed by yaml",
+				Optional:            true,
+				Computed:            true,
+			},
+			"manage_permissions_by_yaml": schema.BoolAttribute{
+				MarkdownDescription: "If set to true pipeline permissions will be managed by yaml",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -650,6 +664,12 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.TargetSiteUrl.IsNull() && !data.TargetSiteUrl.IsUnknown() {
 		ops.TargetSiteUrl = data.TargetSiteUrl.ValueStringPointer()
 	}
+	if !data.ManageVariablesByYaml.IsNull() && !data.ManageVariablesByYaml.IsUnknown() {
+		ops.ManageVariablesByYaml = data.ManageVariablesByYaml.ValueBoolPointer()
+	}
+	if !data.ManagePermissionsByYaml.IsNull() && !data.ManagePermissionsByYaml.IsUnknown() {
+		ops.ManagePermissionsByYaml = data.ManagePermissionsByYaml.ValueBoolPointer()
+	}
 	if !data.GitConfigRef.IsNull() && !data.GitConfigRef.IsUnknown() {
 		ops.GitConfigRef = data.GitConfigRef.ValueStringPointer()
 	}
@@ -845,6 +865,12 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	if !data.TargetSiteUrl.IsNull() && !data.TargetSiteUrl.IsUnknown() {
 		ops.TargetSiteUrl = data.TargetSiteUrl.ValueStringPointer()
+	}
+	if !data.ManageVariablesByYaml.IsNull() && !data.ManageVariablesByYaml.IsUnknown() {
+		ops.ManageVariablesByYaml = data.ManageVariablesByYaml.ValueBoolPointer()
+	}
+	if !data.ManagePermissionsByYaml.IsNull() && !data.ManagePermissionsByYaml.IsUnknown() {
+		ops.ManagePermissionsByYaml = data.ManagePermissionsByYaml.ValueBoolPointer()
 	}
 	if !data.GitConfigRef.IsNull() && !data.GitConfigRef.IsUnknown() {
 		ops.GitConfigRef = data.GitConfigRef.ValueStringPointer()

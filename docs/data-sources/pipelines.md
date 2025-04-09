@@ -70,6 +70,8 @@ Read-Only:
 - `html_url` (String)
 - `last_execution_revision` (String)
 - `last_execution_status` (String)
+- `manage_permissions_by_yaml` (Boolean)
+- `manage_variables_by_yaml` (Boolean)
 - `name` (String)
 - `pipeline_id` (Number)
 - `priority` (String)
