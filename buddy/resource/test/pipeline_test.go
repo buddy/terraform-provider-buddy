@@ -33,6 +33,8 @@ type testAccPipelineExpectedAttributes struct {
 	IgnoreFailOnProjectStatus bool
 	ExecutionMessageTemplate  string
 	TargetSiteUrl             string
+	ManageVariablesByYaml     bool
+	ManagePermissionsByYaml   bool
 	Disabled                  bool
 	DisablingReason           string
 	Cpu                       string
@@ -1113,7 +1115,7 @@ func TestAccPipeline_click(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigClick(domain, projectName, name, true, false, true, false, true, false, true, msgTemplate, targetUrl, ref, cloneDepth, cpu),
+				Config: testAccPipelineConfigClick(domain, projectName, name, true, false, true, false, true, false, true, msgTemplate, targetUrl, ref, cloneDepth, cpu, true, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -1135,12 +1137,14 @@ func TestAccPipeline_click(t *testing.T) {
 						Creator:                   &profile,
 						Ref:                       ref,
 						CloneDepth:                cloneDepth,
+						ManagePermissionsByYaml:   true,
+						ManageVariablesByYaml:     false,
 					}),
 				),
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigClick(domain, projectName, newName, false, true, false, true, false, true, false, newMsgTemplate, newTargetUrl, newRef, newCloneDepth, newCpu),
+				Config: testAccPipelineConfigClick(domain, projectName, newName, false, true, false, true, false, true, false, newMsgTemplate, newTargetUrl, newRef, newCloneDepth, newCpu, false, true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -1162,6 +1166,8 @@ func TestAccPipeline_click(t *testing.T) {
 						Creator:                   &profile,
 						Ref:                       newRef,
 						CloneDepth:                newCloneDepth,
+						ManagePermissionsByYaml:   false,
+						ManageVariablesByYaml:     true,
 					}),
 				),
 			},
@@ -1385,6 +1391,8 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		attrsPaused, _ := strconv.ParseBool(attrs["paused"])
 		attrsCreatorMemberId, _ := strconv.Atoi(attrs["creator.0.member_id"])
 		attrsDisabled, _ := strconv.ParseBool(attrs["disabled"])
+		attrsManagePermissionsByYaml, _ := strconv.ParseBool(attrs["manage_permissions_by_yaml"])
+		attrsManageVariablesByYaml, _ := strconv.ParseBool(attrs["manage_variables_by_yaml"])
 		if err := util.CheckFieldEqualAndSet("Name", pipeline.Name, want.Name); err != nil {
 			return err
 		}
@@ -1410,6 +1418,18 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("DescriptionRequired", pipeline.DescriptionRequired, want.DescriptionRequired); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("ManagePermissionsByYaml", pipeline.ManagePermissionsByYaml, want.ManagePermissionsByYaml); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("manage_permissions_by_yaml", attrsManagePermissionsByYaml, want.ManagePermissionsByYaml); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("ManageVariablesByYaml", pipeline.ManageVariablesByYaml, want.ManageVariablesByYaml); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("manage_variables_by_yaml", attrsManageVariablesByYaml, want.ManageVariablesByYaml); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("ConcurrentPipelineRuns", pipeline.ConcurrentPipelineRuns, want.ConcurrentPipelineRuns); err != nil {
@@ -2200,7 +2220,7 @@ resource "buddy_pipeline" "bar" {
 `, domain, email, groupName, projectName, name, ref)
 }
 
-func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int, cpu string) string {
+func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int, cpu string, managePermissionsByYaml bool, manageVariablesByYaml bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -2227,8 +2247,10 @@ resource "buddy_pipeline" "bar" {
     refs = ["%s"]
     clone_depth = %d
 		cpu = "%s"
+		manage_variables_by_yaml = %t
+		manage_permissions_by_yaml = %t
 }
-`, domain, projectName, name, alwaysFromScratch, failOnPrepareEnvWarning, fetchAllRefs, autoClearCache, noSkipToMostRecent, doNotCreateCommitStatus, ignoreFailOnProjectStatus, executionMessageTemplate, targetSiteUrl, ref, cloneDepth, cpu)
+`, domain, projectName, name, alwaysFromScratch, failOnPrepareEnvWarning, fetchAllRefs, autoClearCache, noSkipToMostRecent, doNotCreateCommitStatus, ignoreFailOnProjectStatus, executionMessageTemplate, targetSiteUrl, ref, cloneDepth, cpu, manageVariablesByYaml, managePermissionsByYaml)
 }
 
 func testAccPipelineCheckDestroy(s *terraform.State) error {

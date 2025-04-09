@@ -143,6 +143,8 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewProfileEmailResource,
 		buddyresource.NewProfilePublicKeyResource,
 		buddyresource.NewIntegrationResource,
+		buddyresource.NewDomainRecordResource,
+		buddyresource.NewDomaindResource,
 		buddyresource.NewProjectResource,
 		buddyresource.NewProjectGroupResource,
 		buddyresource.NewProjectMemberResource,

@@ -202,6 +202,8 @@ resource "buddy_pipeline" "conditions" {
 - `git_config` (Object) The pipeline's GIT configuration spec for `git_config_ref` = `FIXED` (see [below for nested schema](#nestedatt--git_config))
 - `git_config_ref` (String) The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
+- `manage_permissions_by_yaml` (Boolean) If set to true pipeline permissions will be managed by yaml
+- `manage_variables_by_yaml` (Boolean) If set to true pipeline variables will be managed by yaml
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `pause_on_repeated_failures` (Number) The pipeline's max failed executions before it is paused. Restricted to schedule
 - `paused` (Boolean) Is the pipeline's run paused. Restricted schedule
