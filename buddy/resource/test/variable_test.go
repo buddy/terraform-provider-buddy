@@ -132,8 +132,8 @@ func testAccVariableAttributes(n string, variable *buddy.Variable, domain string
 				return err
 			}
 		} else {
-			if !strings.HasPrefix(variable.Value, "secure!") {
-				return util.ErrorFieldFormatted("Value", variable.Value, "secure!")
+			if !strings.HasPrefix(variable.Value, "!encrypted") {
+				return util.ErrorFieldFormatted("Value", variable.Value, "!encrypted")
 			}
 		}
 		if projectName != "" {
@@ -167,8 +167,8 @@ func testAccVariableAttributes(n string, variable *buddy.Variable, domain string
 				return err
 			}
 		} else {
-			if !strings.HasPrefix(attrs["value_processed"], "secure!") {
-				return util.ErrorFieldFormatted("value_processed", attrs["value_processed"], "secure!")
+			if !strings.HasPrefix(attrs["value_processed"], "!encrypted") {
+				return util.ErrorFieldFormatted("value_processed", attrs["value_processed"], "!encrypted")
 			}
 		}
 		if projectName != "" {

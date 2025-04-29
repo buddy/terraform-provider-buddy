@@ -151,8 +151,8 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 		if err := util.CheckFieldEqualAndSet("Key", variable.Key, key); err != nil {
 			return err
 		}
-		if !strings.HasPrefix(variable.Value, "secure!") {
-			return util.ErrorFieldFormatted("Value", variable.Value, "secure!")
+		if !strings.HasPrefix(variable.Value, "!encrypted") {
+			return util.ErrorFieldFormatted("Value", variable.Value, "!encrypted")
 		}
 		if err := util.CheckFieldSet("Checksum", variable.Checksum); err != nil {
 			return err
@@ -205,8 +205,8 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 		if err := util.CheckFieldEqualAndSet("value", attrs["value"], val+"\n"); err != nil {
 			return err
 		}
-		if !strings.HasPrefix(attrs["value_processed"], "secure!") {
-			return util.ErrorFieldFormatted("value_processed", attrs["value_processed"], "secure!")
+		if !strings.HasPrefix(attrs["value_processed"], "!encrypted") {
+			return util.ErrorFieldFormatted("value_processed", attrs["value_processed"], "!encrypted")
 		}
 		if err := util.CheckBoolFieldEqual("encrypted", attrsEncrypted, true); err != nil {
 			return err
