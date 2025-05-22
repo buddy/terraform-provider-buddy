@@ -55,7 +55,7 @@ type environmentResourceModel struct {
 	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
 	AllowedPipelines    types.Set    `tfsdk:"allowed_pipelines"`
 	Project             types.Set    `tfsdk:"project"`
-	Variable            types.Set    `tfsdk:"variable"`
+	Variable            types.Set    `tfsdk:"var"`
 	Permissions         types.Set    `tfsdk:"permissions"`
 }
 
@@ -202,7 +202,7 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"variable": schema.SetNestedBlock{
+			"var": schema.SetNestedBlock{
 				MarkdownDescription: "The environment's variables",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: util.EnvironmentVariableModelAttributes(),

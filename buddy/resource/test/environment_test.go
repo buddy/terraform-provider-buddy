@@ -13,7 +13,7 @@ import (
 
 var ignoreEnvImportVerify = []string{
 	"permissions",
-	"variable",
+	"var",
 }
 
 func TestAccEnvironmentVariables(t *testing.T) {
@@ -327,7 +327,7 @@ resource "buddy_environment" "env" {
     identifier = "%s"
     name = "%s"
     type = "%s"
-    variable {
+    var {
       key = "%s"
       value = "%s"
     }

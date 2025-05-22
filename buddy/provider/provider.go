@@ -159,6 +159,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 
 func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
+		buddysource.NewEnvironmentSource,
 		buddysource.NewGroupSource,
 		buddysource.NewGroupMembersSource,
 		buddysource.NewGroupsSource,
@@ -185,6 +186,7 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewWorkspacesSource,
 		buddysource.NewPipelineSource,
 		buddysource.NewPipelinesSource,
+		buddysource.NewEnvironmentsSource,
 	}
 }
 
