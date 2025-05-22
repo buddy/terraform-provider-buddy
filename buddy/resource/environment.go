@@ -433,5 +433,3 @@ func (e *environmentResource) Delete(ctx context.Context, req resource.DeleteReq
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete environment", err))
 	}
 }
-
-// todo lint & docs & examples
