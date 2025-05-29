@@ -2,6 +2,8 @@ package source
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/datasourcevalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -9,7 +11,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
 	"terraform-provider-buddy/buddy/util"
 )
 
@@ -18,6 +19,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &targetSource{}
 )
 
+// NewTargetSource creates a new instance of the target data source
 func NewTargetSource() datasource.DataSource {
 	return &targetSource{}
 }
@@ -222,24 +224,20 @@ func (s *targetSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	domain := data.Domain.ValueString()
 	projectName := data.ProjectName.ValueString()
 	
+	// Check that either target_id or name is specified
+	if data.TargetId.IsNull() && data.Name.IsNull() {
+		resp.Diagnostics.AddError("Missing required argument", "Either target_id or name must be specified")
+		return
+	}
+	
 	var targets *buddy.Targets
 	var err error
 	
 	if projectName != "" {
 		// Get targets from project
-		if data.TargetId.IsNull() && data.Name.IsNull() {
-			resp.Diagnostics.AddError("Missing required argument", "Either target_id or name must be specified")
-			return
-		}
-		
 		targets, _, err = s.client.TargetService.GetListInProject(domain, projectName)
 	} else {
 		// Get targets from workspace
-		if data.TargetId.IsNull() && data.Name.IsNull() {
-			resp.Diagnostics.AddError("Missing required argument", "Either target_id or name must be specified")
-			return
-		}
-		
 		targets, _, err = s.client.TargetService.GetListInWorkspace(domain)
 	}
 	

@@ -2,13 +2,13 @@ package source
 
 import (
 	"context"
+
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
 	"terraform-provider-buddy/buddy/util"
 )
 
@@ -17,6 +17,7 @@ var (
 	_ datasource.DataSourceWithConfigure = &targetsSource{}
 )
 
+// NewTargetsSource creates a new instance of the targets data source
 func NewTargetsSource() datasource.DataSource {
 	return &targetsSource{}
 }

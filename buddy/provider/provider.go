@@ -79,7 +79,7 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy Base URL",
 		)
 	}
-	if config.BaseUrl.IsUnknown() {
+	if config.Insecure.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("insecure"),
 			"Unknown Buddy insecure value for the API endpoint",
@@ -125,7 +125,7 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 
 	client, err := buddy.NewClientWithTimeout(token, baseUrl, insecure, time.Duration(timeout)*time.Second)
 	if err != nil {
-		resp.Diagnostics.AddError("Failed to create Buddy Client from provider configuration", fmt.Sprintf("The provider failed to create a new Buddy Client from the giver configuration: %s", err.Error()))
+		resp.Diagnostics.AddError("Failed to create Buddy Client from provider configuration", fmt.Sprintf("The provider failed to create a new Buddy Client from the given configuration: %s", err.Error()))
 		return
 	}
 	resp.DataSourceData = client
@@ -144,7 +144,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewProfilePublicKeyResource,
 		buddyresource.NewIntegrationResource,
 		buddyresource.NewDomainRecordResource,
-		buddyresource.NewDomaindResource,
+		buddyresource.NewDomainResource,
 		buddyresource.NewProjectResource,
 		buddyresource.NewProjectGroupResource,
 		buddyresource.NewProjectMemberResource,

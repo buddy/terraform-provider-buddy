@@ -2,6 +2,8 @@ package resource
 
 import (
 	"context"
+	"strconv"
+
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
@@ -17,7 +19,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-	"strconv"
 	"terraform-provider-buddy/buddy/util"
 )
 
@@ -27,6 +28,7 @@ var (
 	_ resource.ResourceWithImportState = &targetResource{}
 )
 
+// NewTargetResource creates a new instance of the target resource
 func NewTargetResource() resource.Resource {
 	return &targetResource{}
 }
@@ -321,83 +323,19 @@ func (r *targetResource) Create(ctx context.Context, req resource.CreateRequest,
 	domain := data.Domain.ValueString()
 	projectName := data.ProjectName.ValueString()
 	
-	ops := buddy.TargetOps{
-		Name: data.Name.ValueStringPointer(),
-		Type: data.Type.ValueStringPointer(),
-	}
-	
-	if !data.Hostname.IsNull() {
-		ops.Hostname = data.Hostname.ValueStringPointer()
-	}
-	
-	if !data.Port.IsNull() {
-		port := int(data.Port.ValueInt64())
-		ops.Port = &port
-	}
-	
-	if !data.Username.IsNull() {
-		ops.Username = data.Username.ValueStringPointer()
-	}
-	
-	if !data.Password.IsNull() {
-		ops.Password = data.Password.ValueStringPointer()
-	}
-	
-	if !data.Passphrase.IsNull() {
-		ops.Passphrase = data.Passphrase.ValueStringPointer()
-	}
-	
-	if !data.KeyId.IsNull() {
-		keyId := int(data.KeyId.ValueInt64())
-		ops.KeyId = &keyId
-	}
-	
-	if !data.FilePath.IsNull() {
-		ops.FilePath = data.FilePath.ValueStringPointer()
-	}
-	
-	if !data.AuthMode.IsNull() {
-		ops.AuthMode = data.AuthMode.ValueStringPointer()
-	}
-	
-	if !data.Description.IsNull() {
-		ops.Description = data.Description.ValueStringPointer()
-	}
-	
-	if !data.AllPipelinesAllowed.IsNull() {
-		allPipelinesAllowed := data.AllPipelinesAllowed.ValueBool()
-		ops.AllPipelinesAllowed = &allPipelinesAllowed
-	}
-	
-	if !data.Tags.IsNull() {
-		var tags []string
-		resp.Diagnostics.Append(data.Tags.ElementsAs(ctx, &tags, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		ops.Tags = &tags
-	}
-	
-	if !data.AllowedPipelines.IsNull() {
-		var allowedPipelines []int64
-		resp.Diagnostics.Append(data.AllowedPipelines.ElementsAs(ctx, &allowedPipelines, false)...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		intPipelines := make([]int, len(allowedPipelines))
-		for i, p := range allowedPipelines {
-			intPipelines[i] = int(p)
-		}
-		ops.AllowedPipelines = &intPipelines
+	ops, diags := convertTargetModelToOps(ctx, data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	
 	var target *buddy.Target
 	var err error
 	
 	if projectName != "" {
-		target, _, err = r.client.TargetService.CreateInProject(domain, projectName, &ops)
+		target, _, err = r.client.TargetService.CreateInProject(domain, projectName, ops)
 	} else {
-		target, _, err = r.client.TargetService.CreateInWorkspace(domain, &ops)
+		target, _, err = r.client.TargetService.CreateInWorkspace(domain, ops)
 	}
 	
 	if err != nil {
@@ -460,10 +398,73 @@ func (r *targetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		return
 	}
 	
-	ops := buddy.TargetOps{}
+	ops, diags := convertTargetModelToOps(ctx, data)
+	resp.Diagnostics.Append(diags...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	
+	var target *buddy.Target
+	
+	if projectName != "" {
+		target, _, err = r.client.TargetService.UpdateInProject(domain, projectName, targetId, ops)
+	} else {
+		target, _, err = r.client.TargetService.UpdateInWorkspace(domain, targetId, ops)
+	}
+	
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("update target", err))
+		return
+	}
+	
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, target)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
+}
+
+func (r *targetResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *targetResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	
+	domain, projectName, targetId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("target", err))
+		return
+	}
+	
+	if projectName != "" {
+		_, err = r.client.TargetService.DeleteInProject(domain, projectName, targetId)
+	} else {
+		_, err = r.client.TargetService.DeleteInWorkspace(domain, targetId)
+	}
+	
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete target", err))
+		return
+	}
+}
+
+func (r *targetResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
+	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+}
+
+// convertModelToOps converts target model data to API operations structure
+func convertTargetModelToOps(ctx context.Context, data *targetResourceModel) (*buddy.TargetOps, diag.Diagnostics) {
+	var diags diag.Diagnostics
+	ops := &buddy.TargetOps{}
 	
 	if !data.Name.IsNull() {
 		ops.Name = data.Name.ValueStringPointer()
+	}
+	
+	if !data.Type.IsNull() {
+		ops.Type = data.Type.ValueStringPointer()
 	}
 	
 	if !data.Hostname.IsNull() {
@@ -511,18 +512,18 @@ func (r *targetResource) Update(ctx context.Context, req resource.UpdateRequest,
 	
 	if !data.Tags.IsNull() {
 		var tags []string
-		resp.Diagnostics.Append(data.Tags.ElementsAs(ctx, &tags, false)...)
-		if resp.Diagnostics.HasError() {
-			return
+		diags.Append(data.Tags.ElementsAs(ctx, &tags, false)...)
+		if diags.HasError() {
+			return nil, diags
 		}
 		ops.Tags = &tags
 	}
 	
 	if !data.AllowedPipelines.IsNull() {
 		var allowedPipelines []int64
-		resp.Diagnostics.Append(data.AllowedPipelines.ElementsAs(ctx, &allowedPipelines, false)...)
-		if resp.Diagnostics.HasError() {
-			return
+		diags.Append(data.AllowedPipelines.ElementsAs(ctx, &allowedPipelines, false)...)
+		if diags.HasError() {
+			return nil, diags
 		}
 		intPipelines := make([]int, len(allowedPipelines))
 		for i, p := range allowedPipelines {
@@ -531,52 +532,5 @@ func (r *targetResource) Update(ctx context.Context, req resource.UpdateRequest,
 		ops.AllowedPipelines = &intPipelines
 	}
 	
-	var target *buddy.Target
-	
-	if projectName != "" {
-		target, _, err = r.client.TargetService.UpdateInProject(domain, projectName, targetId, &ops)
-	} else {
-		target, _, err = r.client.TargetService.UpdateInWorkspace(domain, targetId, &ops)
-	}
-	
-	if err != nil {
-		resp.Diagnostics.Append(util.NewDiagnosticApiError("update target", err))
-		return
-	}
-	
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, target)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (r *targetResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
-	var data *targetResourceModel
-	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
-	
-	domain, projectName, targetId, err := data.decomposeId()
-	if err != nil {
-		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("target", err))
-		return
-	}
-	
-	if projectName != "" {
-		_, err = r.client.TargetService.DeleteInProject(domain, projectName, targetId)
-	} else {
-		_, err = r.client.TargetService.DeleteInWorkspace(domain, targetId)
-	}
-	
-	if err != nil {
-		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete target", err))
-		return
-	}
-}
-
-func (r *targetResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
-	resource.ImportStatePassthroughID(ctx, path.Root("id"), req, resp)
+	return ops, diags
 }

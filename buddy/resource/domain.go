@@ -18,7 +18,7 @@ var (
 	_ resource.ResourceWithImportState = &domainResource{}
 )
 
-func NewDomaindResource() resource.Resource {
+func NewDomainResource() resource.Resource {
 	return &domainResource{}
 }
 
