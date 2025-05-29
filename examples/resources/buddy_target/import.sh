@@ -1,0 +1,1 @@
+terraform import buddy_target.test workspace-domain:target-id

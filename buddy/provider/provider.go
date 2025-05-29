@@ -144,7 +144,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewProfilePublicKeyResource,
 		buddyresource.NewIntegrationResource,
 		buddyresource.NewDomainRecordResource,
-		buddyresource.NewDomaindResource,
+		buddyresource.NewDomainResource,
 		buddyresource.NewProjectResource,
 		buddyresource.NewProjectGroupResource,
 		buddyresource.NewProjectMemberResource,
@@ -154,6 +154,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewWebhookResource,
 		buddyresource.NewPipelineResource,
 		buddyresource.NewEnvironmentResource,
+		buddyresource.NewTargetResource,
 	}
 }
 
@@ -187,6 +188,8 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewPipelineSource,
 		buddysource.NewPipelinesSource,
 		buddysource.NewEnvironmentsSource,
+		buddysource.NewTargetSource,
+		buddysource.NewTargetsSource,
 	}
 }
 

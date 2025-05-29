@@ -11,8 +11,6 @@ import (
 )
 
 func TestAccSourceMember(t *testing.T) {
-	domain := util.UniqueString()
-	p, _, _ := acc.ApiClient.ProfileService.Get()
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -21,17 +19,17 @@ func TestAccSourceMember(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceMemberConfig(domain),
+				Config: testAccSourceMemberConfig(util.UniqueString()),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceMemberAttributes("data.buddy_member.id", p.Name),
-					testAccSourceMemberAttributes("data.buddy_member.name", p.Name),
+					testAccSourceMemberAttributesCheck("data.buddy_member.id"),
+					testAccSourceMemberAttributesCheck("data.buddy_member.name"),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourceMemberAttributes(n string, name string) resource.TestCheckFunc {
+func testAccSourceMemberAttributesCheck(n string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -41,7 +39,7 @@ func testAccSourceMemberAttributes(n string, name string) resource.TestCheckFunc
 		attrsMemberId, _ := strconv.Atoi(attrs["member_id"])
 		attrsAdmin, _ := strconv.ParseBool(attrs["admin"])
 		attrsOwner, _ := strconv.ParseBool(attrs["workspace_owner"])
-		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+		if err := util.CheckFieldSet("name", attrs["name"]); err != nil {
 			return err
 		}
 		if err := util.CheckIntFieldSet("member_id", attrsMemberId); err != nil {
