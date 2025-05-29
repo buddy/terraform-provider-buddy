@@ -141,6 +141,9 @@ func testAccSourcePipelineAttributes(n string, name string, cpu string, ref stri
 		if err := util.CheckIntFieldSet("pipeline_id", attrsPipelineId); err != nil {
 			return err
 		}
+		if err := util.CheckFieldSet("identifier", attrs["identifier"]); err != nil {
+			return err
+		}
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
 			return err
 		}

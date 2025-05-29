@@ -34,6 +34,7 @@ type pipelineSourceModel struct {
 	Domain                  types.String `tfsdk:"domain"`
 	ProjectName             types.String `tfsdk:"project_name"`
 	Name                    types.String `tfsdk:"name"`
+	Identifier              types.String `tfsdk:"identifier"`
 	PipelineId              types.Int64  `tfsdk:"pipeline_id"`
 	Priority                types.String `tfsdk:"priority"`
 	HtmlUrl                 types.String `tfsdk:"html_url"`
@@ -64,6 +65,7 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	s.Domain = types.StringValue(domain)
 	s.ProjectName = types.StringValue(projectName)
 	s.Name = types.StringValue(pipeline.Name)
+	s.Identifier = types.StringValue(pipeline.Identifier)
 	s.PipelineId = types.Int64Value(int64(pipeline.Id))
 	s.Priority = types.StringValue(pipeline.Priority)
 	s.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
@@ -138,6 +140,10 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 						path.MatchRoot("name"),
 					}...),
 				},
+			},
+			"identifier": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's identifier",
+				Computed:            true,
 			},
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The pipeline's ID",

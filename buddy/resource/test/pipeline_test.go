@@ -16,6 +16,7 @@ import (
 
 type testAccPipelineExpectedAttributes struct {
 	Name                      string
+	Identifier                string
 	AlwaysFromScratch         bool
 	DescriptionRequired       bool
 	ConcurrentPipelineRuns    bool
@@ -906,6 +907,8 @@ func TestAccPipeline_event(t *testing.T) {
 	projectName := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
+	identifier := util.UniqueString()
+	newIdentifier := util.UniqueString()
 	ref := util.RandString(10)
 	newRef := util.RandString(10)
 	tcChangePath := "/path"
@@ -935,13 +938,14 @@ func TestAccPipeline_event(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigEvent(domain, projectName, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId, user, group),
+				Config: testAccPipelineConfigEvent(domain, projectName, name, identifier, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId, user, group),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    name,
+						Identifier:              identifier,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
@@ -1007,13 +1011,14 @@ func TestAccPipeline_event(t *testing.T) {
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigEvent(domain, projectName, newName, newEventType, newRef, newTcChangePath, newTcVarKey, newTcVarValue, newTcHours, newTcDays, newTcZoneId, newUser, newGroup),
+				Config: testAccPipelineConfigEvent(domain, projectName, newName, newIdentifier, newEventType, newRef, newTcChangePath, newTcVarKey, newTcVarValue, newTcHours, newTcDays, newTcZoneId, newUser, newGroup),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
 						Name:                    newName,
+						Identifier:              newIdentifier,
 						Project:                 &project,
 						Creator:                 &profile,
 						FailOnPrepareEnvWarning: false,
@@ -1513,6 +1518,14 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		if err := util.CheckBoolFieldEqual("IgnoreFailOnProjectStatus", pipeline.IgnoreFailOnProjectStatus, want.IgnoreFailOnProjectStatus); err != nil {
 			return err
 		}
+		if want.Identifier != "" {
+			if err := util.CheckFieldEqualAndSet("identifier", attrs["identifier"], want.Identifier); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("Identifier", pipeline.Identifier, want.Identifier); err != nil {
+				return err
+			}
+		}
 		if want.ExecutionMessageTemplate != "" {
 			if err := util.CheckFieldEqualAndSet("execution_message_template", attrs["execution_message_template"], want.ExecutionMessageTemplate); err != nil {
 				return err
@@ -1874,7 +1887,7 @@ resource "buddy_pipeline" "bar" {
 `, domain, projectName, name, eventType, branch, prEvent)
 }
 
-func testAccPipelineConfigEvent(domain string, projectName string, name string, eventType string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string, user string, group string) string {
+func testAccPipelineConfigEvent(domain string, projectName string, name string, identifier string, eventType string, ref string, tcChangePath string, tcVarKey string, tcVarValue string, tcHours int, tcDays int, tcZoneId string, user string, group string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -1921,6 +1934,7 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
+		identifier = "%s"
     event {
         type = "%s"
         refs = ["%s"]
@@ -1975,7 +1989,7 @@ resource "buddy_pipeline" "bar" {
 				trigger_group = "${buddy_group.group.name}"
 		}
 }
-`, domain, projectName, user, group, name, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
+`, domain, projectName, user, group, name, identifier, eventType, ref, tcChangePath, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcVarKey, tcVarValue, tcHours, tcDays, tcZoneId)
 }
 
 func testAccPipelinePermissionsEmpty(domain string, projectName string, name string, ref string) string {

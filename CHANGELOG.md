@@ -1,3 +1,6 @@
+# Release v1.28.1 (2025-05-29)
+* Adds identifier to pipeline
+
 # Release v1.28.0 (2025-05-21)
 * Adds environments
 
