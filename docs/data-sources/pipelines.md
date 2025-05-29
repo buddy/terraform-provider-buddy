@@ -68,6 +68,7 @@ Read-Only:
 - `git_config` (Object) (see [below for nested schema](#nestedatt--pipelines--git_config))
 - `git_config_ref` (String)
 - `html_url` (String)
+- `identifier` (String)
 - `last_execution_revision` (String)
 - `last_execution_status` (String)
 - `manage_permissions_by_yaml` (Boolean)

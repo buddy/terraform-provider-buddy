@@ -17,7 +17,7 @@ Token scope required: `WORKSPACE`, `ENVIRONMENT_INFO`
 
 ```terraform
 data "buddy_environment" "dev" {
-  domain   = "mydomain"
+  domain         = "mydomain"
   environment_id = 1234
 }
 

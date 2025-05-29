@@ -35,6 +35,7 @@ type pipelineResource struct {
 
 type pipelineResourceModel struct {
 	ID                        types.String `tfsdk:"id"`
+	Identifier                types.String `tfsdk:"identifier"`
 	Domain                    types.String `tfsdk:"domain"`
 	ProjectName               types.String `tfsdk:"project_name"`
 	HtmlUrl                   types.String `tfsdk:"html_url"`
@@ -89,6 +90,7 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.ProjectName = types.StringValue(projectName)
 	r.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
 	r.Name = types.StringValue(pipeline.Name)
+	r.Identifier = types.StringValue(pipeline.Identifier)
 	r.GitConfigRef = types.StringValue(pipeline.GitConfigRef)
 	gitConfig, d := util.GitConfigModelFromApi(ctx, pipeline.GitConfig)
 	diags.Append(d...)
@@ -191,6 +193,11 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's name",
 				Required:            true,
+			},
+			"identifier": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's identifier",
+				Optional:            true,
+				Computed:            true,
 			},
 			"git_config_ref": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`",
@@ -581,6 +588,9 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 		FailOnPrepareEnvWarning: data.FailOnPrepareEnvWarning.ValueBoolPointer(),
 		FetchAllRefs:            data.FetchAllRefs.ValueBoolPointer(),
 	}
+	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
+		ops.Identifier = data.Identifier.ValueStringPointer()
+	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.PipelinePermissionsModelToApi(ctx, &data.Permissions)
 		resp.Diagnostics.Append(d...)
@@ -768,6 +778,9 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	ops := buddy.PipelineOps{
 		Name: data.Name.ValueStringPointer(),
+	}
+	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
+		ops.Identifier = data.Identifier.ValueStringPointer()
 	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.PipelinePermissionsModelToApi(ctx, &data.Permissions)

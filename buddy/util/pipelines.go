@@ -12,6 +12,7 @@ import (
 
 type pipelineModel struct {
 	Name                    types.String `tfsdk:"name"`
+	Identifier              types.String `tfsdk:"identifier"`
 	PipelineId              types.Int64  `tfsdk:"pipeline_id"`
 	HtmlUrl                 types.String `tfsdk:"html_url"`
 	Cpu                     types.String `tfsdk:"cpu"`
@@ -41,6 +42,7 @@ type pipelineModel struct {
 func pipelineModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
 		"name":                       types.StringType,
+		"identifier":                 types.StringType,
 		"pipeline_id":                types.Int64Type,
 		"html_url":                   types.StringType,
 		"cpu":                        types.StringType,
@@ -71,6 +73,7 @@ func pipelineModelAttrs() map[string]attr.Type {
 func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) diag.Diagnostics {
 	var diags diag.Diagnostics
 	p.Name = types.StringValue(pipeline.Name)
+	p.Identifier = types.StringValue(pipeline.Identifier)
 	p.PipelineId = types.Int64Value(int64(pipeline.Id))
 	p.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
 	p.Cpu = types.StringValue(pipeline.Cpu)
@@ -111,6 +114,9 @@ func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) d
 func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 	return map[string]sourceschema.Attribute{
 		"name": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"identifier": sourceschema.StringAttribute{
 			Computed: true,
 		},
 		"pipeline_id": sourceschema.Int64Attribute{

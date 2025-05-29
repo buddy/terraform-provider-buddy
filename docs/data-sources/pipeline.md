@@ -57,6 +57,7 @@ data "buddy_pipeline" "by_id" {
 - `git_config_ref` (String) The pipeline's GIT configuration type
 - `html_url` (String) The pipeline's URL
 - `id` (String) The Terraform resource identifier for this item
+- `identifier` (String) The pipeline's identifier
 - `last_execution_revision` (String) The pipeline's last run revision
 - `last_execution_status` (String) The pipeline's last run status
 - `priority` (String) The pipeline's priority
