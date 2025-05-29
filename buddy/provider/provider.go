@@ -154,6 +154,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewWebhookResource,
 		buddyresource.NewPipelineResource,
 		buddyresource.NewEnvironmentResource,
+		buddyresource.NewTargetResource,
 	}
 }
 

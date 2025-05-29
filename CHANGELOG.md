@@ -1,3 +1,6 @@
+# Release v1.29.0 (2025-05-29)
+* Adds targets
+
 # Release v1.28.0 (2025-05-21)
 * Adds environments
 
