@@ -254,6 +254,20 @@ func StringValidatorsEmail() []validator.String {
 	}
 }
 
+func StringValidatorsSlug() []validator.String {
+	return []validator.String{
+		stringvalidator.LengthAtLeast(1),
+		stringvalidator.LengthAtMost(100),
+		stringvalidator.RegexMatches(regexp.MustCompile(`^[a-z0-9][a-z0-9\-_]*[a-z0-9]$`), "slug must be lowercase and contain only letters, numbers, dash or underscore characters"),
+	}
+}
+
+func StringValidatorsRegexp() []validator.String {
+	return []validator.String{
+		RegexpValidator(),
+	}
+}
+
 func TestSleep(ms int) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		time.Sleep(time.Duration(ms) * time.Millisecond)
@@ -303,4 +317,18 @@ func GetPipelineDefinitionSource(pipeline *buddy.Pipeline) string {
 		return buddy.PipelineDefinitionSourceLocal
 	}
 	return ds
+}
+
+func FilterTargetsByName(targets *[]buddy.Target, nameRegex string) ([]buddy.Target, error) {
+	regex, err := regexp.Compile(nameRegex)
+	if err != nil {
+		return nil, err
+	}
+	var result []buddy.Target
+	for _, target := range *targets {
+		if regex.MatchString(target.Name) {
+			result = append(result, target)
+		}
+	}
+	return result, nil
 }
