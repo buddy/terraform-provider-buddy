@@ -12,9 +12,8 @@ import (
 func TestAccSourceTarget(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
-	hostname := "example.com"
-	username := "testuser"
-	port := 22
+	host := "example.com"
+	port := "22"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -24,98 +23,53 @@ func TestAccSourceTarget(t *testing.T) {
 		CheckDestroy:             acc.DummyCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTargetConfig(domain, name, hostname, port, username),
+				Config: testAccSourceTargetConfig(domain, name, host, port),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "type", "SSH"),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "port", fmt.Sprintf("%d", port)),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "username", username),
+					resource.TestCheckResourceAttr("data.buddy_target.by_id", "domain", domain),
+					resource.TestCheckResourceAttr("data.buddy_target.by_id", "name", name),
+					resource.TestCheckResourceAttr("data.buddy_target.by_id", "type", "SSH"),
+					resource.TestCheckResourceAttr("data.buddy_target.by_id", "host", host),
+					resource.TestCheckResourceAttr("data.buddy_target.by_id", "port", port),
+					resource.TestCheckResourceAttrSet("data.buddy_target.by_id", "target_id"),
+					resource.TestCheckResourceAttrSet("data.buddy_target.by_id", "html_url"),
+					resource.TestCheckResourceAttr("data.buddy_target.by_name", "domain", domain),
+					resource.TestCheckResourceAttr("data.buddy_target.by_name", "name", name),
+					resource.TestCheckResourceAttr("data.buddy_target.by_name", "type", "SSH"),
+					resource.TestCheckResourceAttr("data.buddy_target.by_name", "host", host),
+					resource.TestCheckResourceAttr("data.buddy_target.by_name", "port", port),
+					resource.TestCheckResourceAttrSet("data.buddy_target.by_name", "target_id"),
+					resource.TestCheckResourceAttrSet("data.buddy_target.by_name", "html_url"),
 				),
 			},
 		},
 	})
 }
 
-func TestAccSourceTarget_project(t *testing.T) {
-	domain := util.UniqueString()
-	projectName := util.RandString(10)
-	name := util.RandString(10)
-	hostname := "example.com"
-	username := "testuser"
-	port := 22
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             acc.DummyCheckDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourceTargetProjectConfig(domain, projectName, name, hostname, port, username),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "project_name", projectName),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "type", "SSH"),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "port", fmt.Sprintf("%d", port)),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "username", username),
-				),
-			},
-		},
-	})
-}
-
-func testAccSourceTargetConfig(domain string, name string, hostname string, port int, username string) string {
+func testAccSourceTargetConfig(domain, name, host, port string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
+resource "buddy_workspace" "test" {
 	domain = "%s"
 }
 
-resource "buddy_target" "bar" {
-	domain = buddy_workspace.foo.domain
+resource "buddy_target" "test" {
+	domain = buddy_workspace.test.domain
 	name = "%s"
 	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
+	host = "%s"
+	port = "%s"
+	auth_method = "PASS"
+	auth_username = "testuser"
+	auth_password = "password123"
 }
 
-data "buddy_target" "test" {
-	domain = buddy_workspace.foo.domain
-	name = buddy_target.bar.name
-}`, domain, name, hostname, port, username)
+data "buddy_target" "by_id" {
+	domain = buddy_workspace.test.domain
+	target_id = buddy_target.test.target_id
 }
 
-func testAccSourceTargetProjectConfig(domain string, projectName string, name string, hostname string, port int, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-	domain = "%s"
+data "buddy_target" "by_name" {
+	domain = buddy_workspace.test.domain
+	name = buddy_target.test.name
 }
-
-resource "buddy_project" "proj" {
-	domain = buddy_workspace.foo.domain
-	display_name = "%s"
-}
-
-resource "buddy_target" "bar" {
-	domain = buddy_workspace.foo.domain
-	project_name = buddy_project.proj.name
-	name = "%s"
-	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
-}
-
-data "buddy_target" "test" {
-	domain = buddy_workspace.foo.domain
-	project_name = buddy_project.proj.name
-	name = buddy_target.bar.name
-}`, domain, projectName, name, hostname, port, username)
+`, domain, name, host, port)
 }

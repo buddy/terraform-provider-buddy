@@ -2,12 +2,10 @@ package test
 
 import (
 	"fmt"
-	"strconv"
 	"terraform-provider-buddy/buddy/acc"
 	"terraform-provider-buddy/buddy/util"
 	"testing"
 
-	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
@@ -16,17 +14,14 @@ func TestAccTarget_workspace_ssh(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
-	hostname := "example.com"
-	newHostname := "newexample.com"
+	host := "example.com"
+	newHost := "newexample.com"
 	username := "testuser"
 	newUsername := "newtestuser"
-	port := 22
-	newPort := 2222
-	description := "Test SSH target"
-	newDescription := "Updated SSH target"
-	filePath := "/var/www/html"
-	newFilePath := "/var/www/public"
-	
+	port := "22"
+	newPort := "2222"
+	newPath := "/var/www/public"
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -36,34 +31,33 @@ func TestAccTarget_workspace_ssh(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create with minimal config
 			{
-				Config: testAccTargetConfigWorkspaceSsh(domain, name, hostname, port, username),
+				Config: testAccTargetConfigWorkspaceSsh(domain, name, host, port, username),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetCheckExist("buddy_target.test", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
 					resource.TestCheckResourceAttr("buddy_target.test", "type", "SSH"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("buddy_target.test", "port", strconv.Itoa(port)),
-					resource.TestCheckResourceAttr("buddy_target.test", "username", username),
-					resource.TestCheckResourceAttr("buddy_target.test", "auth_mode", "PASS"),
-					resource.TestCheckResourceAttr("buddy_target.test", "all_pipelines_allowed", "true"),
+					resource.TestCheckResourceAttr("buddy_target.test", "host", host),
+					resource.TestCheckResourceAttr("buddy_target.test", "port", port),
+					resource.TestCheckResourceAttr("buddy_target.test", "auth_username", username),
+					resource.TestCheckResourceAttr("buddy_target.test", "auth_method", "PASS"),
+					resource.TestCheckResourceAttr("buddy_target.test", "scope", "PRIVATE"),
 				),
 			},
 			// Update with full config
 			{
-				Config: testAccTargetConfigWorkspaceSshFull(domain, newName, newHostname, newPort, newUsername, newDescription, newFilePath),
+				Config: testAccTargetConfigWorkspaceSshFull(domain, newName, newHost, newPort, newUsername, newPath),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetCheckExist("buddy_target.test", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "name", newName),
 					resource.TestCheckResourceAttr("buddy_target.test", "type", "SSH"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", newHostname),
-					resource.TestCheckResourceAttr("buddy_target.test", "port", strconv.Itoa(newPort)),
-					resource.TestCheckResourceAttr("buddy_target.test", "username", newUsername),
-					resource.TestCheckResourceAttr("buddy_target.test", "description", newDescription),
-					resource.TestCheckResourceAttr("buddy_target.test", "file_path", newFilePath),
-					resource.TestCheckResourceAttr("buddy_target.test", "auth_mode", "KEY"),
-					resource.TestCheckResourceAttr("buddy_target.test", "all_pipelines_allowed", "false"),
+					resource.TestCheckResourceAttr("buddy_target.test", "host", newHost),
+					resource.TestCheckResourceAttr("buddy_target.test", "port", newPort),
+					resource.TestCheckResourceAttr("buddy_target.test", "auth_username", newUsername),
+					resource.TestCheckResourceAttr("buddy_target.test", "path", newPath),
+					resource.TestCheckResourceAttr("buddy_target.test", "auth_method", "KEY"),
+					resource.TestCheckResourceAttr("buddy_target.test", "disabled", "false"),
 					resource.TestCheckResourceAttr("buddy_target.test", "tags.#", "2"),
 				),
 			},
@@ -72,20 +66,19 @@ func TestAccTarget_workspace_ssh(t *testing.T) {
 				ResourceName:            "buddy_target.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"password", "passphrase"},
+				ImportStateVerifyIgnore: []string{"auth_password", "auth_passphrase", "auth_key"},
 			},
 		},
 	})
 }
 
-func TestAccTarget_project_ftp(t *testing.T) {
+func TestAccTarget_workspace_ftp(t *testing.T) {
 	domain := util.UniqueString()
-	projectName := util.RandString(10)
 	name := util.RandString(10)
-	hostname := "ftp.example.com"
+	host := "ftp.example.com"
 	username := "ftpuser"
-	port := 21
-	
+	port := "21"
+
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -93,22 +86,17 @@ func TestAccTarget_project_ftp(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		CheckDestroy:             testAccTargetCheckDestroy,
 		Steps: []resource.TestStep{
-			// Create project
-			{
-				Config: testAccProjectConfig(domain, projectName),
-			},
 			// Create FTP target
 			{
-				Config: testAccProjectConfig(domain, projectName) + testAccTargetConfigProjectFtp(domain, projectName, name, hostname, port, username),
+				Config: testAccTargetConfigWorkspaceFtp(domain, name, host, port, username),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetCheckExist("buddy_target.test", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "project_name", projectName),
 					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
 					resource.TestCheckResourceAttr("buddy_target.test", "type", "FTP"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("buddy_target.test", "port", strconv.Itoa(port)),
-					resource.TestCheckResourceAttr("buddy_target.test", "username", username),
+					resource.TestCheckResourceAttr("buddy_target.test", "host", host),
+					resource.TestCheckResourceAttr("buddy_target.test", "port", port),
+					resource.TestCheckResourceAttr("buddy_target.test", "auth_username", username),
 				),
 			},
 			// Import
@@ -116,103 +104,18 @@ func TestAccTarget_project_ftp(t *testing.T) {
 				ResourceName:            "buddy_target.test",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"password"},
+				ImportStateVerifyIgnore: []string{"auth_password"},
 			},
 		},
 	})
 }
 
-func TestAccTarget_sftp(t *testing.T) {
+func TestAccTarget_workspace_s3(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
-	hostname := "sftp.example.com"
-	username := "sftpuser"
-	port := 22
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create SFTP target
-			{
-				Config: testAccTargetConfigSftp(domain, name, hostname, port, username),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "type", "SFTP"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("buddy_target.test", "port", strconv.Itoa(port)),
-					resource.TestCheckResourceAttr("buddy_target.test", "username", username),
-				),
-			},
-		},
-	})
-}
+	repository := "my-bucket"
+	path := "/uploads"
 
-func TestAccTarget_ftps(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	hostname := "ftps.example.com"
-	username := "ftpsuser"
-	port := 990
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create FTPS target
-			{
-				Config: testAccTargetConfigFtps(domain, name, hostname, port, username),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "type", "FTPS"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("buddy_target.test", "port", strconv.Itoa(port)),
-					resource.TestCheckResourceAttr("buddy_target.test", "username", username),
-				),
-			},
-		},
-	})
-}
-
-func TestAccTarget_shell(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create Shell target
-			{
-				Config: testAccTargetConfigShell(domain, name),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "type", "SHELL"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccTarget_s3(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -222,74 +125,33 @@ func TestAccTarget_s3(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create S3 target
 			{
-				Config: testAccTargetConfigS3(domain, name),
+				Config: testAccTargetConfigWorkspaceS3(domain, name, repository, path),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetCheckExist("buddy_target.test", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
 					resource.TestCheckResourceAttr("buddy_target.test", "type", "AMAZON_S3"),
+					resource.TestCheckResourceAttr("buddy_target.test", "repository", repository),
+					resource.TestCheckResourceAttr("buddy_target.test", "path", path),
+					resource.TestCheckResourceAttrSet("buddy_target.test", "integration"),
 				),
 			},
-		},
-	})
-}
-
-func TestAccTarget_gcs(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create GCS target
+			// Import
 			{
-				Config: testAccTargetConfigGcs(domain, name),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "type", "GOOGLE_CLOUD_STORAGE"),
-				),
+				ResourceName:      "buddy_target.test",
+				ImportState:       true,
+				ImportStateVerify: true,
 			},
 		},
 	})
 }
 
-func TestAccTarget_azure(t *testing.T) {
+func TestAccTarget_workspace_docker_registry(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create Azure Storage target
-			{
-				Config: testAccTargetConfigAzure(domain, name),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "type", "AZURE_STORAGE"),
-				),
-			},
-		},
-	})
-}
+	host := "docker.io"
+	repository := "myorg/myapp"
 
-func TestAccTarget_docker(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	hostname := "registry.example.com"
-	username := "dockeruser"
-	
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -299,113 +161,127 @@ func TestAccTarget_docker(t *testing.T) {
 		Steps: []resource.TestStep{
 			// Create Docker Registry target
 			{
-				Config: testAccTargetConfigDocker(domain, name, hostname, username),
+				Config: testAccTargetConfigWorkspaceDockerRegistry(domain, name, host, repository),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetCheckExist("buddy_target.test", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
 					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
 					resource.TestCheckResourceAttr("buddy_target.test", "type", "DOCKER_REGISTRY"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", hostname),
-					resource.TestCheckResourceAttr("buddy_target.test", "username", username),
+					resource.TestCheckResourceAttr("buddy_target.test", "host", host),
+					resource.TestCheckResourceAttr("buddy_target.test", "repository", repository),
+					resource.TestCheckResourceAttr("buddy_target.test", "secure", "true"),
 				),
+			},
+			// Import
+			{
+				ResourceName:            "buddy_target.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"auth_password"},
 			},
 		},
 	})
 }
 
-func TestAccTarget_kubernetes(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	hostname := "k8s.example.com"
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create Kubernetes target
-			{
-				Config: testAccTargetConfigKubernetes(domain, name, hostname),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "type", "KUBERNETES"),
-					resource.TestCheckResourceAttr("buddy_target.test", "hostname", hostname),
-				),
-			},
-		},
-	})
+func testAccTargetConfigWorkspaceSsh(domain, name, host, port, username string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "test" {
+	domain = "%s"
 }
 
-func TestAccTarget_allowed_pipelines(t *testing.T) {
-	domain := util.UniqueString()
-	projectName := util.RandString(10)
-	name := util.RandString(10)
-	hostname := "example.com"
-	username := "testuser"
-	port := 22
-	
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccTargetCheckDestroy,
-		Steps: []resource.TestStep{
-			// Create project with pipeline
-			{
-				Config: testAccProjectConfigWithPipeline(domain, projectName),
-			},
-			// Create target with allowed pipelines
-			{
-				Config: testAccProjectConfigWithPipeline(domain, projectName) + testAccTargetConfigWithAllowedPipelines(domain, projectName, name, hostname, port, username),
-				Check: resource.ComposeTestCheckFunc(
-					testAccTargetCheckExist("buddy_target.test", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "domain", domain),
-					resource.TestCheckResourceAttr("buddy_target.test", "project_name", projectName),
-					resource.TestCheckResourceAttr("buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("buddy_target.test", "all_pipelines_allowed", "false"),
-					resource.TestCheckResourceAttr("buddy_target.test", "allowed_pipelines.#", "1"),
-				),
-			},
-		},
-	})
+resource "buddy_target" "test" {
+	domain = buddy_workspace.test.domain
+	name = "%s"
+	type = "SSH"
+	host = "%s"
+	port = "%s"
+	auth_method = "PASS"
+	auth_username = "%s"
+	auth_password = "secret123"
+}
+`, domain, name, host, port, username)
 }
 
-func testAccTargetCheckDestroy(s *terraform.State) error {
-	for _, rs := range s.RootModule().Resources {
-		if rs.Type != "buddy_target" {
-			continue
-		}
-		domain, pid, tid, err := util.DecomposeTripleId(rs.Primary.ID)
-		if err != nil {
-			domain, tid, err = util.DecomposeDoubleId(rs.Primary.ID)
-			if err != nil {
-				return err
-			}
-		}
-		targetId, err := strconv.Atoi(tid)
-		if err != nil {
-			return err
-		}
-		var target *buddy.Target
-		var resp *buddy.Response
-		if pid != "" {
-			target, resp, err = acc.ApiClient.TargetService.GetInProject(domain, pid, targetId)
-		} else {
-			target, resp, err = acc.ApiClient.TargetService.GetInWorkspace(domain, targetId)
-		}
-		if err == nil && target != nil {
-			return util.ErrorResourceExists()
-		}
-		if !util.IsResourceNotFound(resp, err) {
-			return err
-		}
-	}
-	return nil
+func testAccTargetConfigWorkspaceSshFull(domain, name, host, port, username, path string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "test" {
+	domain = "%s"
+}
+
+resource "buddy_target" "test" {
+	domain = buddy_workspace.test.domain
+	name = "%s"
+	type = "SSH"
+	host = "%s"
+	port = "%s"
+	path = "%s"
+	auth_method = "KEY"
+	auth_username = "%s"
+	auth_key = "-----BEGIN RSA PRIVATE KEY-----\ntest\n-----END RSA PRIVATE KEY-----"
+	auth_passphrase = "passphrase123"
+	disabled = false
+	tags = ["production", "server"]
+}
+`, domain, name, host, port, path, username)
+}
+
+func testAccTargetConfigWorkspaceFtp(domain, name, host, port, username string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "test" {
+	domain = "%s"
+}
+
+resource "buddy_target" "test" {
+	domain = buddy_workspace.test.domain
+	name = "%s"
+	type = "FTP"
+	host = "%s"
+	port = "%s"
+	auth_username = "%s"
+	auth_password = "secret123"
+}
+`, domain, name, host, port, username)
+}
+
+func testAccTargetConfigWorkspaceS3(domain, name, repository, path string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "test" {
+	domain = "%s"
+}
+
+data "buddy_integrations" "aws" {
+	domain = buddy_workspace.test.domain
+	type = "AMAZON"
+}
+
+resource "buddy_target" "test" {
+	domain = buddy_workspace.test.domain
+	name = "%s"
+	type = "AMAZON_S3"
+	repository = "%s"
+	path = "%s"
+	integration = data.buddy_integrations.aws.integrations[0].integration_id
+}
+`, domain, name, repository, path)
+}
+
+func testAccTargetConfigWorkspaceDockerRegistry(domain, name, host, repository string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "test" {
+	domain = "%s"
+}
+
+resource "buddy_target" "test" {
+	domain = buddy_workspace.test.domain
+	name = "%s"
+	type = "DOCKER_REGISTRY"
+	host = "%s"
+	repository = "%s"
+	secure = true
+	auth_username = "dockeruser"
+	auth_password = "dockerpass"
+}
+`, domain, name, host, repository)
 }
 
 func testAccTargetCheckExist(n string, domain string) resource.TestCheckFunc {
@@ -414,214 +290,39 @@ func testAccTargetCheckExist(n string, domain string) resource.TestCheckFunc {
 		if !ok {
 			return fmt.Errorf("not found: %s", n)
 		}
-		dom, pid, tid, err := util.DecomposeTripleId(rs.Primary.ID)
-		if err != nil {
-			dom, tid, err = util.DecomposeDoubleId(rs.Primary.ID)
-			if err != nil {
-				return err
-			}
+
+		targetId := rs.Primary.Attributes["target_id"]
+		if targetId == "" {
+			return fmt.Errorf("no target ID is set")
 		}
-		if dom != domain {
-			return fmt.Errorf("bad domain, expected: %s, got: %s", domain, dom)
-		}
-		targetId, err := strconv.Atoi(tid)
+
+		_, _, err := acc.ApiClient.TargetService.Get(domain, targetId)
 		if err != nil {
 			return err
 		}
-		var target *buddy.Target
-		if pid != "" {
-			target, _, err = acc.ApiClient.TargetService.GetInProject(dom, pid, targetId)
-		} else {
-			target, _, err = acc.ApiClient.TargetService.GetInWorkspace(dom, targetId)
-		}
-		if err != nil {
-			return err
-		}
-		if target == nil {
-			return fmt.Errorf("target not found")
-		}
+
 		return nil
 	}
 }
 
-func testAccTargetConfigWorkspaceSsh(domain string, name string, hostname string, port int, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
-}`, domain, name, hostname, port, username)
-}
+func testAccTargetCheckDestroy(s *terraform.State) error {
+	for _, rs := range s.RootModule().Resources {
+		if rs.Type != "buddy_target" {
+			continue
+		}
 
-func testAccTargetConfigWorkspaceSshFull(domain string, name string, hostname string, port int, username string, description string, filePath string) string {
-	return fmt.Sprintf(`
-resource "buddy_variable_ssh_key" "test" {
-	domain = "%s"
-	display_name = "test-key"
-	value = "test-key-value"
-	file_place = "NONE"
-}
+		domain := rs.Primary.Attributes["domain"]
+		targetId := rs.Primary.Attributes["target_id"]
 
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	description = "%s"
-	file_path = "%s"
-	auth_mode = "KEY"
-	key_id = buddy_variable_ssh_key.test.variable_id
-	all_pipelines_allowed = false
-	tags = ["production", "secure"]
-}`, domain, domain, name, hostname, port, username, description, filePath)
-}
+		target, resp, err := acc.ApiClient.TargetService.Get(domain, targetId)
+		if err == nil && target != nil {
+			return fmt.Errorf("target still exists")
+		}
 
-func testAccTargetConfigProjectFtp(domain string, projectName string, name string, hostname string, port int, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	project_name = "%s"
-	name = "%s"
-	type = "FTP"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "ftp123"
-}`, domain, projectName, name, hostname, port, username)
-}
+		if !util.IsResourceNotFound(resp, err) {
+			return err
+		}
+	}
 
-func testAccTargetConfigSftp(domain string, name string, hostname string, port int, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "SFTP"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "sftp123"
-}`, domain, name, hostname, port, username)
-}
-
-func testAccTargetConfigFtps(domain string, name string, hostname string, port int, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "FTPS"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "ftps123"
-}`, domain, name, hostname, port, username)
-}
-
-func testAccTargetConfigShell(domain string, name string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "SHELL"
-}`, domain, name)
-}
-
-func testAccTargetConfigS3(domain string, name string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "AMAZON_S3"
-}`, domain, name)
-}
-
-func testAccTargetConfigGcs(domain string, name string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "GOOGLE_CLOUD_STORAGE"
-}`, domain, name)
-}
-
-func testAccTargetConfigAzure(domain string, name string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "AZURE_STORAGE"
-}`, domain, name)
-}
-
-func testAccTargetConfigDocker(domain string, name string, hostname string, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "DOCKER_REGISTRY"
-	hostname = "%s"
-	username = "%s"
-	password = "docker123"
-}`, domain, name, hostname, username)
-}
-
-func testAccTargetConfigKubernetes(domain string, name string, hostname string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	name = "%s"
-	type = "KUBERNETES"
-	hostname = "%s"
-}`, domain, name, hostname)
-}
-
-func testAccTargetConfigWithAllowedPipelines(domain string, projectName string, name string, hostname string, port int, username string) string {
-	return fmt.Sprintf(`
-resource "buddy_target" "test" {
-	domain = "%s"
-	project_name = "%s"
-	name = "%s"
-	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
-	all_pipelines_allowed = false
-	allowed_pipelines = [buddy_pipeline.test.pipeline_id]
-}`, domain, projectName, name, hostname, port, username)
-}
-
-func testAccProjectConfig(domain string, projectName string) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-	domain = "%s"
-}
-
-resource "buddy_project" "test" {
-	domain = buddy_workspace.foo.domain
-	display_name = "%s"
-}`, domain, projectName)
-}
-
-func testAccProjectConfigWithPipeline(domain string, projectName string) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-	domain = "%s"
-}
-
-resource "buddy_project" "test" {
-	domain = buddy_workspace.foo.domain
-	display_name = "%s"
-}
-
-resource "buddy_pipeline" "test" {
-	domain = buddy_workspace.foo.domain
-	project_name = buddy_project.test.name
-	name = "test"
-}`, domain, projectName)
+	return nil
 }

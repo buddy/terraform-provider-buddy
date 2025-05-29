@@ -13,9 +13,8 @@ func TestAccSourceTargets(t *testing.T) {
 	domain := util.UniqueString()
 	name1 := util.RandString(10)
 	name2 := util.RandString(10)
-	hostname := "example.com"
-	username := "testuser"
-	port := 22
+	host := "example.com"
+	port := "22"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -25,37 +24,9 @@ func TestAccSourceTargets(t *testing.T) {
 		CheckDestroy:             acc.DummyCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTargetsConfig(domain, name1, name2, hostname, port, username),
+				Config: testAccSourceTargetsConfig(domain, name1, name2, host, port),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.buddy_targets.test", "domain", domain),
-					resource.TestCheckResourceAttr("data.buddy_targets.test", "targets.#", "2"),
-				),
-			},
-		},
-	})
-}
-
-func TestAccSourceTargets_project(t *testing.T) {
-	domain := util.UniqueString()
-	projectName := util.RandString(10)
-	name1 := util.RandString(10)
-	name2 := util.RandString(10)
-	hostname := "example.com"
-	username := "testuser"
-	port := 22
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             acc.DummyCheckDestroy,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourceTargetsProjectConfig(domain, projectName, name1, name2, hostname, port, username),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.buddy_targets.test", "domain", domain),
-					resource.TestCheckResourceAttr("data.buddy_targets.test", "project_name", projectName),
 					resource.TestCheckResourceAttr("data.buddy_targets.test", "targets.#", "2"),
 				),
 			},
@@ -69,9 +40,8 @@ func TestAccSourceTargets_regex(t *testing.T) {
 	name1 := fmt.Sprintf("%s-ssh", prefix)
 	name2 := fmt.Sprintf("%s-ftp", prefix)
 	name3 := util.RandString(10)
-	hostname := "example.com"
-	username := "testuser"
-	port := 22
+	host := "example.com"
+	port := "22"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -81,7 +51,7 @@ func TestAccSourceTargets_regex(t *testing.T) {
 		CheckDestroy:             acc.DummyCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTargetsRegexConfig(domain, name1, name2, name3, hostname, port, username, prefix),
+				Config: testAccSourceTargetsRegexConfig(domain, name1, name2, name3, host, port, prefix),
 				Check: resource.ComposeTestCheckFunc(
 					resource.TestCheckResourceAttr("data.buddy_targets.test", "domain", domain),
 					resource.TestCheckResourceAttr("data.buddy_targets.test", "name_regex", fmt.Sprintf("^%s-", prefix)),
@@ -92,117 +62,82 @@ func TestAccSourceTargets_regex(t *testing.T) {
 	})
 }
 
-func testAccSourceTargetsConfig(domain string, name1 string, name2 string, hostname string, port int, username string) string {
+func testAccSourceTargetsConfig(domain, name1, name2, host, port string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
+resource "buddy_workspace" "test" {
 	domain = "%s"
 }
 
-resource "buddy_target" "bar1" {
-	domain = buddy_workspace.foo.domain
+resource "buddy_target" "target1" {
+	domain = buddy_workspace.test.domain
 	name = "%s"
 	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
+	host = "%s"
+	port = "%s"
+	auth_method = "PASS"
+	auth_username = "testuser"
+	auth_password = "password123"
 }
 
-resource "buddy_target" "bar2" {
-	domain = buddy_workspace.foo.domain
+resource "buddy_target" "target2" {
+	domain = buddy_workspace.test.domain
 	name = "%s"
 	type = "FTP"
-	hostname = "%s"
-	port = 21
-	username = "%s"
-	password = "test123"
+	host = "%s"
+	port = "21"
+	auth_username = "ftpuser"
+	auth_password = "password123"
 }
 
 data "buddy_targets" "test" {
-	domain = buddy_workspace.foo.domain
-	depends_on = [buddy_target.bar1, buddy_target.bar2]
-}`, domain, name1, hostname, port, username, name2, hostname, username)
+	domain = buddy_workspace.test.domain
+	depends_on = [buddy_target.target1, buddy_target.target2]
+}
+`, domain, name1, host, port, name2, host)
 }
 
-func testAccSourceTargetsProjectConfig(domain string, projectName string, name1 string, name2 string, hostname string, port int, username string) string {
+func testAccSourceTargetsRegexConfig(domain, name1, name2, name3, host, port, prefix string) string {
 	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
+resource "buddy_workspace" "test" {
 	domain = "%s"
 }
 
-resource "buddy_project" "proj" {
-	domain = buddy_workspace.foo.domain
-	display_name = "%s"
-}
-
-resource "buddy_target" "bar1" {
-	domain = buddy_workspace.foo.domain
-	project_name = buddy_project.proj.name
+resource "buddy_target" "target1" {
+	domain = buddy_workspace.test.domain
 	name = "%s"
 	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
+	host = "%s"
+	port = "%s"
+	auth_method = "PASS"
+	auth_username = "testuser"
+	auth_password = "password123"
 }
 
-resource "buddy_target" "bar2" {
-	domain = buddy_workspace.foo.domain
-	project_name = buddy_project.proj.name
+resource "buddy_target" "target2" {
+	domain = buddy_workspace.test.domain
 	name = "%s"
 	type = "FTP"
-	hostname = "%s"
-	port = 21
-	username = "%s"
-	password = "test123"
+	host = "%s"
+	port = "21"
+	auth_username = "ftpuser"
+	auth_password = "password123"
 }
 
-data "buddy_targets" "test" {
-	domain = buddy_workspace.foo.domain
-	project_name = buddy_project.proj.name
-	depends_on = [buddy_target.bar1, buddy_target.bar2]
-}`, domain, projectName, name1, hostname, port, username, name2, hostname, username)
-}
-
-func testAccSourceTargetsRegexConfig(domain string, name1 string, name2 string, name3 string, hostname string, port int, username string, prefix string) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-	domain = "%s"
-}
-
-resource "buddy_target" "bar1" {
-	domain = buddy_workspace.foo.domain
-	name = "%s"
-	type = "SSH"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
-}
-
-resource "buddy_target" "bar2" {
-	domain = buddy_workspace.foo.domain
-	name = "%s"
-	type = "FTP"
-	hostname = "%s"
-	port = 21
-	username = "%s"
-	password = "test123"
-}
-
-resource "buddy_target" "bar3" {
-	domain = buddy_workspace.foo.domain
+resource "buddy_target" "target3" {
+	domain = buddy_workspace.test.domain
 	name = "%s"
 	type = "SFTP"
-	hostname = "%s"
-	port = %d
-	username = "%s"
-	password = "test123"
+	host = "%s"
+	port = "%s"
+	auth_method = "PASS"
+	auth_username = "sftpuser"
+	auth_password = "password123"
 }
 
 data "buddy_targets" "test" {
-	domain = buddy_workspace.foo.domain
+	domain = buddy_workspace.test.domain
 	name_regex = "^%s-"
-	depends_on = [buddy_target.bar1, buddy_target.bar2, buddy_target.bar3]
-}`, domain, name1, hostname, port, username, name2, hostname, username, name3, hostname, port, username, prefix)
+	depends_on = [buddy_target.target1, buddy_target.target2, buddy_target.target3]
+}
+`, domain, name1, host, port, name2, host, name3, host, port, prefix)
 }
