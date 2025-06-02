@@ -4,6 +4,7 @@
 *.log
 terraform-provider-buddy
 .DS_Store
+.claude
 .run
 ./*.tfstate
 .idea

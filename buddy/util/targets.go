@@ -5,7 +5,9 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
 )
 
 type TargetModel struct {
@@ -108,4 +110,13 @@ func SourceTargetModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 	}
+}
+
+func TargetsModelFromApi(ctx context.Context, targets *[]*buddy.Target) (basetypes.SetValue, diag.Diagnostics) {
+	l := make([]*TargetModel, len(*targets))
+	for i, v := range *targets {
+		l[i] = &TargetModel{}
+		l[i].LoadAPI(ctx, v)
+	}
+	return types.SetValueFrom(ctx, types.ObjectType{AttrTypes: TargetModelAttrs()}, &l)
 }

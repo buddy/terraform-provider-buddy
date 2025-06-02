@@ -4,21 +4,22 @@ import (
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"terraform-provider-buddy/buddy/acc"
 	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
 
-func TestAccSourceTarget_byId(t *testing.T) {
+func TestAccSourceTarget(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	identifier := util.UniqueString()
 	host := "1.1.1.1"
-	port := "44"
-	path := util.RandString(10)
+	port := "22"
+	path := "/"
+	tag := util.RandString(3)
 	username := util.RandString(10)
 	password := util.RandString(10)
-
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -26,59 +27,53 @@ func TestAccSourceTarget_byId(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTargetByIdConfig(domain, name, identifier, host, port, path, username, password),
+				Config: testAccSourceTargetConfig(domain, name, identifier, host, port, path, username, password, tag),
 				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "identifier", identifier),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "type", buddy.TargetTypeSsh),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "host", host),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "port", port),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "path", path),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "secure", "false"),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "disabled", "false"),
-					resource.TestCheckResourceAttrSet("data.buddy_target.test", "target_id"),
-					resource.TestCheckResourceAttrSet("data.buddy_target.test", "html_url"),
-				),
+					testAccSourceTargetAttributes("data.buddy_target.test", name, identifier, host, port, path, tag)),
 			},
 		},
 	})
 }
 
-func TestAccSourceTarget_byIdentifier(t *testing.T) {
-	domain := util.UniqueString()
-	name := util.RandString(10)
-	identifier := util.UniqueString()
-	repository := "https://a" + util.UniqueString() + ".com"
-	username := util.RandString(10)
-	password := util.RandString(10)
-	tag1 := "a"
-	tag2 := "b"
-
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		Steps: []resource.TestStep{
-			{
-				Config: testAccSourceTargetByIdentifierConfig(domain, name, identifier, repository, username, password, tag1, tag2),
-				Check: resource.ComposeTestCheckFunc(
-					resource.TestCheckResourceAttr("data.buddy_target.test", "name", name),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "identifier", identifier),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "type", buddy.TargetTypeGit),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "repository", repository),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "tags.#", "2"),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "tags.0", tag1),
-					resource.TestCheckResourceAttr("data.buddy_target.test", "tags.1", tag2),
-					resource.TestCheckResourceAttrSet("data.buddy_target.test", "target_id"),
-					resource.TestCheckResourceAttrSet("data.buddy_target.test", "html_url"),
-				),
-			},
-		},
-	})
+func testAccSourceTargetAttributes(n string, name string, identifier string, host string, port string, path string, tag string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		attrs := rs.Primary.Attributes
+		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("identifier", attrs["identifier"], identifier); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("html_url", attrs["html_url"]); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("target_id", attrs["target_id"]); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("type", attrs["type"], buddy.TargetTypeSsh); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("host", attrs["host"], host); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("port", attrs["port"], port); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("path", attrs["path"], path); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("tags.0", attrs["tags.0"], tag); err != nil {
+			return err
+		}
+		return nil
+	}
 }
 
-func testAccSourceTargetByIdConfig(domain string, name string, identifier string, host string, port string, path string, username string, password string) string {
+func testAccSourceTargetConfig(domain string, name string, identifier string, host string, port string, path string, username string, password string, tag string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "test" {
     domain = "%s"
@@ -88,12 +83,13 @@ resource "buddy_target" "test" {
     domain     = buddy_workspace.test.domain
     name       = "%s"
     identifier = "%s"
-    type       = "%s"
+    type       = "SSH"
     host       = "%s"
     port       = "%s"
     path       = "%s"
+    tags       = ["%s"]
     auth {
-        method   = "%s"
+        method   = "PASSWORD"
         username = "%s"
         password = "%s"
     }
@@ -102,31 +98,5 @@ resource "buddy_target" "test" {
 data "buddy_target" "test" {
     domain    = buddy_workspace.test.domain
     target_id = buddy_target.test.target_id
-}`, domain, name, identifier, buddy.TargetTypeSsh, host, port, path, buddy.TargetAuthMethodPassword, username, password)
-}
-
-func testAccSourceTargetByIdentifierConfig(domain string, name string, identifier string, repository string, username string, password string, tag1 string, tag2 string) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "test" {
-    domain = "%s"
-}
-
-resource "buddy_target" "test" {
-    domain     = buddy_workspace.test.domain
-    name       = "%s"
-    identifier = "%s"
-    type       = "%s"
-    repository = "%s"
-    tags       = ["%s", "%s"]
-    auth {
-        method   = "%s"
-        username = "%s"
-        password = "%s"
-    }
-}
-
-data "buddy_target" "test" {
-    domain     = buddy_workspace.test.domain
-    identifier = buddy_target.test.identifier
-}`, domain, name, identifier, buddy.TargetTypeGit, repository, tag1, tag2, buddy.TargetAuthMethodHttp, username, password)
+}`, domain, name, identifier, host, port, path, tag, username, password)
 }

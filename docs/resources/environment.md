@@ -44,7 +44,7 @@ resource "buddy_environment" "dev" {
 - `identifier` (String) The environment's identifier
 - `name` (String) The environment's name
 - `project_name` (String) The project's name
-- `type` (String) The environment's typpe. Allowed: `PRODUCTION`, `STAGE`, `DEV`
+- `type` (String) The environment's type. Allowed: `PRODUCTION`, `STAGE`, `DEV`
 
 ### Optional
 
@@ -58,7 +58,7 @@ resource "buddy_environment" "dev" {
 ### Read-Only
 
 - `environment_id` (String) The environment's ID
-- `html_url` (String) The pipeline's URL
+- `html_url` (String) The environment's URL
 - `id` (String) The Terraform resource identifier for this item
 - `project` (Attributes Set) The environment's project (see [below for nested schema](#nestedatt--project))
 

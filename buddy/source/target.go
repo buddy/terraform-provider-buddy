@@ -2,13 +2,10 @@ package source
 
 import (
 	"context"
-	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
-	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/path"
-	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"terraform-provider-buddy/buddy/util"
 )
@@ -27,20 +24,43 @@ type targetSource struct {
 }
 
 type targetSourceModel struct {
-	Domain     types.String `tfsdk:"domain"`
-	TargetId   types.String `tfsdk:"target_id"`
-	Name       types.String `tfsdk:"name"`
-	Identifier types.String `tfsdk:"identifier"`
-	Tags       types.List   `tfsdk:"tags"`
-	Type       types.String `tfsdk:"type"`
-	HtmlUrl    types.String `tfsdk:"html_url"`
-	Host       types.String `tfsdk:"host"`
-	Scope      types.String `tfsdk:"scope"`
-	Repository types.String `tfsdk:"repository"`
-	Port       types.String `tfsdk:"port"`
-	Path       types.String `tfsdk:"path"`
-	Secure     types.Bool   `tfsdk:"secure"`
-	Disabled   types.Bool   `tfsdk:"disabled"`
+	ID          types.String `tfsdk:"id"`
+	Domain      types.String `tfsdk:"domain"`
+	TargetId    types.String `tfsdk:"target_id"`
+	HtmlUrl     types.String `tfsdk:"html_url"`
+	Name        types.String `tfsdk:"name"`
+	Identifier  types.String `tfsdk:"identifier"`
+	Tags        types.Set    `tfsdk:"tags"`
+	Type        types.String `tfsdk:"type"`
+	Host        types.String `tfsdk:"host"`
+	Scope       types.String `tfsdk:"scope"`
+	Repository  types.String `tfsdk:"repository"`
+	Port        types.String `tfsdk:"port"`
+	Integration types.String `tfsdk:"integration"`
+	Path        types.String `tfsdk:"path"`
+	Secure      types.Bool   `tfsdk:"secure"`
+	Disabled    types.Bool   `tfsdk:"disabled"`
+}
+
+func (m *targetSourceModel) loadAPI(ctx context.Context, domain string, target *buddy.Target) diag.Diagnostics {
+	m.ID = types.StringValue(util.ComposeDoubleId(domain, target.Id))
+	m.Domain = types.StringValue(domain)
+	m.HtmlUrl = types.StringValue(target.HtmlUrl)
+	m.TargetId = types.StringValue(target.Id)
+	m.Identifier = types.StringValue(target.Identifier)
+	tags, d := types.SetValueFrom(ctx, types.StringType, &target.Tags)
+	m.Tags = tags
+	m.Name = types.StringValue(target.Name)
+	m.Type = types.StringValue(target.Type)
+	m.Host = types.StringValue(target.Host)
+	m.Scope = types.StringValue(target.Scope)
+	m.Repository = types.StringValue(target.Repository)
+	m.Port = types.StringValue(target.Port)
+	m.Path = types.StringValue(target.Path)
+	m.Secure = types.BoolValue(target.Secure)
+	m.Disabled = types.BoolValue(target.Disabled)
+	m.Integration = types.StringValue(target.Integration)
+	return d
 }
 
 func (s *targetSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -49,62 +69,74 @@ func (s *targetSource) Metadata(_ context.Context, req datasource.MetadataReques
 
 func (s *targetSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		MarkdownDescription: "Get target by target ID or Identifier\n\n" +
-			"Token scope required: `WORKSPACE`",
+		MarkdownDescription: "Get target by name or target ID\n\n" +
+			"Token scope required: `WORKSPACE`, TARGET_INFO",
 		Attributes: map[string]schema.Attribute{
+			"id": schema.StringAttribute{
+				MarkdownDescription: "The Terraform resource identifier for this item",
+				Computed:            true,
+			},
 			"domain": schema.StringAttribute{
-				Required: true,
-				Validators: []validator.String{
-					stringvalidator.LengthAtLeast(1),
-				},
+				MarkdownDescription: "The workspace's URL handle",
+				Required:            true,
+				Validators:          util.StringValidatorsDomain(),
 			},
 			"target_id": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
-				Validators: []validator.String{
-					stringvalidator.ExactlyOneOf(path.Expressions{
-						path.MatchRoot("target_id"),
-						path.MatchRoot("identifier"),
-					}...),
-				},
-			},
-			"identifier": schema.StringAttribute{
-				Optional: true,
-				Computed: true,
+				MarkdownDescription: "The target's ID",
+				Required:            true,
 			},
 			"name": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's name",
+				Computed:            true,
 			},
-			"tags": schema.ListAttribute{
-				Computed:    true,
-				ElementType: types.StringType,
-			},
-			"type": schema.StringAttribute{
-				Computed: true,
+			"identifier": schema.StringAttribute{
+				MarkdownDescription: "The target's identifier",
+				Computed:            true,
 			},
 			"html_url": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's URL",
+				Computed:            true,
 			},
-			"host": schema.StringAttribute{
-				Computed: true,
+			"type": schema.StringAttribute{
+				MarkdownDescription: "The target's type",
+				Computed:            true,
+			},
+			"tags": schema.SetAttribute{
+				MarkdownDescription: "The target's list of tags",
+				Computed:            true,
+				ElementType:         types.StringType,
 			},
 			"scope": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's scope",
+				Computed:            true,
+			},
+			"host": schema.StringAttribute{
+				MarkdownDescription: "The target's host",
+				Computed:            true,
 			},
 			"repository": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's repository",
+				Computed:            true,
 			},
 			"port": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's port",
+				Computed:            true,
 			},
 			"path": schema.StringAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's path",
+				Computed:            true,
 			},
 			"secure": schema.BoolAttribute{
-				Computed: true,
+				MarkdownDescription: "The target's secure setting",
+				Computed:            true,
+			},
+			"integration": schema.StringAttribute{
+				MarkdownDescription: "The target's integration",
+				Computed:            true,
 			},
 			"disabled": schema.BoolAttribute{
-				Computed: true,
+				MarkdownDescription: "Defines whether or not the target can be run",
+				Computed:            true,
 			},
 		},
 	}
@@ -123,79 +155,16 @@ func (s *targetSource) Read(ctx context.Context, req datasource.ReadRequest, res
 	if resp.Diagnostics.HasError() {
 		return
 	}
-
 	domain := data.Domain.ValueString()
-
-	var target *buddy.Target
-	var err error
-
-	// Determine whether to search by ID or identifier
-	if !data.TargetId.IsNull() && data.TargetId.ValueString() != "" {
-		// Get by ID
-		target, _, err = s.client.TargetService.Get(domain, data.TargetId.ValueString())
-		if err != nil {
-			resp.Diagnostics.Append(util.NewDiagnosticApiError("get target by id", err))
-			return
-		}
-	} else if !data.Identifier.IsNull() && data.Identifier.ValueString() != "" {
-		// Get all targets and find by identifier
-		targets, _, err := s.client.TargetService.GetList(domain, nil)
-		if err != nil {
-			resp.Diagnostics.Append(util.NewDiagnosticApiError("get targets", err))
-			return
-		}
-
-		identifier := data.Identifier.ValueString()
-		for _, t := range targets.Targets {
-			if t.Identifier == identifier {
-				target = t
-				break
-			}
-		}
-
-		if target == nil {
-			resp.Diagnostics.AddError(
-				"target not found",
-				"target with identifier "+identifier+" not found",
-			)
-			return
-		}
-	}
-
-	// Load data from API response
-	if err := data.loadAPI(ctx, domain, target); err != nil {
-		resp.Diagnostics.AddError("failed to load target data", err.Error())
+	targetId := data.TargetId.ValueString()
+	target, _, err := s.client.TargetService.Get(domain, targetId)
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get target by id", err))
 		return
 	}
-
-	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
-}
-
-func (m *targetSourceModel) loadAPI(ctx context.Context, domain string, target *buddy.Target) error {
-	m.Domain = types.StringValue(domain)
-	m.TargetId = types.StringValue(target.Id)
-	m.Identifier = types.StringValue(target.Identifier)
-	m.Name = types.StringValue(target.Name)
-	m.Type = types.StringValue(target.Type)
-	m.HtmlUrl = types.StringValue(target.HtmlUrl)
-	m.Scope = types.StringValue(target.Scope)
-
-	if target.Tags != nil && len(target.Tags) > 0 {
-		tags, diags := types.ListValueFrom(ctx, types.StringType, target.Tags)
-		if diags.HasError() {
-			return fmt.Errorf("failed to convert tags: %s", diags[0].Summary())
-		}
-		m.Tags = tags
-	} else {
-		m.Tags = types.ListNull(types.StringType)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, target)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
-
-	m.Host = types.StringValue(target.Host)
-	m.Repository = types.StringValue(target.Repository)
-	m.Port = types.StringValue(target.Port)
-	m.Path = types.StringValue(target.Path)
-	m.Secure = types.BoolValue(target.Secure)
-	m.Disabled = types.BoolValue(target.Disabled)
-
-	return nil
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
