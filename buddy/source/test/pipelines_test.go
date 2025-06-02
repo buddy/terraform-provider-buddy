@@ -79,6 +79,9 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 			if err := util.CheckFieldSet("pipelines.0.html_url", attrs["pipelines.0.html_url"]); err != nil {
 				return err
 			}
+			if err := util.CheckFieldSet("pipelines.0.identifier", attrs["pipelines.0.identifier"]); err != nil {
+				return err
+			}
 			if err := util.CheckFieldSet("pipelines.0.last_execution_status", attrs["pipelines.0.last_execution_status"]); err != nil {
 				return err
 			}
