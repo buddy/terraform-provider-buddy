@@ -259,7 +259,7 @@ func testAccEnvironmentAttributes(n string, environment *buddy.Environment, name
 				return err
 			}
 		} else {
-			if err := util.CheckIntFieldEqual("Permissions.Permissions.Users", len(environment.Permissions.Users), 0); err != nil {
+			if err := util.CheckIntFieldEqual("len(Permissions.Users)", len(environment.Permissions.Users), 0); err != nil {
 				return err
 			}
 		}
@@ -268,7 +268,7 @@ func testAccEnvironmentAttributes(n string, environment *buddy.Environment, name
 				return err
 			}
 		} else {
-			if err := util.CheckIntFieldEqual("Permissions.Permissions.Groups", len(environment.Permissions.Groups), 0); err != nil {
+			if err := util.CheckIntFieldEqual("len(Permissions.Groups)", len(environment.Permissions.Groups), 0); err != nil {
 				return err
 			}
 		}

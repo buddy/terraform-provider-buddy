@@ -127,7 +127,7 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 				},
 			},
 			"html_url": schema.StringAttribute{
-				MarkdownDescription: "The pipeline's URL",
+				MarkdownDescription: "The environment's URL",
 				Computed:            true,
 			},
 			"environment_id": schema.StringAttribute{
@@ -147,7 +147,7 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Required:            true,
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "The environment's typpe. Allowed: `PRODUCTION`, `STAGE`, `DEV`",
+				MarkdownDescription: "The environment's type. Allowed: `PRODUCTION`, `STAGE`, `DEV`",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
