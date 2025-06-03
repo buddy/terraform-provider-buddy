@@ -1,3 +1,6 @@
+# Release v1.29.1 (2025-06-03)
+* Adds variable scope validator
+
 # Release v1.29.0 (2025-06-02)
 * Adds targets
 

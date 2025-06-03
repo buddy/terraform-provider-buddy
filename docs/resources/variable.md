@@ -55,11 +55,11 @@ resource "buddy_variable" "in_pipeline" {
 
 ### Optional
 
-- `action_id` (Number) The variable's action ID
+- `action_id` (Number) The variable's action ID. Set for action scope
 - `description` (String) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted
-- `pipeline_id` (Number) The variable's pipeline ID
-- `project_name` (String) The variable's project name
+- `pipeline_id` (Number) The variable's pipeline ID. Set for pipeline scope
+- `project_name` (String) The variable's project name. Set for project scope
 - `settable` (Boolean) Is the variable's value changeable
 
 ### Read-Only
