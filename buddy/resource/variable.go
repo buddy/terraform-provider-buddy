@@ -4,12 +4,15 @@ import (
 	"context"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"strconv"
 	"terraform-provider-buddy/buddy/util"
@@ -125,27 +128,45 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:            true,
 			},
 			"project_name": schema.StringAttribute{
-				MarkdownDescription: "The variable's project name",
+				MarkdownDescription: "The variable's project name. Set for project scope",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("action_id"),
+					}...),
+				},
 			},
 			"pipeline_id": schema.Int64Attribute{
-				MarkdownDescription: "The variable's pipeline ID",
+				MarkdownDescription: "The variable's pipeline ID. Set for pipeline scope",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("action_id"),
+					}...),
+				},
 			},
 			"action_id": schema.Int64Attribute{
-				MarkdownDescription: "The variable's action ID",
+				MarkdownDescription: "The variable's action ID. Set for action scope",
 				Optional:            true,
 				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
+				},
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("pipeline_id"),
+					}...),
 				},
 			},
 			"settable": schema.BoolAttribute{
