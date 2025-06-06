@@ -1,5 +1,6 @@
 # Release v1.30.0 (2025-06-06)
 * [Breaking] - 'type' removed from environment
+* [Breaking] - 'allowed_pipelines' removed from environment
 
 # Release v1.29.1 (2025-06-03)
 * Adds variable scope validator
