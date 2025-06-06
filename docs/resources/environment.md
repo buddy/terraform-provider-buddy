@@ -47,7 +47,6 @@ resource "buddy_environment" "dev" {
 ### Optional
 
 - `all_pipelines_allowed` (Boolean) Defines whether or not environment can be used in all pipelines
-- `allowed_pipelines` (Set of Number) List of pipeline IDs that is allowed to use the environment
 - `permissions` (Block Set) The environment's permissions (see [below for nested schema](#nestedblock--permissions))
 - `public_url` (String) The environment's public URL
 - `tags` (Set of String) The environment's list of tags
