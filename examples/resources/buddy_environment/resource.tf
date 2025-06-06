@@ -3,7 +3,6 @@ resource "buddy_environment" "dev" {
   project_name          = "myproject"
   name                  = "dev"
   identifier            = "dev"
-  type                  = "dev"
   public_url            = "https://dev.com"
   all_pipelines_allowed = true
   tags                  = ["frontend", "backend"]

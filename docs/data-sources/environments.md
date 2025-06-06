@@ -56,4 +56,3 @@ Read-Only:
 - `name` (String)
 - `public_url` (String)
 - `tags` (Set of String)
-- `type` (String)

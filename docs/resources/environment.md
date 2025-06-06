@@ -21,7 +21,6 @@ resource "buddy_environment" "dev" {
   project_name          = "myproject"
   name                  = "dev"
   identifier            = "dev"
-  type                  = "dev"
   public_url            = "https://dev.com"
   all_pipelines_allowed = true
   tags                  = ["frontend", "backend"]
@@ -44,7 +43,6 @@ resource "buddy_environment" "dev" {
 - `identifier` (String) The environment's identifier
 - `name` (String) The environment's name
 - `project_name` (String) The project's name
-- `type` (String) The environment's type. Allowed: `PRODUCTION`, `STAGE`, `DEV`
 
 ### Optional
 

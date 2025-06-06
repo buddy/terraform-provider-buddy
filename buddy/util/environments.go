@@ -15,7 +15,6 @@ type environmentModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Name          types.String `tfsdk:"name"`
 	Identifier    types.String `tfsdk:"identifier"`
-	Type          types.String `tfsdk:"type"`
 	Tags          types.Set    `tfsdk:"tags"`
 	PublicUrl     types.String `tfsdk:"public_url"`
 }
@@ -26,7 +25,6 @@ func environmentModelAttrs() map[string]attr.Type {
 		"environment_id": types.StringType,
 		"name":           types.StringType,
 		"identifier":     types.StringType,
-		"type":           types.StringType,
 		"tags":           types.SetType{ElemType: types.StringType},
 		"public_url":     types.StringType,
 	}
@@ -37,7 +35,6 @@ func (e *environmentModel) loadAPI(ctx context.Context, environment *buddy.Envir
 	e.EnvironmentId = types.StringValue(environment.Id)
 	e.Name = types.StringValue(environment.Name)
 	e.Identifier = types.StringValue(environment.Identifier)
-	e.Type = types.StringValue(environment.Type)
 	e.PublicUrl = types.StringValue(environment.PublicUrl)
 	t, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
 	e.Tags = t
@@ -56,9 +53,6 @@ func SourceEnvironmentModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"identifier": schema.StringAttribute{
-			Computed: true,
-		},
-		"type": schema.StringAttribute{
 			Computed: true,
 		},
 		"public_url": schema.StringAttribute{

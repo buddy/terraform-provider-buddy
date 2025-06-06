@@ -49,7 +49,6 @@ type environmentResourceModel struct {
 	EnvironmentId       types.String `tfsdk:"environment_id"`
 	Name                types.String `tfsdk:"name"`
 	Identifier          types.String `tfsdk:"identifier"`
-	Type                types.String `tfsdk:"type"`
 	Tags                types.Set    `tfsdk:"tags"`
 	PublicUrl           types.String `tfsdk:"public_url"`
 	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
@@ -68,7 +67,6 @@ func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, p
 	r.EnvironmentId = types.StringValue(environment.Id)
 	r.Name = types.StringValue(environment.Name)
 	r.Identifier = types.StringValue(environment.Identifier)
-	r.Type = types.StringValue(environment.Type)
 	tags, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
 	diags.Append(d...)
 	r.Tags = tags
@@ -145,18 +143,6 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The environment's name",
 				Required:            true,
-			},
-			"type": schema.StringAttribute{
-				MarkdownDescription: "The environment's type. Allowed: `PRODUCTION`, `STAGE`, `DEV`",
-				Required:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{stringvalidator.OneOf(
-					buddy.EnvironmentTypeProduction,
-					buddy.EnvironmentTypeStage,
-					buddy.EnvironmentTypeDev,
-				)},
 			},
 			"public_url": schema.StringAttribute{
 				MarkdownDescription: "The environment's public URL",
@@ -255,7 +241,6 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 	projectName := data.ProjectName.ValueString()
 	ops := buddy.EnvironmentOps{
 		Name: data.Name.ValueStringPointer(),
-		Type: data.Type.ValueStringPointer(),
 	}
 	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
@@ -356,7 +341,6 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	ops := buddy.EnvironmentOps{
 		Name: data.Name.ValueStringPointer(),
-		Type: data.Type.ValueStringPointer(),
 	}
 	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
