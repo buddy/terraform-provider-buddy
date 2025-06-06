@@ -47,4 +47,3 @@ data "buddy_environment" "stage" {
 - `identifier` (String) The environment's identifier
 - `public_url` (String) The environment's public URL
 - `tags` (Set of String) The environment's list of tags
-- `type` (String) The environment's type

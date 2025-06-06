@@ -21,7 +21,6 @@ resource "buddy_environment" "dev" {
   project_name          = "myproject"
   name                  = "dev"
   identifier            = "dev"
-  type                  = "dev"
   public_url            = "https://dev.com"
   all_pipelines_allowed = true
   tags                  = ["frontend", "backend"]
@@ -44,12 +43,10 @@ resource "buddy_environment" "dev" {
 - `identifier` (String) The environment's identifier
 - `name` (String) The environment's name
 - `project_name` (String) The project's name
-- `type` (String) The environment's type. Allowed: `PRODUCTION`, `STAGE`, `DEV`
 
 ### Optional
 
 - `all_pipelines_allowed` (Boolean) Defines whether or not environment can be used in all pipelines
-- `allowed_pipelines` (Set of Number) List of pipeline IDs that is allowed to use the environment
 - `permissions` (Block Set) The environment's permissions (see [below for nested schema](#nestedblock--permissions))
 - `public_url` (String) The environment's public URL
 - `tags` (Set of String) The environment's list of tags

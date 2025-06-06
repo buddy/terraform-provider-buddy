@@ -49,11 +49,9 @@ type environmentResourceModel struct {
 	EnvironmentId       types.String `tfsdk:"environment_id"`
 	Name                types.String `tfsdk:"name"`
 	Identifier          types.String `tfsdk:"identifier"`
-	Type                types.String `tfsdk:"type"`
 	Tags                types.Set    `tfsdk:"tags"`
 	PublicUrl           types.String `tfsdk:"public_url"`
 	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
-	AllowedPipelines    types.Set    `tfsdk:"allowed_pipelines"`
 	Project             types.Set    `tfsdk:"project"`
 	Variable            types.Set    `tfsdk:"var"`
 	Permissions         types.Set    `tfsdk:"permissions"`
@@ -68,19 +66,11 @@ func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, p
 	r.EnvironmentId = types.StringValue(environment.Id)
 	r.Name = types.StringValue(environment.Name)
 	r.Identifier = types.StringValue(environment.Identifier)
-	r.Type = types.StringValue(environment.Type)
 	tags, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
 	diags.Append(d...)
 	r.Tags = tags
 	r.PublicUrl = types.StringValue(environment.PublicUrl)
 	r.AllPipelinesAllowed = types.BoolValue(environment.AllPipelinesAllowed)
-	ids := make([]int64, len(environment.AllowedPipelines))
-	for i, v := range environment.AllowedPipelines {
-		ids[i] = int64(v.Id)
-	}
-	allowedPipelines, d := types.SetValueFrom(ctx, types.Int64Type, &ids)
-	diags.Append(d...)
-	r.AllowedPipelines = allowedPipelines
 	projects, d := util.ProjectsModelFromApi(ctx, &[]*buddy.Project{environment.Project})
 	diags.Append(d...)
 	r.Project = projects
@@ -146,18 +136,6 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "The environment's name",
 				Required:            true,
 			},
-			"type": schema.StringAttribute{
-				MarkdownDescription: "The environment's type. Allowed: `PRODUCTION`, `STAGE`, `DEV`",
-				Required:            true,
-				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
-				},
-				Validators: []validator.String{stringvalidator.OneOf(
-					buddy.EnvironmentTypeProduction,
-					buddy.EnvironmentTypeStage,
-					buddy.EnvironmentTypeDev,
-				)},
-			},
 			"public_url": schema.StringAttribute{
 				MarkdownDescription: "The environment's public URL",
 				Optional:            true,
@@ -165,12 +143,6 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"all_pipelines_allowed": schema.BoolAttribute{
 				MarkdownDescription: "Defines whether or not environment can be used in all pipelines",
-				Optional:            true,
-				Computed:            true,
-			},
-			"allowed_pipelines": schema.SetAttribute{
-				ElementType:         types.Int64Type,
-				MarkdownDescription: "List of pipeline IDs that is allowed to use the environment",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -255,7 +227,6 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 	projectName := data.ProjectName.ValueString()
 	ops := buddy.EnvironmentOps{
 		Name: data.Name.ValueStringPointer(),
-		Type: data.Type.ValueStringPointer(),
 	}
 	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
@@ -265,20 +236,6 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 	}
 	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
 		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
-	}
-	if !data.AllowedPipelines.IsNull() && !data.AllowedPipelines.IsUnknown() {
-		ids, d := util.Int64SetToApi(ctx, &data.AllowedPipelines)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		allowedPipelines := make([]*buddy.AllowedPipeline, len(*ids))
-		for i, v := range *ids {
-			allowedPipelines[i] = &buddy.AllowedPipeline{
-				Id: v,
-			}
-		}
-		ops.AllowedPipelines = &allowedPipelines
 	}
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &data.Tags)
@@ -356,7 +313,6 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	ops := buddy.EnvironmentOps{
 		Name: data.Name.ValueStringPointer(),
-		Type: data.Type.ValueStringPointer(),
 	}
 	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
@@ -366,20 +322,6 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
 		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
-	}
-	if !data.AllowedPipelines.IsNull() && !data.AllowedPipelines.IsUnknown() {
-		ids, d := util.Int64SetToApi(ctx, &data.AllowedPipelines)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		allowedPipelines := make([]*buddy.AllowedPipeline, len(*ids))
-		for i, v := range *ids {
-			allowedPipelines[i] = &buddy.AllowedPipeline{
-				Id: v,
-			}
-		}
-		ops.AllowedPipelines = &allowedPipelines
 	}
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &data.Tags)

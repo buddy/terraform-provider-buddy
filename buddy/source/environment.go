@@ -35,7 +35,6 @@ type environmentSourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Name          types.String `tfsdk:"name"`
 	Identifier    types.String `tfsdk:"identifier"`
-	Type          types.String `tfsdk:"type"`
 	Tags          types.Set    `tfsdk:"tags"`
 	PublicUrl     types.String `tfsdk:"public_url"`
 }
@@ -48,7 +47,6 @@ func (e *environmentSourceModel) loadAPI(ctx context.Context, domain string, pro
 	e.EnvironmentId = types.StringValue(environment.Id)
 	e.Name = types.StringValue(environment.Name)
 	e.Identifier = types.StringValue(environment.Identifier)
-	e.Type = types.StringValue(environment.Type)
 	e.PublicUrl = types.StringValue(environment.PublicUrl)
 	t, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
 	e.Tags = t
@@ -112,10 +110,6 @@ func (s *environmentSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			},
 			"identifier": schema.StringAttribute{
 				MarkdownDescription: "The environment's identifier",
-				Computed:            true,
-			},
-			"type": schema.StringAttribute{
-				MarkdownDescription: "The environment's type",
 				Computed:            true,
 			},
 			"public_url": schema.StringAttribute{

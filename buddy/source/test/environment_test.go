@@ -50,9 +50,6 @@ func testAccSourceEnvironmentAttributes(n string, name string) resource.TestChec
 		if err := util.CheckFieldSet("environment_id", attrs["environment_id"]); err != nil {
 			return err
 		}
-		if err := util.CheckFieldSet("type", attrs["type"]); err != nil {
-			return err
-		}
 		if err := util.CheckFieldSet("public_url", attrs["public_url"]); err != nil {
 			return err
 		}
@@ -79,7 +76,6 @@ resource "buddy_environment" "a" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    identifier = "%s"
-   type = "DEV"
 	 public_url = "https://a.com"
    tags = ["a"]
 }

@@ -1130,7 +1130,6 @@ resource "buddy_environment" "test" {
     project_name = buddy_project.test.name
     name         = "dev"
     identifier   = "dev"
-    type         = "DEV"
 }
 
 resource "buddy_target" "test" {
