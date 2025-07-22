@@ -11,6 +11,57 @@ import (
 	"testing"
 )
 
+func TestAccDomainGeoRecord(t *testing.T) {
+	var record buddy.Record
+	workspaceDomain := util.UniqueString()
+	domain := util.UniqueString() + ".com"
+	name := util.UniqueString() + "." + domain
+	typ := "TXT"
+	ttl := 300
+	value := "A"
+	continentName := buddy.DomainRecordContinentEurope
+	continentValue := "B"
+	countryName := buddy.DomainRecordCountryItaly
+	countryValue := "C"
+	newContinentName := buddy.DomainRecordContinentAsia
+	newContinentValue := "G"
+	newCountryName := buddy.DomainRecordCountryJapan
+	newCountryValue := "F"
+	newTtl := 600
+	newValue := "B"
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccDomainRecordDestroy,
+		Steps: []resource.TestStep{
+			// create domain & record
+			{
+				Config: testAccDomainGeoRecordConfig(workspaceDomain, domain, name, typ, ttl, value, countryName, countryValue, continentName, continentValue),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDomainRecordGet("buddy_domain_record.foo", &record),
+					testAccDomainRecordAttributes("buddy_domain_record.foo", &record),
+				),
+			},
+			// update record
+			{
+				Config: testAccDomainGeoRecordConfig(workspaceDomain, domain, name, typ, newTtl, newValue, newCountryName, newCountryValue, newContinentName, newContinentValue),
+				Check: resource.ComposeTestCheckFunc(
+					testAccDomainRecordGet("buddy_domain_record.foo", &record),
+					testAccDomainRecordAttributes("buddy_domain_record.foo", &record),
+				),
+			},
+			// import record
+			{
+				ResourceName:      "buddy_domain_record.foo",
+				ImportState:       true,
+				ImportStateVerify: true,
+			},
+		},
+	})
+}
+
 func TestAccDomainRecord(t *testing.T) {
 	var record buddy.Record
 	workspaceDomain := util.UniqueString()
@@ -62,11 +113,46 @@ func testAccDomainRecordAttributes(n string, record *buddy.Record) resource.Test
 		}
 		attrs := rs.Primary.Attributes
 		attrsTtl, _ := strconv.Atoi(attrs["ttl"])
+		if err := util.CheckFieldEqualAndSet("routing", attrs["routing"], record.Routing); err != nil {
+			return err
+		}
 		if err := util.CheckIntFieldEqualAndSet("ttl", attrsTtl, record.Ttl); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("value.0", attrs["value.0"], record.Values[0]); err != nil {
 			return err
+		}
+		for k, v := range attrs {
+			fmt.Printf("%s: %s\n", k, v)
+		}
+		if record.Routing == buddy.DomainRecordRoutingGeolocation {
+			if err := util.CheckFieldEqual("1 country", attrs["country.%"], "1"); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqual("1 continent", attrs["continent.%"], "1"); err != nil {
+				return err
+			}
+			i := 0
+			for k, v := range record.Country {
+				if err := util.CheckFieldEqual("country val", attrs[fmt.Sprintf("country.%s.%d", k, i)], v[i]); err != nil {
+					return err
+				}
+				i += 1
+			}
+			i = 0
+			for k, v := range record.Continent {
+				if err := util.CheckFieldEqual("continent val", attrs[fmt.Sprintf("continent.%s.%d", k, i)], v[i]); err != nil {
+					return err
+				}
+				i += 1
+			}
+		} else {
+			if err := util.CheckFieldEqual("no country", attrs["country.%"], ""); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqual("no continent", attrs["continent.%"], ""); err != nil {
+				return err
+			}
 		}
 		return nil
 	}
@@ -89,6 +175,36 @@ func testAccDomainRecordGet(n string, record *buddy.Record) resource.TestCheckFu
 		*record = *r
 		return nil
 	}
+}
+
+func testAccDomainGeoRecordConfig(workspaceDomain string, domain string, name string, typ string, ttl int, value string, countryName string, countryValue string, continentName string, continentValue string) string {
+	return fmt.Sprintf(`
+
+  resource "buddy_workspace" "foo" {
+	   domain = "%s"
+	}
+
+  resource "buddy_domain" "foo" {
+     workspace_domain = "${buddy_workspace.foo.domain}"
+     domain = "%s"
+  }
+
+  resource "buddy_domain_record" "foo" {
+     depends_on = [buddy_domain.foo]
+     workspace_domain = "${buddy_workspace.foo.domain}"
+     domain = "%s"
+     type = "%s"
+     ttl = %d
+     routing = "Geolocation"
+     value = ["%s"]
+     country = {
+       %s = ["%s"]
+		 }
+     continent = {
+       %s = ["%s"]
+     }
+  }
+`, workspaceDomain, domain, name, typ, ttl, value, countryName, countryValue, continentName, continentValue)
 }
 
 func testAccDomainRecordConfig(workspaceDomain string, domain string, name string, typ string, ttl int, value string) string {
