@@ -10,6 +10,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/int64default"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -36,7 +37,10 @@ type domainRecordResourceModel struct {
 	Domain          types.String `tfsdk:"domain"`
 	Type            types.String `tfsdk:"type"`
 	Ttl             types.Int64  `tfsdk:"ttl"`
+	Routing         types.String `tfsdk:"routing"`
 	Value           types.List   `tfsdk:"value"`
+	Continent       types.Map    `tfsdk:"continent"`
+	Country         types.Map    `tfsdk:"country"`
 }
 
 func (r *domainRecordResourceModel) decomposeId() (string, string, string, error) {
@@ -54,9 +58,16 @@ func (r *domainRecordResourceModel) loadAPI(ctx context.Context, workspaceDomain
 	r.Domain = types.StringValue(domain)
 	r.Type = types.StringValue(record.Type)
 	r.Ttl = types.Int64Value(int64(record.Ttl))
+	r.Routing = types.StringValue(record.Routing)
 	value, d := types.ListValueFrom(ctx, types.StringType, &record.Values)
 	diags.Append(d...)
 	r.Value = value
+	continent, d := types.MapValueFrom(ctx, types.SetType{ElemType: types.StringType}, &record.Continent)
+	diags.Append(d...)
+	r.Continent = continent
+	country, d := types.MapValueFrom(ctx, types.SetType{ElemType: types.StringType}, &record.Country)
+	diags.Append(d...)
+	r.Country = country
 	return diags
 }
 
@@ -113,6 +124,12 @@ func (r *domainRecordResource) Schema(_ context.Context, _ resource.SchemaReques
 					),
 				},
 			},
+			"routing": schema.StringAttribute{
+				MarkdownDescription: "The record's routing type",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(buddy.DomainRecordRoutingSimple),
+			},
 			"ttl": schema.Int64Attribute{
 				MarkdownDescription: "The record's ttl",
 				Optional:            true,
@@ -123,6 +140,18 @@ func (r *domainRecordResource) Schema(_ context.Context, _ resource.SchemaReques
 				MarkdownDescription: "The record's value list",
 				Required:            true,
 				ElementType:         types.StringType,
+			},
+			"country": schema.MapAttribute{
+				MarkdownDescription: "The record's geolocation country list",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.SetType{ElemType: types.StringType},
+			},
+			"continent": schema.MapAttribute{
+				MarkdownDescription: "The record's geolocation continent list",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.SetType{ElemType: types.StringType},
 			},
 		},
 	}
@@ -145,14 +174,32 @@ func (r *domainRecordResource) Create(ctx context.Context, req resource.CreateRe
 	domain := data.Domain.ValueString()
 	typ := data.Type.ValueString()
 	ttl := int(data.Ttl.ValueInt64())
+	routing := data.Routing.ValueString()
 	value, d := util.StringListToApi(ctx, &data.Value)
 	resp.Diagnostics.Append(d...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	ops := buddy.RecordUpsertOps{
-		Ttl:    &ttl,
-		Values: value,
+		Ttl:     &ttl,
+		Routing: &routing,
+		Values:  value,
+	}
+	if !data.Country.IsNull() && !data.Country.IsUnknown() {
+		country, d := util.MapStringListToApi(ctx, &data.Country)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Country = country
+	}
+	if !data.Continent.IsNull() && !data.Continent.IsUnknown() {
+		continent, d := util.MapStringListToApi(ctx, &data.Continent)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Continent = continent
 	}
 	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domain, typ, &ops)
 	if err != nil {
@@ -204,6 +251,7 @@ func (r *domainRecordResource) Update(ctx context.Context, req resource.UpdateRe
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("domain_record", err))
 		return
 	}
+	routing := data.Routing.ValueString()
 	ttl := int(data.Ttl.ValueInt64())
 	value, d := util.StringListToApi(ctx, &data.Value)
 	resp.Diagnostics.Append(d...)
@@ -211,8 +259,25 @@ func (r *domainRecordResource) Update(ctx context.Context, req resource.UpdateRe
 		return
 	}
 	ops := buddy.RecordUpsertOps{
-		Ttl:    &ttl,
-		Values: value,
+		Routing: &routing,
+		Ttl:     &ttl,
+		Values:  value,
+	}
+	if !data.Country.IsNull() && !data.Country.IsUnknown() {
+		country, d := util.MapStringListToApi(ctx, &data.Country)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Country = country
+	}
+	if !data.Continent.IsNull() && !data.Continent.IsUnknown() {
+		continent, d := util.MapStringListToApi(ctx, &data.Continent)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Continent = continent
 	}
 	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domain, typ, &ops)
 	if err != nil {
