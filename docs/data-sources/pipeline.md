@@ -62,10 +62,11 @@ data "buddy_pipeline" "by_id" {
 - `last_execution_status` (String) The pipeline's last run status
 - `priority` (String) The pipeline's priority
 - `refs` (Set of String) The pipeline's list of refs
-- `remote_branch` (String) The pipeline's remote definition branch name
+- `remote_branch` (String, Deprecated) The pipeline's remote definition branch name
 - `remote_parameter` (Attributes Set) The pipeline's remote definition parameters (see [below for nested schema](#nestedatt--remote_parameter))
 - `remote_path` (String) The pipeline's remote definition path
 - `remote_project_name` (String) The pipeline's remote definition project name
+- `remote_ref` (String) The pipeline's remote definition ref name
 - `tags` (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 
 <a id="nestedatt--event"></a>

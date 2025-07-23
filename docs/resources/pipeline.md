@@ -105,7 +105,7 @@ resource "buddy_pipeline" "remote" {
   name                = "remote_pipeline"
   definition_source   = "REMOTE"
   remote_project_name = "remote_project"
-  remote_branch       = "remote_branch"
+  remote_ref          = "remote_branch|remote_ref|remote_tag"
   remote_path         = "remote.yml"
 
   remote_parameter {
@@ -211,10 +211,11 @@ resource "buddy_pipeline" "conditions" {
 - `permissions` (Block Set) The pipeline's permissions (see [below for nested schema](#nestedblock--permissions))
 - `priority` (String) The pipeline's priority. Allowed: `LOW`, `NORMAL`, `HIGH`
 - `refs` (Set of String) The pipeline's list of refs for manual mode
-- `remote_branch` (String) The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`
+- `remote_branch` (String, Deprecated) The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`
 - `remote_parameter` (Block Set) The pipeline's remote definition parameters. Set it if `definition_source: REMOTE` (see [below for nested schema](#nestedblock--remote_parameter))
 - `remote_path` (String) The pipeline's remote definition path. Set it if `definition_source: REMOTE`
 - `remote_project_name` (String) The pipeline's remote definition project name. Set it if `definition_source: REMOTE`
+- `remote_ref` (String) The pipeline's remote definition ref name. Set it if `definition_source: REMOTE`
 - `tags` (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 - `target_site_url` (String) The pipeline's website target URL
 - `trigger_condition` (Block Set) The pipeline's list of trigger conditions (see [below for nested schema](#nestedblock--trigger_condition))

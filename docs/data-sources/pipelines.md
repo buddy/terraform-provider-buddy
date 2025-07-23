@@ -81,6 +81,7 @@ Read-Only:
 - `remote_parameter` (Attributes Set) (see [below for nested schema](#nestedatt--pipelines--remote_parameter))
 - `remote_path` (String)
 - `remote_project_name` (String)
+- `remote_ref` (String)
 - `tags` (Set of String)
 
 <a id="nestedatt--pipelines--event"></a>

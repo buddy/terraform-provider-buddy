@@ -87,7 +87,7 @@ resource "buddy_pipeline" "remote" {
   name                = "remote_pipeline"
   definition_source   = "REMOTE"
   remote_project_name = "remote_project"
-  remote_branch       = "remote_branch"
+  remote_ref          = "remote_branch|remote_ref|remote_tag"
   remote_path         = "remote.yml"
 
   remote_parameter {

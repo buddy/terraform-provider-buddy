@@ -55,6 +55,7 @@ type pipelineSourceModel struct {
 	DefinitionSource        types.String `tfsdk:"definition_source"`
 	RemoteProjectName       types.String `tfsdk:"remote_project_name"`
 	RemoteBranch            types.String `tfsdk:"remote_branch"`
+	RemoteRef               types.String `tfsdk:"remote_ref"`
 	RemotePath              types.String `tfsdk:"remote_path"`
 	RemoteParameter         types.Set    `tfsdk:"remote_parameter"`
 }
@@ -94,6 +95,7 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	s.DefinitionSource = types.StringValue(util.GetPipelineDefinitionSource(pipeline))
 	s.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
 	s.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
+	s.RemoteRef = types.StringValue(pipeline.RemoteRef)
 	s.RemotePath = types.StringValue(pipeline.RemotePath)
 	rp, d := util.RemoteParametersModelFromApi(ctx, &pipeline.RemoteParameters)
 	diags.Append(d...)
@@ -229,6 +231,11 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"remote_branch": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's remote definition branch name",
+				DeprecationMessage:  "Remote branch is deprecated - use remote_ref instead",
+				Computed:            true,
+			},
+			"remote_ref": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's remote definition ref name",
 				Computed:            true,
 			},
 			"remote_path": schema.StringAttribute{
