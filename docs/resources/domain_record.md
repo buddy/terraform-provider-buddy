@@ -30,8 +30,8 @@ resource "buddy_domain_record" "geo" {
   type             = "TXT"
   ttl              = 60
   value            = ["Fallback"]
-  continent        = {
-    "Asia" = ["Asia"]
+  continent = {
+    "Asia"   = ["Asia"]
     "Europe" = ["Europe"]
   }
   country = {

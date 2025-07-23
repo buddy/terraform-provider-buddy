@@ -1,3 +1,6 @@
+# Release v1.32.0 (2025-07-23)
+* Adds `remote_ref` to pipeline, `remote_branch` deprecated
+
 # Release v1.31.0 (2025-07-22)
 * Adds geolocation to domain record
 

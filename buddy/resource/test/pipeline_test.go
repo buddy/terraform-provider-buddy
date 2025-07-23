@@ -55,6 +55,7 @@ type testAccPipelineRemoteExpectedAttributes struct {
 	GitConfig         *buddy.PipelineGitConfig
 	DefinitionSource  string
 	RemoteProjectName string
+	RemoteRef         string
 	RemoteBranch      string
 	RemotePath        string
 	RemoteParam       string
@@ -263,6 +264,131 @@ func TestAccPipeline_permissions(t *testing.T) {
 	})
 }
 
+func TestAccPipeline_remoteBranch(t *testing.T) {
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	remoteProjectName := util.UniqueString()
+	remoteProjectName2 := util.UniqueString()
+	gitConfigBranch := util.UniqueString()
+	gitConfigPath := util.UniqueString()
+	gitConfigYml := fmt.Sprintf(`
+  git_config = {
+    project = "%s"
+    branch = "%s"
+    path="%s"
+  }
+`, projectName, gitConfigBranch, gitConfigPath)
+	name := util.RandString(10)
+	remoteBranch := "master"
+	remotePath := util.RandString(10)
+	remotePath2 := util.RandString(10)
+	yaml := testAccPipelineGetRemoteYaml(remoteBranch)
+	cmd := "ls"
+	cmd2 := "pwd"
+	branch := util.RandString(10)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
+		Steps: []resource.TestStep{
+			// create workspace & projects
+			{
+				Config: testAccPipelineConfigRemoteInit(domain, projectName, remoteProjectName, remoteProjectName2),
+			},
+			// create yaml file & pipeline
+			{
+				PreConfig: func() {
+					testAccPipelineCreateRemoteYaml(domain, remoteProjectName, remotePath, yaml)
+					testAccPipelineCreateRemoteYaml(domain, remoteProjectName2, remotePath2, yaml)
+				},
+				Config: testAccPipelineConfigRemoteBranchMain(domain, projectName, name, buddy.PipelineGitConfigRefNone, "", remoteProjectName, remoteProjectName2, remoteProjectName, remoteBranch, remotePath, cmd),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:              name,
+						GitConfigRef:      buddy.PipelineGitConfigRefNone,
+						RemoteParam:       cmd,
+						RemoteProjectName: remoteProjectName,
+						RemoteBranch:      remoteBranch,
+						RemotePath:        remotePath,
+						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
+						Creator:           &profile,
+						Project:           &project,
+					}),
+				),
+			},
+			// update remote project
+			{
+				Config: testAccPipelineConfigRemoteBranchMain(domain, projectName, name, buddy.PipelineGitConfigRefDynamic, "", remoteProjectName, remoteProjectName2, remoteProjectName2, remoteBranch, remotePath2, cmd2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:              name,
+						GitConfigRef:      buddy.PipelineGitConfigRefDynamic,
+						RemoteParam:       cmd2,
+						RemoteProjectName: remoteProjectName2,
+						RemoteBranch:      remoteBranch,
+						RemotePath:        remotePath2,
+						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
+						Creator:           &profile,
+						Project:           &project,
+					}),
+				),
+			},
+			// update to git config fixed
+			{
+				Config: testAccPipelineConfigRemoteBranchMain(domain, projectName, name, buddy.PipelineGitConfigRefFixed, gitConfigYml, remoteProjectName, remoteProjectName2, remoteProjectName2, remoteBranch, remotePath2, cmd2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:         name,
+						GitConfigRef: buddy.PipelineGitConfigRefFixed,
+						GitConfig: &buddy.PipelineGitConfig{
+							Project: projectName,
+							Branch:  gitConfigBranch,
+							Path:    gitConfigPath,
+						},
+						RemoteParam:       cmd2,
+						RemoteProjectName: remoteProjectName2,
+						RemoteBranch:      remoteBranch,
+						RemotePath:        remotePath2,
+						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
+						Creator:           &profile,
+						Project:           &project,
+					}),
+				),
+			},
+			// change to local
+			{
+				Config: testAccPipelineConfigRemoteToLocal(domain, projectName, remoteProjectName, remoteProjectName2, name, branch),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.remote", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineRemoteAttributes("buddy_pipeline.remote", &pipeline, &testAccPipelineRemoteExpectedAttributes{
+						Name:             name,
+						GitConfigRef:     buddy.PipelineGitConfigRefNone,
+						DefinitionSource: buddy.PipelineDefinitionSourceLocal,
+						Creator:          &profile,
+						Project:          &project,
+					}),
+				),
+			},
+		},
+	})
+}
+
 func TestAccPipeline_remote(t *testing.T) {
 	var pipeline buddy.Pipeline
 	var project buddy.Project
@@ -315,7 +441,7 @@ func TestAccPipeline_remote(t *testing.T) {
 						GitConfigRef:      buddy.PipelineGitConfigRefNone,
 						RemoteParam:       cmd,
 						RemoteProjectName: remoteProjectName,
-						RemoteBranch:      remoteBranch,
+						RemoteRef:         remoteBranch,
 						RemotePath:        remotePath,
 						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
 						Creator:           &profile,
@@ -335,7 +461,7 @@ func TestAccPipeline_remote(t *testing.T) {
 						GitConfigRef:      buddy.PipelineGitConfigRefDynamic,
 						RemoteParam:       cmd2,
 						RemoteProjectName: remoteProjectName2,
-						RemoteBranch:      remoteBranch,
+						RemoteRef:         remoteBranch,
 						RemotePath:        remotePath2,
 						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
 						Creator:           &profile,
@@ -360,7 +486,7 @@ func TestAccPipeline_remote(t *testing.T) {
 						},
 						RemoteParam:       cmd2,
 						RemoteProjectName: remoteProjectName2,
-						RemoteBranch:      remoteBranch,
+						RemoteRef:         remoteBranch,
 						RemotePath:        remotePath2,
 						DefinitionSource:  buddy.PipelineDefinitionSourceRemote,
 						Creator:           &profile,
@@ -729,6 +855,46 @@ resource "buddy_pipeline" "remote" {
 }
 
 func testAccPipelineConfigRemoteMain(domain string, projectName string, name string, gitConfigRef string, gitConfig string, remoteProjectName string, remoteProjectName2 string, selectedRemoteProjectName string, remoteBranch string, remotePath string, cmd string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_project" "remote_proj2" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "remote" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	depends_on = [buddy_project.remote_proj, buddy_project.remote_proj2]
+	name = "%s"
+  git_config_ref = "%s"
+  %s
+	definition_source = "REMOTE"
+	remote_project_name = "%s"
+	remote_ref = "%s"
+	remote_path = "%s"
+	remote_parameter {
+		key = "cmd"
+		value = "%s"
+	}
+}
+`, domain, projectName, remoteProjectName, remoteProjectName2, name, gitConfigRef, gitConfig, selectedRemoteProjectName, remoteBranch, remotePath, cmd)
+}
+
+func testAccPipelineConfigRemoteBranchMain(domain string, projectName string, name string, gitConfigRef string, gitConfig string, remoteProjectName string, remoteProjectName2 string, selectedRemoteProjectName string, remoteBranch string, remotePath string, cmd string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -1340,8 +1506,28 @@ func testAccPipelineRemoteAttributes(n string, pipeline *buddy.Pipeline, want *t
 				return err
 			}
 		}
+		if want.RemoteRef != "" {
+			if err := util.CheckFieldEqualAndSet("remote_ref", attrs["remote_ref"], want.RemoteRef); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("remote_branch", attrs["remote_branch"], want.RemoteRef); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteRef", pipeline.RemoteRef, want.RemoteRef); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteBranch", pipeline.RemoteBranch, want.RemoteRef); err != nil {
+				return err
+			}
+		}
 		if want.RemoteBranch != "" {
+			if err := util.CheckFieldEqualAndSet("remote_ref", attrs["remote_ref"], want.RemoteBranch); err != nil {
+				return err
+			}
 			if err := util.CheckFieldEqualAndSet("remote_branch", attrs["remote_branch"], want.RemoteBranch); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("RemoteRef", pipeline.RemoteRef, want.RemoteBranch); err != nil {
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("RemoteBranch", pipeline.RemoteBranch, want.RemoteBranch); err != nil {

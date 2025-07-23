@@ -46,6 +46,7 @@ type pipelineResourceModel struct {
 	DefinitionSource          types.String `tfsdk:"definition_source"`
 	RemoteProjectName         types.String `tfsdk:"remote_project_name"`
 	RemoteBranch              types.String `tfsdk:"remote_branch"`
+	RemoteRef                 types.String `tfsdk:"remote_ref"`
 	RemotePath                types.String `tfsdk:"remote_path"`
 	RemoteParameters          types.Set    `tfsdk:"remote_parameter"`
 	Cpu                       types.String `tfsdk:"cpu"`
@@ -126,6 +127,7 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.DefinitionSource = types.StringValue(util.GetPipelineDefinitionSource(pipeline))
 	r.RemotePath = types.StringValue(pipeline.RemotePath)
 	r.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
+	r.RemoteRef = types.StringValue(pipeline.RemoteRef)
 	r.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
 	r.Paused = types.BoolValue(pipeline.Paused)
 	r.PauseOnRepeatedFailures = types.Int64Value(int64(pipeline.PauseOnRepeatedFailures))
@@ -240,8 +242,24 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"remote_branch": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's remote definition branch name. Set it if `definition_source: REMOTE`",
+				DeprecationMessage:  "Remote branch is deprecated - use remote_ref instead",
 				Optional:            true,
 				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("remote_ref"),
+					}...),
+				},
+			},
+			"remote_ref": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's remote definition ref name. Set it if `definition_source: REMOTE`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("remote_branch"),
+					}...),
+				},
 			},
 			"remote_path": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's remote definition path. Set it if `definition_source: REMOTE`",
@@ -697,7 +715,9 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.RemotePath.IsNull() && !data.RemotePath.IsUnknown() {
 		ops.RemotePath = data.RemotePath.ValueStringPointer()
 	}
-	if !data.RemoteBranch.IsNull() && !data.RemoteBranch.IsUnknown() {
+	if !data.RemoteRef.IsNull() && !data.RemoteRef.IsUnknown() {
+		ops.RemoteRef = data.RemoteRef.ValueStringPointer()
+	} else if !data.RemoteBranch.IsNull() && !data.RemoteBranch.IsUnknown() {
 		ops.RemoteBranch = data.RemoteBranch.ValueStringPointer()
 	}
 	if !data.RemoteProjectName.IsNull() && !data.RemoteProjectName.IsUnknown() {
@@ -902,7 +922,9 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	if !data.RemotePath.IsNull() && !data.RemotePath.IsUnknown() {
 		ops.RemotePath = data.RemotePath.ValueStringPointer()
 	}
-	if !data.RemoteBranch.IsNull() && !data.RemoteBranch.IsUnknown() {
+	if !data.RemoteRef.IsNull() && !data.RemoteRef.IsUnknown() {
+		ops.RemoteRef = data.RemoteRef.ValueStringPointer()
+	} else if !data.RemoteBranch.IsNull() && !data.RemoteBranch.IsUnknown() {
 		ops.RemoteBranch = data.RemoteBranch.ValueStringPointer()
 	}
 	if !data.RemoteProjectName.IsNull() && !data.RemoteProjectName.IsUnknown() {

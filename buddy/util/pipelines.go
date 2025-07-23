@@ -35,6 +35,7 @@ type pipelineModel struct {
 	DefinitionSource        types.String `tfsdk:"definition_source"`
 	RemoteProjectName       types.String `tfsdk:"remote_project_name"`
 	RemoteBranch            types.String `tfsdk:"remote_branch"`
+	RemoteRef               types.String `tfsdk:"remote_ref"`
 	RemotePath              types.String `tfsdk:"remote_path"`
 	RemoteParameter         types.Set    `tfsdk:"remote_parameter"`
 }
@@ -65,6 +66,7 @@ func pipelineModelAttrs() map[string]attr.Type {
 		"definition_source":          types.StringType,
 		"remote_project_name":        types.StringType,
 		"remote_branch":              types.StringType,
+		"remote_ref":                 types.StringType,
 		"remote_path":                types.StringType,
 		"remote_parameter":           types.SetType{ElemType: types.ObjectType{AttrTypes: remoteParameterModelAttrs()}},
 	}
@@ -104,6 +106,7 @@ func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) d
 	p.DefinitionSource = types.StringValue(GetPipelineDefinitionSource(pipeline))
 	p.RemoteProjectName = types.StringValue(pipeline.RemoteProjectName)
 	p.RemoteBranch = types.StringValue(pipeline.RemoteBranch)
+	p.RemoteRef = types.StringValue(pipeline.RemoteRef)
 	p.RemotePath = types.StringValue(pipeline.RemotePath)
 	rp, d := RemoteParametersModelFromApi(ctx, &pipeline.RemoteParameters)
 	diags.Append(d...)
@@ -189,6 +192,9 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"remote_branch": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"remote_ref": sourceschema.StringAttribute{
 			Computed: true,
 		},
 		"remote_path": sourceschema.StringAttribute{
