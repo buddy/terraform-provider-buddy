@@ -72,6 +72,8 @@ resource "buddy_variable" "in_pipeline" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # import using domain(mydomain), variable_id(1234)
 terraform import buddy_variable.mysecret mydomain:1234

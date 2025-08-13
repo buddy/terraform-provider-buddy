@@ -60,6 +60,8 @@ resource "buddy_group_member" "sylvia_manager_in_devs" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # import using domain(mydomain), group_id(1234) & member_id(5678)
 terraform import buddy_group_member.john_in_devs mydomain:1234:5678

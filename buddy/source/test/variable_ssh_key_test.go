@@ -18,7 +18,7 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
-	err, _, privateKey := util.GenerateRsaKeyPair()
+	_, privateKey, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}

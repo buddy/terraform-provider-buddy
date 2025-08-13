@@ -66,6 +66,8 @@ resource "buddy_domain_record" "geo" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # import using workspace(myworkspace), domain (test.my.com), record type (A)
 terraform import buddy_domain_record.test myworkspace:test.my.com:A

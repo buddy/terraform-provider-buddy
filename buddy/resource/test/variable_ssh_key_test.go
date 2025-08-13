@@ -21,11 +21,11 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test"
 	fileChmod := "600"
-	err, _, privateKey := util.GenerateRsaKeyPair()
+	_, privateKey, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	err, _, privateKey2 := util.GenerateRsaKeyPair()
+	_, privateKey2, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -88,11 +88,11 @@ func TestAccVariableSshKey_project(t *testing.T) {
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
-	err, _, privateKey := util.GenerateRsaKeyPair()
+	_, privateKey, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	err, _, privateKey2 := util.GenerateRsaKeyPair()
+	_, privateKey2, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}

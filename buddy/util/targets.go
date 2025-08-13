@@ -52,7 +52,7 @@ func (t *TargetModel) LoadAPI(ctx context.Context, target *buddy.Target) {
 	t.Type = types.StringValue(target.Type)
 	t.Scope = types.StringValue(target.Scope)
 
-	if target.Tags != nil && len(target.Tags) > 0 {
+	if len(target.Tags) > 0 {
 		tags, _ := types.ListValueFrom(ctx, types.StringType, target.Tags)
 		t.Tags = tags
 	} else {

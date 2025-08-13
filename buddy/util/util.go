@@ -55,7 +55,7 @@ func CheckFieldEqual(field string, got string, want string) error {
 	return nil
 }
 
-func GenerateCertificate() (error, string) {
+func GenerateCertificate() (string, error) {
 	cert := &x509.Certificate{
 		SerialNumber: big.NewInt(1658),
 		Subject: pkix.Name{
@@ -70,11 +70,11 @@ func GenerateCertificate() (error, string) {
 	}
 	certPrivKey, err := rsa.GenerateKey(crand.Reader, 4096)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	certBytes, err := x509.CreateCertificate(crand.Reader, cert, cert, &certPrivKey.PublicKey, certPrivKey)
 	if err != nil {
-		return err, ""
+		return "", err
 	}
 	certPEM := new(bytes.Buffer)
 	err = pem.Encode(certPEM, &pem.Block{
@@ -82,15 +82,15 @@ func GenerateCertificate() (error, string) {
 		Bytes: certBytes,
 	})
 	if err != nil {
-		return err, ""
+		return "", err
 	}
-	return nil, certPEM.String()
+	return certPEM.String(), nil
 }
 
-func GenerateRsaKeyPair() (error, string, string) {
+func GenerateRsaKeyPair() (string, string, error) {
 	privateKey, err := rsa.GenerateKey(crand.Reader, 4096)
 	if err != nil {
-		return err, "", ""
+		return "", "", err
 	}
 	privateKeyBytes := x509.MarshalPKCS1PrivateKey(privateKey)
 	privateKeyBlock := &pem.Block{
@@ -100,10 +100,10 @@ func GenerateRsaKeyPair() (error, string, string) {
 	privateKeyBytesEncoded := pem.EncodeToMemory(privateKeyBlock)
 	sshPublicKey, err := ssh.NewPublicKey(&privateKey.PublicKey)
 	if err != nil {
-		return err, "", ""
+		return "", "", err
 	}
 	sshPublicKeyBytes := ssh.MarshalAuthorizedKey(sshPublicKey)
-	return nil, strings.TrimSpace(string(sshPublicKeyBytes)), strings.TrimSpace(string(privateKeyBytesEncoded))
+	return strings.TrimSpace(string(sshPublicKeyBytes)), strings.TrimSpace(string(privateKeyBytesEncoded)), nil
 }
 
 func CheckDateFieldEqual(field string, got string, want string) error {

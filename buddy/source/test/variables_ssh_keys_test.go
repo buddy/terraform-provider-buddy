@@ -11,11 +11,11 @@ import (
 )
 
 func TestAccSourceVariablesSshKeys(t *testing.T) {
-	err, _, privateKey := util.GenerateRsaKeyPair()
+	_, privateKey, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	err, _, privateKey2 := util.GenerateRsaKeyPair()
+	_, privateKey2, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}

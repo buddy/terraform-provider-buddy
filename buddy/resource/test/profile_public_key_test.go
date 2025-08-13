@@ -13,11 +13,11 @@ import (
 
 func TestAccProfilePublicKey(t *testing.T) {
 	var key buddy.PublicKey
-	err, publicKey, _ := util.GenerateRsaKeyPair()
+	publicKey, _, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
-	err, publicKey2, _ := util.GenerateRsaKeyPair()
+	publicKey2, _, err := util.GenerateRsaKeyPair()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
