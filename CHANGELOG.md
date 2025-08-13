@@ -1,3 +1,6 @@
+# Release v1.32.1 (2025-08-13)
+* Bump api sdk version to v1.30.1
+
 # Release v1.32.0 (2025-07-23)
 * Adds `remote_ref` to pipeline, `remote_branch` deprecated
 
