@@ -67,7 +67,7 @@ func TestAccSso(t *testing.T) {
 	issuer := "https://sts.windows.net/" + util.UniqueString()
 	signature := buddy.SignatureMethodSha256
 	digest := buddy.DigestMethodSha256
-	err, cert := util.GenerateCertificate()
+	cert, err := util.GenerateCertificate()
 	if err != nil {
 		t.Fatal(err.Error())
 	}
@@ -75,7 +75,7 @@ func TestAccSso(t *testing.T) {
 	newIssuer := "https://sts.windows.net/" + util.UniqueString()
 	newSignature := buddy.SignatureMethodSha512
 	newDigest := buddy.DigestMethodSha512
-	err, newCert := util.GenerateCertificate()
+	newCert, err := util.GenerateCertificate()
 	if err != nil {
 		t.Fatal(err.Error())
 	}

@@ -51,6 +51,8 @@ resource "buddy_webhook" "ws" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # import using domain(mydomain), webhook_id(1234)
 terraform import buddy_webhook.mykey mydomain:1234

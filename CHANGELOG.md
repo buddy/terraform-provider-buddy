@@ -1,3 +1,6 @@
+# Release v1.33.0 (2025-08-13)
+* Bump deps & go version to 1.23
+
 # Release v1.32.1 (2025-08-13)
 * Bump api sdk version to v1.30.1
 

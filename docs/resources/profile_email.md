@@ -37,6 +37,8 @@ resource "buddy_profile_email" "my_second_email" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # import using email
 terraform import buddy_profile_email.my_second_email my@second.com

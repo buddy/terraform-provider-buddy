@@ -274,10 +274,7 @@ Optional:
 Required:
 
 - `access_level` (String)
-
-Read-Only:
-
-- `id` (Number) The ID of this resource.
+- `id` (Number)
 
 
 <a id="nestedblock--permissions--user"></a>
@@ -286,10 +283,7 @@ Read-Only:
 Required:
 
 - `access_level` (String)
-
-Read-Only:
-
-- `id` (Number) The ID of this resource.
+- `id` (Number)
 
 
 
@@ -322,6 +316,8 @@ Optional:
 ## Import
 
 Import is supported using the following syntax:
+
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
 # import using domain(mydomain) and target_id (a1b2c3d4)

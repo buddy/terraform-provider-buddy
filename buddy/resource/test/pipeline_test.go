@@ -1874,7 +1874,8 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 			if err := util.CheckFieldEqualAndSet("event.0.type", attrs["event.0.type"], want.Event.Type); err != nil {
 				return err
 			}
-			if want.Event.Type == buddy.PipelineEventTypePullRequest {
+			switch want.Event.Type {
+			case buddy.PipelineEventTypePullRequest:
 				if err := util.CheckFieldEqualAndSet("Events[0].Branches[0]", pipeline.Events[0].Branches[0], want.Event.Branches[0]); err != nil {
 					return err
 				}
@@ -1887,7 +1888,7 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				if err := util.CheckFieldEqualAndSet("event.0.events.0", attrs["event.0.events.0"], want.Event.Events[0]); err != nil {
 					return err
 				}
-			} else if want.Event.Type == buddy.PipelineEventTypeSchedule {
+			case buddy.PipelineEventTypeSchedule:
 				if want.Event.StartDate != "" {
 					if err := util.CheckDateFieldEqual("event.0.start_date", attrs["event.0.start_date"], want.Event.StartDate); err != nil {
 						return err
@@ -1921,7 +1922,7 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 						return err
 					}
 				}
-			} else {
+			default:
 				if err := util.CheckFieldEqualAndSet("Events[0].Refs[0]", pipeline.Events[0].Refs[0], want.Event.Refs[0]); err != nil {
 					return err
 				}

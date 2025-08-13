@@ -41,6 +41,8 @@ resource "buddy_domain" "dev" {
 
 Import is supported using the following syntax:
 
+The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
+
 ```shell
 # import using workspace(myworkspace), domain (my.com)
 terraform import buddy_domain.test myworkspace:my.com
