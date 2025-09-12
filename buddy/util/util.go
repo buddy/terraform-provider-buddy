@@ -48,6 +48,10 @@ func NewDiagnosticDecomposeError(resource string, err error) diag.Diagnostic {
 	)
 }
 
+func NewDiagnosticSandboxTimeout(detail string) diag.Diagnostic {
+	return diag.NewErrorDiagnostic("Timeout waiting for sandbox", detail)
+}
+
 func CheckFieldEqual(field string, got string, want string) error {
 	if got != want {
 		return ErrorFieldFormatted(field, got, want)
@@ -234,6 +238,11 @@ func PointerInt(v int64) *int {
 	return &p
 }
 
+func PointerInt32(v int32) *int {
+	p := int(v)
+	return &p
+}
+
 func StringValidatorsDomain() []validator.String {
 	return []validator.String{
 		stringvalidator.LengthAtLeast(4),
@@ -293,6 +302,12 @@ func StringListToApi(ctx context.Context, s *types.List) (*[]string, diag.Diagno
 
 func MapStringListToApi(ctx context.Context, s *types.Map) (*map[string][]string, diag.Diagnostics) {
 	var m map[string][]string
+	d := s.ElementsAs(ctx, &m, false)
+	return &m, d
+}
+
+func MapStringToApi(ctx context.Context, s *types.Map) (*map[string]string, diag.Diagnostics) {
+	var m map[string]string
 	d := s.ElementsAs(ctx, &m, false)
 	return &m, d
 }

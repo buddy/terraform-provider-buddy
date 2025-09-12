@@ -1,3 +1,6 @@
+# Release v1.34.0 (2025-09-23)
+* Add sandbox resource & data
+
 # Release v1.33.0 (2025-08-13)
 * Bump deps & go version to 1.23
 
