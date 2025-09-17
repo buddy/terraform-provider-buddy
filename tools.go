@@ -4,7 +4,7 @@
 package main
 
 import (
-  _ "github.com/bflad/tfproviderlint/cmd/tfproviderlint"
-  _ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
-  _ "github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs"
+	_ "github.com/bflad/tfproviderlint/cmd/tfproviderlint"
+	_ "github.com/golangci/golangci-lint/v2/cmd/golangci-lint"
+	_ "github.com/hashicorp/terraform-plugin-docs/cmd/tfplugindocs"
 )

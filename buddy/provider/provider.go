@@ -153,6 +153,8 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewVariableSshResource,
 		buddyresource.NewWebhookResource,
 		buddyresource.NewPipelineResource,
+		buddyresource.NewSandboxResource,
+		buddyresource.NewSandboxStatusResource,
 		buddyresource.NewEnvironmentResource,
 		buddyresource.NewTargetResource,
 	}
@@ -187,6 +189,8 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewWorkspacesSource,
 		buddysource.NewPipelineSource,
 		buddysource.NewPipelinesSource,
+		buddysource.NewSandboxesSource,
+		buddysource.NewSandboxSource,
 		buddysource.NewEnvironmentsSource,
 		buddysource.NewTargetSource,
 		buddysource.NewTargetsSource,
