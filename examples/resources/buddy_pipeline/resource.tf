@@ -15,7 +15,7 @@ resource "buddy_pipeline" "click" {
   }
 }
 
-resource "buddy_pipeline" "event_push" {
+resource "buddy_pipeline" "event_push_webhook" {
   domain               = "mydomain"
   project_name         = "myproject"
   name                 = "event_push"
@@ -26,6 +26,10 @@ resource "buddy_pipeline" "event_push" {
   event {
     type = "PUSH"
     refs = ["refs/heads/master"]
+  }
+
+  event {
+    type = "WEBHOOK"
   }
 }
 
