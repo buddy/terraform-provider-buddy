@@ -1,3 +1,6 @@
+# Release v1.35.0 (2025-09-30)
+* Add new pipeline event - WEBHOOK
+
 # Release v1.34.0 (2025-09-23)
 * Add sandbox resource & data
 

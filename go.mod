@@ -6,7 +6,7 @@ toolchain go1.23.12
 
 require (
 	github.com/bflad/tfproviderlint v0.31.0
-	github.com/buddy/api-go-sdk v1.32.4
+	github.com/buddy/api-go-sdk v1.33.0
 	github.com/golangci/golangci-lint/v2 v2.3.1
 	github.com/hashicorp/terraform-plugin-docs v0.22.0
 	github.com/hashicorp/terraform-plugin-framework v1.15.1
