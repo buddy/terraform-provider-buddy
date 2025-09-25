@@ -990,6 +990,75 @@ resource "buddy_pipeline" "bar" {
 `, domain, projectName, name, startDate, delay, paused, priority, pausedFailures, descRequired, concurrentRuns, gitChangesetBase, filesystemChangesetBase)
 }
 
+func TestAccPipeline_event_webhook(t *testing.T) {
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	eventType := buddy.PipelineEventTypeWebhook
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
+		Steps: []resource.TestStep{
+			// create pipeline
+			{
+				Config: testAccPipelineConfigEventWebhook(domain, projectName, name, true),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    name,
+						Project:                 &project,
+						Creator:                 &profile,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
+							Type: eventType,
+							Totp: true,
+						},
+					}),
+				),
+			},
+			// update pipeline
+			{
+				Config: testAccPipelineConfigEventWebhook(domain, projectName, newName, false),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    newName,
+						Project:                 &project,
+						Creator:                 &profile,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
+							Type: eventType,
+							Totp: false,
+						},
+					}),
+				),
+			},
+			// import
+			{
+				ResourceName:            "buddy_pipeline.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"event"},
+			},
+		},
+	})
+}
+
 func TestAccPipeline_event_pull_request(t *testing.T) {
 	var pipeline buddy.Pipeline
 	var project buddy.Project
@@ -1888,6 +1957,10 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				if err := util.CheckFieldEqualAndSet("event.0.events.0", attrs["event.0.events.0"], want.Event.Events[0]); err != nil {
 					return err
 				}
+			case buddy.PipelineEventTypeWebhook:
+				if err := util.CheckBoolFieldEqual("", pipeline.Events[0].Totp, want.Event.Totp); err != nil {
+					return err
+				}
 			case buddy.PipelineEventTypeSchedule:
 				if want.Event.StartDate != "" {
 					if err := util.CheckDateFieldEqual("event.0.start_date", attrs["event.0.start_date"], want.Event.StartDate); err != nil {
@@ -2048,6 +2121,29 @@ func testAccPipelineGet(n string, pipeline *buddy.Pipeline) resource.TestCheckFu
 		*pipeline = *p
 		return nil
 	}
+}
+
+func testAccPipelineConfigEventWebhook(domain string, projectName string, name string, totp bool) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    event {
+        type = "WEBHOOK"
+				totp = %t
+    }
+}
+`, domain, projectName, name, totp)
 }
 
 func testAccPipelineConfigEventPullRequest(domain string, projectName string, name string, eventType string, branch string, prEvent string) string {

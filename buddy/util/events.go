@@ -24,6 +24,7 @@ type eventModel struct {
 	StartDate types.String `tfsdk:"start_date"`
 	Delay     types.Int64  `tfsdk:"delay"`
 	Cron      types.String `tfsdk:"cron"`
+	Totp      types.Bool   `tfsdk:"totp"`
 	Timezone  types.String `tfsdk:"timezone"`
 }
 
@@ -36,6 +37,7 @@ func eventModelAttrs() map[string]attr.Type {
 		"start_date": types.StringType,
 		"delay":      types.Int64Type,
 		"cron":       types.StringType,
+		"totp":       types.BoolType,
 		"timezone":   types.StringType,
 	}
 }
@@ -47,6 +49,7 @@ func (e *eventModel) loadAPI(ctx context.Context, event *buddy.PipelineEvent) di
 	e.Delay = types.Int64Value(int64(event.Delay))
 	e.Cron = types.StringValue(event.Cron)
 	e.Timezone = types.StringValue(event.Timezone)
+	e.Totp = types.BoolValue(event.Totp)
 	r, d1 := types.SetValueFrom(ctx, types.StringType, &event.Refs)
 	e.Refs = r
 	diags.Append(d1...)
@@ -80,6 +83,9 @@ func SourceEventModelAttributes() map[string]sourceschema.Attribute {
 			Computed:    true,
 			ElementType: types.StringType,
 		},
+		"totp": sourceschema.BoolAttribute{
+			Computed: true,
+		},
 		"branches": sourceschema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
@@ -102,6 +108,7 @@ func ResourceEventModelAttributes() map[string]schema.Attribute {
 					buddy.PipelineEventTypeCreateRef,
 					buddy.PipelineEventTypeDeleteRef,
 					buddy.PipelineEventTypePullRequest,
+					buddy.PipelineEventTypeWebhook,
 				),
 			},
 		},
@@ -157,6 +164,9 @@ func ResourceEventModelAttributes() map[string]schema.Attribute {
 					path.MatchRelative().AtParent().AtName("refs"),
 				}...),
 			},
+		},
+		"totp": schema.BoolAttribute{
+			Optional: true,
 		},
 		"events": schema.SetAttribute{
 			ElementType: types.StringType,
@@ -242,6 +252,9 @@ func EventsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.PipelineEven
 			pe.Events = *events
 		} else {
 			pe.Events = []string{}
+		}
+		if !v.Totp.IsNull() && !v.Totp.IsUnknown() {
+			pe.Totp = v.Totp.ValueBool()
 		}
 		pipelineEvents[i] = pe
 	}
