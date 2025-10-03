@@ -1,3 +1,6 @@
+# Release v1.36.0 (2025-10-03)
+* [Breaking] - 'buddy_domain' & 'buddy_domain_record' to support api changes 
+
 # Release v1.35.0 (2025-09-30)
 * Add new pipeline event - WEBHOOK
 

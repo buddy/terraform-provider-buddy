@@ -34,6 +34,7 @@ type domainRecordResource struct {
 type domainRecordResourceModel struct {
 	ID              types.String `tfsdk:"id"`
 	WorkspaceDomain types.String `tfsdk:"workspace_domain"`
+	DomainId        types.String `tfsdk:"domain_id"`
 	Domain          types.String `tfsdk:"domain"`
 	Type            types.String `tfsdk:"type"`
 	Ttl             types.Int64  `tfsdk:"ttl"`
@@ -43,18 +44,19 @@ type domainRecordResourceModel struct {
 	Country         types.Map    `tfsdk:"country"`
 }
 
-func (r *domainRecordResourceModel) decomposeId() (string, string, string, error) {
-	workspaceDomain, domain, typ, err := util.DecomposeTripleId(r.ID.ValueString())
+func (r *domainRecordResourceModel) decomposeId() (string, string, string, string, error) {
+	workspaceDomain, domainId, domain, typ, err := util.DecomposeQuadrupleId(r.ID.ValueString())
 	if err != nil {
-		return "", "", "", err
+		return "", "", "", "", err
 	}
-	return workspaceDomain, domain, typ, nil
+	return workspaceDomain, domainId, domain, typ, nil
 }
 
-func (r *domainRecordResourceModel) loadAPI(ctx context.Context, workspaceDomain string, domain string, record *buddy.Record) diag.Diagnostics {
+func (r *domainRecordResourceModel) loadAPI(ctx context.Context, workspaceDomain string, domainId string, domain string, record *buddy.Record) diag.Diagnostics {
 	var diags diag.Diagnostics
-	r.ID = types.StringValue(util.ComposeTripleId(workspaceDomain, domain, record.Type))
+	r.ID = types.StringValue(util.ComposeQuadrupleId(workspaceDomain, domainId, domain, record.Type))
 	r.WorkspaceDomain = types.StringValue(workspaceDomain)
+	r.DomainId = types.StringValue(domainId)
 	r.Domain = types.StringValue(domain)
 	r.Type = types.StringValue(record.Type)
 	r.Ttl = types.Int64Value(int64(record.Ttl))
@@ -91,6 +93,13 @@ func (r *domainRecordResource) Schema(_ context.Context, _ resource.SchemaReques
 				MarkdownDescription: "The workspace's URL handle",
 				Required:            true,
 				Validators:          util.StringValidatorsDomain(),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"domain_id": schema.StringAttribute{
+				MarkdownDescription: "The domain's ID",
+				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -171,6 +180,7 @@ func (r *domainRecordResource) Create(ctx context.Context, req resource.CreateRe
 		return
 	}
 	workspaceDomain := data.WorkspaceDomain.ValueString()
+	domainId := data.DomainId.ValueString()
 	domain := data.Domain.ValueString()
 	typ := data.Type.ValueString()
 	ttl := int(data.Ttl.ValueInt64())
@@ -201,12 +211,12 @@ func (r *domainRecordResource) Create(ctx context.Context, req resource.CreateRe
 		}
 		ops.Continent = continent
 	}
-	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domain, typ, &ops)
+	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domainId, domain, typ, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("upsert record", err))
 		return
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, workspaceDomain, domain, record)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, workspaceDomain, domainId, domain, record)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -219,12 +229,12 @@ func (r *domainRecordResource) Read(ctx context.Context, req resource.ReadReques
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	workspaceDomain, domain, typ, err := data.decomposeId()
+	workspaceDomain, domainId, domain, typ, err := data.decomposeId()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("domain_record", err))
 		return
 	}
-	record, httpResp, err := r.client.DomainService.GetRecord(workspaceDomain, domain, typ)
+	record, httpResp, err := r.client.DomainService.GetRecord(workspaceDomain, domainId, domain, typ)
 	if err != nil {
 		if util.IsResourceNotFound(httpResp, err) {
 			resp.State.RemoveResource(ctx)
@@ -233,7 +243,7 @@ func (r *domainRecordResource) Read(ctx context.Context, req resource.ReadReques
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get record", err))
 		return
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, workspaceDomain, domain, record)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, workspaceDomain, domainId, domain, record)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -246,7 +256,7 @@ func (r *domainRecordResource) Update(ctx context.Context, req resource.UpdateRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	workspaceDomain, domain, typ, err := data.decomposeId()
+	workspaceDomain, domainId, domain, typ, err := data.decomposeId()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("domain_record", err))
 		return
@@ -279,12 +289,12 @@ func (r *domainRecordResource) Update(ctx context.Context, req resource.UpdateRe
 		}
 		ops.Continent = continent
 	}
-	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domain, typ, &ops)
+	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domainId, domain, typ, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("update record", err))
 		return
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, workspaceDomain, domain, record)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, workspaceDomain, domainId, domain, record)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -297,12 +307,12 @@ func (r *domainRecordResource) Delete(ctx context.Context, req resource.DeleteRe
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	workspaceDomain, domain, typ, err := data.decomposeId()
+	workspaceDomain, domainId, domain, typ, err := data.decomposeId()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("domain_record", err))
 		return
 	}
-	_, err = r.client.DomainService.DeleteRecord(workspaceDomain, domain, typ)
+	_, err = r.client.DomainService.DeleteRecord(workspaceDomain, domainId, domain, typ)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete record", err))
 	}

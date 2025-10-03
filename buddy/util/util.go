@@ -193,6 +193,10 @@ func ComposeTripleId(a, b, c string) string {
 	return fmt.Sprintf("%s:%s:%s", a, b, c)
 }
 
+func ComposeQuadrupleId(a, b, c, d string) string {
+	return fmt.Sprintf("%s:%s:%s:%s", a, b, c, d)
+}
+
 func DecomposeDoubleId(id string) (string, string, error) {
 	parts := strings.SplitN(id, ":", 2)
 	if len(parts) != 2 {
@@ -207,6 +211,14 @@ func DecomposeTripleId(id string) (string, string, string, error) {
 		return "", "", "", fmt.Errorf("wrong id format %q", id)
 	}
 	return parts[0], parts[1], parts[2], nil
+}
+
+func DecomposeQuadrupleId(id string) (string, string, string, string, error) {
+	parts := strings.SplitN(id, ":", 4)
+	if len(parts) != 4 {
+		return "", "", "", "", fmt.Errorf("wrong id format %q", id)
+	}
+	return parts[0], parts[1], parts[2], parts[3], nil
 }
 
 func RandStringFromCharSet(strlen int, charSet string) string {

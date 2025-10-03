@@ -122,9 +122,6 @@ func testAccDomainRecordAttributes(n string, record *buddy.Record) resource.Test
 		if err := util.CheckFieldEqualAndSet("value.0", attrs["value.0"], record.Values[0]); err != nil {
 			return err
 		}
-		for k, v := range attrs {
-			fmt.Printf("%s: %s\n", k, v)
-		}
 		if record.Routing == buddy.DomainRecordRoutingGeolocation {
 			if err := util.CheckFieldEqual("1 country", attrs["country.%"], "1"); err != nil {
 				return err
@@ -164,11 +161,11 @@ func testAccDomainRecordGet(n string, record *buddy.Record) resource.TestCheckFu
 		if !ok {
 			return fmt.Errorf("not found: %s", n)
 		}
-		workspaceDomain, domain, typ, err := util.DecomposeTripleId(rs.Primary.ID)
+		workspaceDomain, domainId, domain, typ, err := util.DecomposeQuadrupleId(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
-		r, _, err := acc.ApiClient.DomainService.GetRecord(workspaceDomain, domain, typ)
+		r, _, err := acc.ApiClient.DomainService.GetRecord(workspaceDomain, domainId, domain, typ)
 		if err != nil {
 			return err
 		}
@@ -190,7 +187,7 @@ func testAccDomainGeoRecordConfig(workspaceDomain string, domain string, name st
   }
 
   resource "buddy_domain_record" "foo" {
-     depends_on = [buddy_domain.foo]
+		 domain_id = "${buddy_domain.foo.domain_id}"
      workspace_domain = "${buddy_workspace.foo.domain}"
      domain = "%s"
      type = "%s"
@@ -220,7 +217,7 @@ func testAccDomainRecordConfig(workspaceDomain string, domain string, name strin
   }
 
   resource "buddy_domain_record" "foo" {
-     depends_on = [buddy_domain.foo]
+     domain_id = "${buddy_domain.foo.domain_id}"
      workspace_domain = "${buddy_workspace.foo.domain}"
      domain = "%s"
      type = "%s"
@@ -235,11 +232,11 @@ func testAccDomainRecordDestroy(s *terraform.State) error {
 		if rs.Type != "buddy_domain_record" {
 			continue
 		}
-		workspaceDomain, name, typ, err := util.DecomposeTripleId(rs.Primary.ID)
+		workspaceDomain, domainId, name, typ, err := util.DecomposeQuadrupleId(rs.Primary.ID)
 		if err != nil {
 			return err
 		}
-		record, resp, err := acc.ApiClient.DomainService.GetRecord(workspaceDomain, name, typ)
+		record, resp, err := acc.ApiClient.DomainService.GetRecord(workspaceDomain, domainId, name, typ)
 		if err == nil && record != nil {
 			return util.ErrorResourceExists()
 		}

@@ -35,6 +35,7 @@ resource "buddy_domain" "dev" {
 
 ### Read-Only
 
+- `domain_id` (String) The domain's id
 - `id` (String) The Terraform resource identifier for this item
 
 ## Import
@@ -44,6 +45,6 @@ Import is supported using the following syntax:
 The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
-# import using workspace(myworkspace), domain (my.com)
-terraform import buddy_domain.test myworkspace:my.com
+# import using workspace(myworkspace), domainId (test123)
+terraform import buddy_domain.test myworkspace:test123
 ```
