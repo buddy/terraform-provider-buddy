@@ -30,12 +30,22 @@ type domainResourceModel struct {
 	ID              types.String `tfsdk:"id"`
 	WorkspaceDomain types.String `tfsdk:"workspace_domain"`
 	Domain          types.String `tfsdk:"domain"`
+	DomainId        types.String `tfsdk:"domain_id"`
 }
 
-func (r *domainResourceModel) loadAPI(workspaceDomain string, domain string) {
-	r.ID = types.StringValue(util.ComposeDoubleId(workspaceDomain, domain))
+func (r *domainResourceModel) decomposeId() (string, string, error) {
+	workspaceDomain, domainId, err := util.DecomposeDoubleId(r.ID.ValueString())
+	if err != nil {
+		return "", "", err
+	}
+	return workspaceDomain, domainId, nil
+}
+
+func (r *domainResourceModel) loadAPI(workspaceDomain string, domain string, domainId string) {
+	r.ID = types.StringValue(util.ComposeDoubleId(workspaceDomain, domainId))
 	r.WorkspaceDomain = types.StringValue(workspaceDomain)
 	r.Domain = types.StringValue(domain)
+	r.DomainId = types.StringValue(domainId)
 }
 
 func (r *domainResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -70,6 +80,10 @@ func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"domain_id": schema.StringAttribute{
+				MarkdownDescription: "The domain's id",
+				Computed:            true,
+			},
 		},
 	}
 }
@@ -97,12 +111,32 @@ func (r *domainResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create domain", err))
 		return
 	}
-	data.loadAPI(workspaceDomain, d.Name)
+	data.loadAPI(workspaceDomain, d.Name, d.Id)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *domainResource) Read(_ context.Context, _ resource.ReadRequest, _ *resource.ReadResponse) {
-	// do nothing
+func (r *domainResource) Read(ctx context.Context, req resource.ReadRequest, resp *resource.ReadResponse) {
+	var data *domainResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	workspaceDomain, domainId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("domain", err))
+		return
+	}
+	d, httpResp, err := r.client.DomainService.Get(workspaceDomain, domainId)
+	if err != nil {
+		if util.IsResourceNotFound(httpResp, err) {
+			resp.State.RemoveResource(ctx)
+			return
+		}
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("get domain", err))
+		return
+	}
+	data.loadAPI(workspaceDomain, d.Name, domainId)
+	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
 func (r *domainResource) Update(_ context.Context, _ resource.UpdateRequest, _ *resource.UpdateResponse) {

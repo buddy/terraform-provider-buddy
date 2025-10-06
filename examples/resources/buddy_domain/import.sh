@@ -1,2 +1,2 @@
-# import using workspace(myworkspace), domain (my.com)
-terraform import buddy_domain.test myworkspace:my.com
+# import using workspace(myworkspace), domainId (test123)
+terraform import buddy_domain.test myworkspace:test123

@@ -1,5 +1,6 @@
 resource "buddy_domain_record" "a" {
   workspace_domain = "myworkspace"
+  domain_id        = "abcdef1234"
   domain           = "a.test.com"
   type             = "A"
   ttl              = 60
@@ -8,6 +9,7 @@ resource "buddy_domain_record" "a" {
 
 resource "buddy_domain_record" "geo" {
   workspace_domain = "myworkspace"
+  domain_id        = "abcdef1234"
   domain           = "geo.test.com"
   type             = "TXT"
   ttl              = 60

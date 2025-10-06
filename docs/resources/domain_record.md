@@ -18,6 +18,7 @@ Token scope required: `ZONE_READ, ZONE_WRITE`
 ```terraform
 resource "buddy_domain_record" "a" {
   workspace_domain = "myworkspace"
+  domain_id        = "abcdef1234"
   domain           = "a.test.com"
   type             = "A"
   ttl              = 60
@@ -26,6 +27,7 @@ resource "buddy_domain_record" "a" {
 
 resource "buddy_domain_record" "geo" {
   workspace_domain = "myworkspace"
+  domain_id        = "abcdef1234"
   domain           = "geo.test.com"
   type             = "TXT"
   ttl              = 60
@@ -47,6 +49,7 @@ resource "buddy_domain_record" "geo" {
 ### Required
 
 - `domain` (String) The record's full domain name
+- `domain_id` (String) The domain's ID
 - `type` (String) The record's type
 - `value` (List of String) The record's value list
 - `workspace_domain` (String) The workspace's URL handle
@@ -69,6 +72,6 @@ Import is supported using the following syntax:
 The [`terraform import` command](https://developer.hashicorp.com/terraform/cli/commands/import) can be used, for example:
 
 ```shell
-# import using workspace(myworkspace), domain (test.my.com), record type (A)
-terraform import buddy_domain_record.test myworkspace:test.my.com:A
+# import using workspace(myworkspace), domain ID (domainId), domain (test.my.com), record type (A)
+terraform import buddy_domain_record.test myworkspace:domainId:test.my.com:A
 ```
