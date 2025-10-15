@@ -365,6 +365,9 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			if endpoint.Http == nil {
 				return fmt.Errorf("http endpoint http is null")
 			}
+			if err := util.CheckFieldEqualAndSet("Endpoint.Http.AuthType", *endpoint.Http.AuthType, buddy.SandboxEndpointHttpAuthTypeBuddy); err != nil {
+				return err
+			}
 			if endpoint.Http.Compression == nil {
 				return fmt.Errorf("http endpoint http compression is null")
 			}
@@ -404,10 +407,10 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			}
 		}
 		if want.WaitForConfigured {
-			if err := util.CheckFieldEqualAndSet("SetupStatus", sandbox.SetupStatus, buddy.SandboxSetupStatusDone); err != nil {
+			if err := util.CheckFieldEqualAndSet("SetupStatus", sandbox.SetupStatus, buddy.SandboxSetupStatusSuccess); err != nil {
 				return err
 			}
-			if err := util.CheckFieldEqualAndSet("setup_status", attrs["setup_status"], buddy.SandboxSetupStatusDone); err != nil {
+			if err := util.CheckFieldEqualAndSet("setup_status", attrs["setup_status"], buddy.SandboxSetupStatusSuccess); err != nil {
 				return err
 			}
 		}

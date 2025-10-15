@@ -396,7 +396,7 @@ func (r *sandboxResource) waitForApp(domain string, sandboxId string, timeout in
 func (r *sandboxResource) waitForConfigured(domain string, sandboxId string, timeout int32) (*buddy.Sandbox, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	sandbox, err := r.client.SandboxService.WaitForSetupStatuses(domain, sandboxId, int(timeout), []string{
-		buddy.SandboxSetupStatusDone,
+		buddy.SandboxSetupStatusSuccess,
 		buddy.SandboxSetupStatusFailed,
 	})
 	if err != nil || sandbox == nil {

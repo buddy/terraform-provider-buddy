@@ -89,6 +89,7 @@ Optional:
 
 Optional:
 
+- `auth_type` (String)
 - `circuit_breaker` (Number)
 - `compression` (Boolean)
 - `http2` (Boolean)
