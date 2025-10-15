@@ -404,10 +404,10 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			}
 		}
 		if want.WaitForConfigured {
-			if err := util.CheckFieldEqualAndSet("SetupStatus", sandbox.SetupStatus, buddy.SandboxSetupStatusDone); err != nil {
+			if err := util.CheckFieldEqualAndSet("SetupStatus", sandbox.SetupStatus, buddy.SandboxSetupStatusSuccess); err != nil {
 				return err
 			}
-			if err := util.CheckFieldEqualAndSet("setup_status", attrs["setup_status"], buddy.SandboxSetupStatusDone); err != nil {
+			if err := util.CheckFieldEqualAndSet("setup_status", attrs["setup_status"], buddy.SandboxSetupStatusSuccess); err != nil {
 				return err
 			}
 		}

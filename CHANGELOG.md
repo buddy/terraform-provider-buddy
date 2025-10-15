@@ -1,3 +1,6 @@
+# Release v1.36.1 (2025-10-15)
+* new sandbox statuses
+
 # Release v1.36.0 (2025-10-03)
 * [Breaking] - 'buddy_domain' & 'buddy_domain_record' to support api changes 
 
