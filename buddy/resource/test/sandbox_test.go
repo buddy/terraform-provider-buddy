@@ -365,6 +365,9 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			if endpoint.Http == nil {
 				return fmt.Errorf("http endpoint http is null")
 			}
+			if err := util.CheckFieldEqualAndSet("Endpoint.Http.AuthType", *endpoint.Http.AuthType, buddy.SandboxEndpointHttpAuthTypeBuddy); err != nil {
+				return err
+			}
 			if endpoint.Http.Compression == nil {
 				return fmt.Errorf("http endpoint http compression is null")
 			}

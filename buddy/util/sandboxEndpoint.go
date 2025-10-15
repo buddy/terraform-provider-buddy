@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/attr"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"github.com/hashicorp/terraform-plugin-framework/types/basetypes"
@@ -24,6 +25,7 @@ func sandboxEndpointHttpModelAttrs() map[string]attr.Type {
 		"response_headers":      types.MapType{ElemType: types.StringType},
 		"login":                 types.StringType,
 		"password":              types.StringType,
+		"auth_type":             types.StringType,
 		"circuit_breaker":       types.Int32Type,
 		"tls_ca":                types.StringType,
 	}
@@ -69,6 +71,7 @@ type sandboxEndpointHttpModel struct {
 	Login               types.String `tfsdk:"login"`
 	Password            types.String `tfsdk:"password"`
 	CircuitBreaker      types.Int32  `tfsdk:"circuit_breaker"`
+	AuthType            types.String `tfsdk:"auth_type"`
 	TlsCa               types.String `tfsdk:"tls_ca"`
 }
 
@@ -154,6 +157,9 @@ func (r *sandboxEndpointHttpModel) toAPI(ctx context.Context) (*buddy.SandboxEnd
 	if !r.CircuitBreaker.IsNull() && !r.CircuitBreaker.IsUnknown() {
 		e.CircuitBreaker = PointerInt32(r.CircuitBreaker.ValueInt32())
 	}
+	if !r.AuthType.IsNull() && !r.AuthType.IsUnknown() {
+		e.AuthType = r.AuthType.ValueStringPointer()
+	}
 	if !r.TlsCa.IsNull() && !r.TlsCa.IsUnknown() {
 		e.TlsCa = r.TlsCa.ValueStringPointer()
 	}
@@ -228,6 +234,11 @@ func (r *sandboxEndpointHttpModel) loadAPI(ctx context.Context, e *buddy.Sandbox
 		r.CircuitBreaker = types.Int32Value(int32(*e.CircuitBreaker))
 	} else {
 		r.CircuitBreaker = types.Int32Null()
+	}
+	if e.AuthType != nil {
+		r.AuthType = types.StringValue(*e.AuthType)
+	} else {
+		r.AuthType = types.StringValue(buddy.SandboxEndpointHttpAuthTypeNone)
 	}
 	if e.TlsCa != nil {
 		r.TlsCa = types.StringValue(*e.TlsCa)
@@ -372,6 +383,18 @@ func ResourceSandboxEndpointHttpModelAttributes() map[string]schema.Attribute {
 		"password": schema.StringAttribute{
 			Optional: true,
 			Computed: true,
+		},
+		"auth_type": schema.StringAttribute{
+			Optional: true,
+			Computed: true,
+			Default:  stringdefault.StaticString(buddy.SandboxEndpointHttpAuthTypeBuddy),
+			Validators: []validator.String{
+				stringvalidator.OneOf(
+					buddy.SandboxEndpointHttpAuthTypeNone,
+					buddy.SandboxEndpointHttpAuthTypeBasic,
+					buddy.SandboxEndpointHttpAuthTypeBuddy,
+				),
+			},
 		},
 		"circuit_breaker": schema.Int32Attribute{
 			Optional: true,
