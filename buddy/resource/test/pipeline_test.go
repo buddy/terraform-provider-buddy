@@ -990,6 +990,85 @@ resource "buddy_pipeline" "bar" {
 `, domain, projectName, name, startDate, delay, paused, priority, pausedFailures, descRequired, concurrentRuns, gitChangesetBase, filesystemChangesetBase)
 }
 
+func TestAccPipeline_event_email(t *testing.T) {
+	var pipeline buddy.Pipeline
+	var project buddy.Project
+	var profile buddy.Profile
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	eventType := buddy.PipelineEventTypeEmail
+	prefix := util.RandString(10)
+	newPrefix := util.RandString(10)
+	whitelist := util.RandEmail()
+	newWhitelist := util.RandEmail()
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccPipelineCheckDestroy,
+		Steps: []resource.TestStep{
+			// create pipeline
+			{
+				Config: testAccPipelineConfigEventEmail(domain, projectName, name, prefix, whitelist),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    name,
+						Project:                 &project,
+						Creator:                 &profile,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
+							Type:   eventType,
+							Prefix: prefix,
+							Whitelist: []string{
+								whitelist,
+							},
+						},
+					}),
+				),
+			},
+			// update pipeline
+			{
+				Config: testAccPipelineConfigEventEmail(domain, projectName, newName, newPrefix, newWhitelist),
+				Check: resource.ComposeTestCheckFunc(
+					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccProfileGet(&profile),
+					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
+						Name:                    newName,
+						Project:                 &project,
+						Creator:                 &profile,
+						FailOnPrepareEnvWarning: false,
+						FetchAllRefs:            false,
+						Priority:                buddy.PipelinePriorityNormal,
+						Event: &buddy.PipelineEvent{
+							Type:   eventType,
+							Prefix: newPrefix,
+							Whitelist: []string{
+								newWhitelist,
+							},
+						},
+					}),
+				),
+			},
+			// import
+			{
+				ResourceName:            "buddy_pipeline.bar",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: []string{"event"},
+			},
+		},
+	})
+}
+
 func TestAccPipeline_event_webhook(t *testing.T) {
 	var pipeline buddy.Pipeline
 	var project buddy.Project
@@ -1958,7 +2037,20 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 					return err
 				}
 			case buddy.PipelineEventTypeWebhook:
-				if err := util.CheckBoolFieldEqual("", pipeline.Events[0].Totp, want.Event.Totp); err != nil {
+				if err := util.CheckBoolFieldEqual("Events[0].Totp", pipeline.Events[0].Totp, want.Event.Totp); err != nil {
+					return err
+				}
+			case buddy.PipelineEventTypeEmail:
+				if err := util.CheckFieldEqualAndSet("Events[0].Prefix", pipeline.Events[0].Prefix, want.Event.Prefix); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("Events[0].Whitelist[0]", pipeline.Events[0].Whitelist[0], want.Event.Whitelist[0]); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("Events[0].Prefix", attrs["event.0.prefix"], want.Event.Prefix); err != nil {
+					return err
+				}
+				if err := util.CheckFieldEqualAndSet("Events[0].Whitelist[0]", attrs["event.0.whitelist.0"], want.Event.Whitelist[0]); err != nil {
 					return err
 				}
 			case buddy.PipelineEventTypeSchedule:
@@ -2121,6 +2213,30 @@ func testAccPipelineGet(n string, pipeline *buddy.Pipeline) resource.TestCheckFu
 		*pipeline = *p
 		return nil
 	}
+}
+
+func testAccPipelineConfigEventEmail(domain string, projectName string, name string, prefix string, whitelist string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+    domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+    domain = "${buddy_workspace.foo.domain}"
+    display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+    domain = "${buddy_workspace.foo.domain}"
+    project_name = "${buddy_project.proj.name}"
+    name = "%s"
+    event {
+        type = "EMAIL"
+				prefix = "%s"
+				whitelist = ["%s"]
+    }
+}
+`, domain, projectName, name, prefix, whitelist)
 }
 
 func testAccPipelineConfigEventWebhook(domain string, projectName string, name string, totp bool) string {

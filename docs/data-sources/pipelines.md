@@ -93,11 +93,13 @@ Read-Only:
 - `cron` (String)
 - `delay` (Number)
 - `events` (Set of String)
+- `prefix` (String)
 - `refs` (Set of String)
 - `start_date` (String)
 - `timezone` (String)
 - `totp` (Boolean)
 - `type` (String)
+- `whitelist` (Set of String)
 
 
 <a id="nestedatt--pipelines--git_config"></a>

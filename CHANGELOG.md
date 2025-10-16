@@ -1,3 +1,6 @@
+# Release v1.37.0 (2025-10-28)
+* new pipeline event - EMAIL
+
 # Release v1.36.1 (2025-10-15)
 * new sandbox statuses, endpoint auth_type
 
