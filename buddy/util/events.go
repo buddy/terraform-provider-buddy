@@ -25,6 +25,8 @@ type eventModel struct {
 	Delay     types.Int64  `tfsdk:"delay"`
 	Cron      types.String `tfsdk:"cron"`
 	Totp      types.Bool   `tfsdk:"totp"`
+	Prefix    types.String `tfsdk:"prefix"`
+	Whitelist types.Set    `tfsdk:"whitelist"`
 	Timezone  types.String `tfsdk:"timezone"`
 }
 
@@ -38,6 +40,8 @@ func eventModelAttrs() map[string]attr.Type {
 		"delay":      types.Int64Type,
 		"cron":       types.StringType,
 		"totp":       types.BoolType,
+		"prefix":     types.StringType,
+		"whitelist":  types.SetType{ElemType: types.StringType},
 		"timezone":   types.StringType,
 	}
 }
@@ -49,6 +53,7 @@ func (e *eventModel) loadAPI(ctx context.Context, event *buddy.PipelineEvent) di
 	e.Delay = types.Int64Value(int64(event.Delay))
 	e.Cron = types.StringValue(event.Cron)
 	e.Timezone = types.StringValue(event.Timezone)
+	e.Prefix = types.StringValue(event.Prefix)
 	e.Totp = types.BoolValue(event.Totp)
 	r, d1 := types.SetValueFrom(ctx, types.StringType, &event.Refs)
 	e.Refs = r
@@ -59,6 +64,9 @@ func (e *eventModel) loadAPI(ctx context.Context, event *buddy.PipelineEvent) di
 	ev, d3 := types.SetValueFrom(ctx, types.StringType, &event.Events)
 	diags.Append(d3...)
 	e.Events = ev
+	w, d4 := types.SetValueFrom(ctx, types.StringType, &event.Whitelist)
+	diags.Append(d4...)
+	e.Whitelist = w
 	return diags
 }
 
@@ -86,6 +94,13 @@ func SourceEventModelAttributes() map[string]sourceschema.Attribute {
 		"totp": sourceschema.BoolAttribute{
 			Computed: true,
 		},
+		"prefix": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"whitelist": sourceschema.SetAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
+		},
 		"branches": sourceschema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
@@ -109,6 +124,7 @@ func ResourceEventModelAttributes() map[string]schema.Attribute {
 					buddy.PipelineEventTypeDeleteRef,
 					buddy.PipelineEventTypePullRequest,
 					buddy.PipelineEventTypeWebhook,
+					buddy.PipelineEventTypeEmail,
 				),
 			},
 		},
@@ -167,6 +183,13 @@ func ResourceEventModelAttributes() map[string]schema.Attribute {
 		},
 		"totp": schema.BoolAttribute{
 			Optional: true,
+		},
+		"prefix": schema.StringAttribute{
+			Optional: true,
+		},
+		"whitelist": schema.SetAttribute{
+			Optional:    true,
+			ElementType: types.StringType,
 		},
 		"events": schema.SetAttribute{
 			ElementType: types.StringType,
@@ -255,6 +278,16 @@ func EventsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.PipelineEven
 		}
 		if !v.Totp.IsNull() && !v.Totp.IsUnknown() {
 			pe.Totp = v.Totp.ValueBool()
+		}
+		if !v.Prefix.IsNull() && !v.Prefix.IsUnknown() {
+			pe.Prefix = v.Prefix.ValueString()
+		}
+		if !v.Whitelist.IsNull() && !v.Whitelist.IsUnknown() {
+			whitelist, d := StringSetToApi(ctx, &v.Whitelist)
+			diags.Append(d...)
+			pe.Whitelist = *whitelist
+		} else {
+			pe.Whitelist = []string{}
 		}
 		pipelineEvents[i] = pe
 	}

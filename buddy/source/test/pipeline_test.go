@@ -71,6 +71,14 @@ func TestAccSourcePipeline(t *testing.T) {
 					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", buddy.PipelineEventTypePullRequest, "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
+			// email
+			{
+				Config: testAccSourcePipelineConfigEmail(domain, projectName, name, false, false, newGitChangeSet, newFilesystemChangeSet),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", buddy.PipelineEventTypeEmail, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", buddy.PipelineEventTypeEmail, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+				),
+			},
 			// webhook
 			{
 				Config: testAccSourcePipelineConfigWebhook(domain, projectName, name, false, false, newGitChangeSet, newFilesystemChangeSet),
@@ -259,6 +267,44 @@ resource "buddy_pipeline" "bar" {
    name = "%s"
    event {
        type = "WEBHOOK"
+   }
+   concurrent_pipeline_runs = "%t"
+   description_required = "%t"
+   git_changeset_base = "%s"
+   filesystem_changeset_base = "%s"
+}
+
+data "buddy_pipeline" "name" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "${buddy_pipeline.bar.name}"
+}
+
+data "buddy_pipeline" "id" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
+}
+`, domain, projectName, name, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase)
+}
+
+func testAccSourcePipelineConfigEmail(domain string, projectName string, name string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_pipeline" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   event {
+       type = "EMAIL"
    }
    concurrent_pipeline_runs = "%t"
    description_required = "%t"
