@@ -1,3 +1,6 @@
+# Release v1.37.1 (2025-10-28)
+* bump api sdk
+
 # Release v1.37.0 (2025-10-28)
 * new pipeline event - EMAIL
 
