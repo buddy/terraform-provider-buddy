@@ -82,6 +82,7 @@ type pipelineResourceModel struct {
 	Events                    types.Set    `tfsdk:"event"`
 	TriggerConditions         types.Set    `tfsdk:"trigger_condition"`
 	Permissions               types.Set    `tfsdk:"permissions"`
+	Loop                      types.Set    `tfsdk:"loop"`
 }
 
 func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, projectName string, pipeline *buddy.Pipeline) diag.Diagnostics {
@@ -138,6 +139,9 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.TargetSiteUrl = types.StringValue(pipeline.TargetSiteUrl)
 	r.ManagePermissionsByYaml = types.BoolValue(pipeline.ManagePermissionsByYaml)
 	r.ManageVariablesByYaml = types.BoolValue(pipeline.ManageVariablesByYaml)
+	loop, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Loop)
+	diags.Append(d...)
+	r.Loop = loop
 	return diags
 }
 
@@ -467,6 +471,12 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				MarkdownDescription: "The pipeline's list of tags. Only for `Buddy Enterprise`",
 				Optional:            true,
 			},
+			"loop": schema.SetAttribute{
+				ElementType:         types.StringType,
+				MarkdownDescription: "Specify multiple variables to create a multi-dimensional matrix. A pipeline will run for each possible combination of the variables",
+				Optional:            true,
+				Computed:            true,
+			},
 		},
 		Blocks: map[string]schema.Block{
 			// singular form for compatibility
@@ -624,6 +634,14 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 			return
 		}
 		ops.Refs = refs
+	}
+	if !data.Loop.IsNull() && !data.Loop.IsUnknown() {
+		loop, d := util.StringSetToApi(ctx, &data.Loop)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Loop = loop
 	}
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &data.Tags)
@@ -817,6 +835,14 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 			return
 		}
 		ops.Refs = refs
+	}
+	if !data.Loop.IsNull() && !data.Loop.IsUnknown() {
+		loop, d := util.StringSetToApi(ctx, &data.Loop)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Loop = loop
 	}
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &data.Tags)

@@ -207,6 +207,7 @@ resource "buddy_pipeline" "conditions" {
 - `git_config_ref` (String) The pipeline's GIT configuration type. Allowed: `NONE`, `FIXED`, `DYNAMIC`
 - `identifier` (String) The pipeline's identifier
 - `ignore_fail_on_project_status` (Boolean) If set to true the status of a given pipeline will be ignored on the projects' dashboard
+- `loop` (Set of String) Specify multiple variables to create a multi-dimensional matrix. A pipeline will run for each possible combination of the variables
 - `manage_permissions_by_yaml` (Boolean) If set to true pipeline permissions will be managed by yaml
 - `manage_variables_by_yaml` (Boolean) If set to true pipeline variables will be managed by yaml
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run

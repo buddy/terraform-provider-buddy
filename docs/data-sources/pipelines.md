@@ -71,6 +71,7 @@ Read-Only:
 - `identifier` (String)
 - `last_execution_revision` (String)
 - `last_execution_status` (String)
+- `loop` (Set of String)
 - `manage_permissions_by_yaml` (Boolean)
 - `manage_variables_by_yaml` (Boolean)
 - `name` (String)
