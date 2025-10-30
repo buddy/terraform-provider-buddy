@@ -45,6 +45,7 @@ type pipelineSourceModel struct {
 	DisablingReason         types.String `tfsdk:"disabling_reason"`
 	Refs                    types.Set    `tfsdk:"refs"`
 	Event                   types.Set    `tfsdk:"event"`
+	Loop                    types.Set    `tfsdk:"loop"`
 	Tags                    types.Set    `tfsdk:"tags"`
 	ConcurrentPipelineRuns  types.Bool   `tfsdk:"concurrent_pipeline_runs"`
 	DescriptionRequired     types.Bool   `tfsdk:"description_required"`
@@ -82,6 +83,9 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	r, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Refs)
 	diags.Append(d...)
 	s.Refs = r
+	l, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Loop)
+	diags.Append(d...)
+	s.Loop = l
 	e, d := util.EventsModelFromApi(ctx, &pipeline.Events)
 	diags.Append(d...)
 	s.Event = e
@@ -204,6 +208,11 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"refs": schema.SetAttribute{
 				MarkdownDescription: "The pipeline's list of refs",
+				Computed:            true,
+				ElementType:         types.StringType,
+			},
+			"loop": schema.SetAttribute{
+				MarkdownDescription: "Pipeline will run for each possible combination of the variables",
 				Computed:            true,
 				ElementType:         types.StringType,
 			},

@@ -17,6 +17,7 @@ func TestAccSourcePipelines(t *testing.T) {
 	name1 := "aaaa" + util.RandString(10)
 	name2 := util.RandString(10)
 	ref := util.RandString(10)
+	loop := util.UniqueString()
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -25,17 +26,17 @@ func TestAccSourcePipelines(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePipelinesConfig(domain, projectName, name1, name2, ref),
+				Config: testAccSourcePipelinesConfig(domain, projectName, name1, name2, ref, loop),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelinesAttributes("data.buddy_pipelines.all", 2, "", ""),
-					testAccSourcePipelinesAttributes("data.buddy_pipelines.name", 1, name1, ref),
+					testAccSourcePipelinesAttributes("data.buddy_pipelines.all", 2, "", "", ""),
+					testAccSourcePipelinesAttributes("data.buddy_pipelines.name", 1, name1, ref, loop),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourcePipelinesAttributes(n string, count int, name string, ref string) resource.TestCheckFunc {
+func testAccSourcePipelinesAttributes(n string, count int, name string, ref string, loop string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -61,6 +62,11 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 			}
 			if ref != "" {
 				if err := util.CheckFieldEqualAndSet("pipelines.0.refs.0", attrs["pipelines.0.refs.0"], ref); err != nil {
+					return err
+				}
+			}
+			if loop != "" {
+				if err := util.CheckFieldEqualAndSet("pipelines.0.loop.0", attrs["pipelines.0.loop.0"], loop); err != nil {
 					return err
 				}
 			}
@@ -102,7 +108,7 @@ func testAccSourcePipelinesAttributes(n string, count int, name string, ref stri
 	}
 }
 
-func testAccSourcePipelinesConfig(domain string, projectName string, name1 string, name2 string, ref string) string {
+func testAccSourcePipelinesConfig(domain string, projectName string, name1 string, name2 string, ref string, loop string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -118,6 +124,7 @@ resource "buddy_pipeline" "a" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    refs = ["%s"]
+	 loop = ["%s"]
 }
 
 resource "buddy_pipeline" "b" {
@@ -142,5 +149,5 @@ data "buddy_pipelines" "name" {
    name_regex = "^aaaa"
    depends_on = [buddy_pipeline.a, buddy_pipeline.b]
 }
-`, domain, projectName, name1, ref, name2, ref)
+`, domain, projectName, name1, ref, loop, name2, ref)
 }

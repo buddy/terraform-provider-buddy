@@ -1,3 +1,6 @@
+# Release v1.38.0 (2025-10-30)
+* Adds new pipeline prop - loop
+
 # Release v1.37.1 (2025-10-28)
 * bump api sdk
 

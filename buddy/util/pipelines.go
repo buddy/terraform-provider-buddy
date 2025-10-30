@@ -22,6 +22,7 @@ type pipelineModel struct {
 	LastExecutionStatus     types.String `tfsdk:"last_execution_status"`
 	LastExecutionRevision   types.String `tfsdk:"last_execution_revision"`
 	Refs                    types.Set    `tfsdk:"refs"`
+	Loop                    types.Set    `tfsdk:"loop"`
 	Tags                    types.Set    `tfsdk:"tags"`
 	Event                   types.Set    `tfsdk:"event"`
 	GitConfigRef            types.String `tfsdk:"git_config_ref"`
@@ -53,6 +54,7 @@ func pipelineModelAttrs() map[string]attr.Type {
 		"last_execution_status":      types.StringType,
 		"last_execution_revision":    types.StringType,
 		"refs":                       types.SetType{ElemType: types.StringType},
+		"loop":                       types.SetType{ElemType: types.StringType},
 		"tags":                       types.SetType{ElemType: types.StringType},
 		"event":                      types.SetType{ElemType: types.ObjectType{AttrTypes: eventModelAttrs()}},
 		"concurrent_pipeline_runs":   types.BoolType,
@@ -96,6 +98,9 @@ func (p *pipelineModel) loadAPI(ctx context.Context, pipeline *buddy.Pipeline) d
 	t, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Tags)
 	diags.Append(d...)
 	p.Tags = t
+	l, d := types.SetValueFrom(ctx, types.StringType, &pipeline.Loop)
+	diags.Append(d...)
+	p.Loop = l
 	e, d := EventsModelFromApi(ctx, &pipeline.Events)
 	diags.Append(d...)
 	p.Event = e
@@ -165,6 +170,10 @@ func SourcePipelineModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"refs": sourceschema.SetAttribute{
+			Computed:    true,
+			ElementType: types.StringType,
+		},
+		"loop": sourceschema.SetAttribute{
 			Computed:    true,
 			ElementType: types.StringType,
 		},

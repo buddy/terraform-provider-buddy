@@ -42,6 +42,7 @@ type testAccPipelineExpectedAttributes struct {
 	Creator                   *buddy.Profile
 	Project                   *buddy.Project
 	Ref                       string
+	Loop                      string
 	Event                     *buddy.PipelineEvent
 	TriggerConditions         []*buddy.PipelineTriggerCondition
 	Permissions               *buddy.PipelinePermissions
@@ -82,6 +83,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 	groupPerm1 := buddy.PipelinePermissionReadWrite
 	othersPerm3 := buddy.PipelinePermissionReadWrite
 	groupPerm2 := buddy.PipelinePermissionDefault
+	loop := util.UniqueString()
+	newLoop := util.UniqueString()
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -117,7 +120,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 			},
 			// update pipeline permission to user
 			{
-				Config: testAccPipelinePermissionsUser(domain, projectName, name, ref, email, othersPerm1, userPerm1),
+				Config: testAccPipelinePermissionsUser(domain, projectName, name, ref, loop, email, othersPerm1, userPerm1),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -138,6 +141,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Project:                   &project,
 						Creator:                   &profile,
 						Ref:                       ref,
+						Loop:                      loop,
 						Permissions: &buddy.PipelinePermissions{
 							Others: othersPerm1,
 							Users: []*buddy.PipelineResourcePermission{
@@ -152,7 +156,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 			},
 			// update pipeline permission to group & user
 			{
-				Config: testAccPipelinePermissionsUserGroup(domain, projectName, name, ref, email, groupName, othersPerm2, userPerm2, groupPerm1),
+				Config: testAccPipelinePermissionsUserGroup(domain, projectName, name, ref, newLoop, email, groupName, othersPerm2, userPerm2, groupPerm1),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -174,6 +178,7 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Project:                   &project,
 						Creator:                   &profile,
 						Ref:                       ref,
+						Loop:                      newLoop,
 						Permissions: &buddy.PipelinePermissions{
 							Others: othersPerm2,
 							Users: []*buddy.PipelineResourcePermission{
@@ -2096,6 +2101,27 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 				}
 			}
 		}
+		if want.Loop != "" {
+			if err := util.CheckIntFieldEqual("len(pipeline.Loop)", len(pipeline.Loop), 1); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("loop.#", attrs["loop.#"], "1"); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("Loop[0]", pipeline.Loop[0], want.Loop); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("loop.0", attrs["loop.0"], want.Loop); err != nil {
+				return err
+			}
+		} else {
+			if err := util.CheckIntFieldEqual("len(pipeline.Loop)", len(pipeline.Loop), 0); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual("loop.#", attrs["loop.#"] == "" || attrs["loop.#"] == "0", true); err != nil {
+				return err
+			}
+		}
 		if len(want.TriggerConditions) > 0 {
 			for _, triggerCondition := range want.TriggerConditions {
 				i := 0
@@ -2411,7 +2437,7 @@ resource "buddy_pipeline" "bar" {
 `, domain, projectName, name, ref)
 }
 
-func testAccPipelinePermissionsUser(domain string, projectName string, name string, ref string, email string, othersPerm string, userPerm string) string {
+func testAccPipelinePermissionsUser(domain string, projectName string, name string, ref string, loop string, email string, othersPerm string, userPerm string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -2446,19 +2472,20 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-	refs = ["%s"]
-	permissions {
-		others = "%s"
-      	user {
-			id = "${buddy_project_member.bar.member_id}"
-            access_level = "%s"
+		refs = ["%s"]
+		loop = ["%s"]
+		permissions {
+			others = "%s"
+      user {
+				id = "${buddy_project_member.bar.member_id}"
+        access_level = "%s"
+			}
 		}
-	}
 }
-`, domain, email, projectName, name, ref, othersPerm, userPerm)
+`, domain, email, projectName, name, ref, loop, othersPerm, userPerm)
 }
 
-func testAccPipelinePermissionsUserGroup(domain string, projectName string, name string, ref string, email string, groupName string, othersPerm string, userPerm string, groupPerm string) string {
+func testAccPipelinePermissionsUserGroup(domain string, projectName string, name string, ref string, loop string, email string, groupName string, othersPerm string, userPerm string, groupPerm string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -2505,20 +2532,21 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-	refs = ["%s"]
-	permissions {
-		others = "%s"
+		refs = ["%s"]
+		loop = ["%s"]	
+		permissions {
+			others = "%s"
       	user {
-			id = "${buddy_project_member.bar.member_id}"
-            access_level = "%s"
+				id = "${buddy_project_member.bar.member_id}"
+        access_level = "%s"
+			}
+			group {
+				id = "${buddy_project_group.bar.group_id}"
+				access_level = "%s"
+			}
 		}
-		group {
-			id = "${buddy_project_group.bar.group_id}"
-			access_level = "%s"
-		}
-	}
 }
-`, domain, email, groupName, projectName, name, ref, othersPerm, userPerm, groupPerm)
+`, domain, email, groupName, projectName, name, ref, loop, othersPerm, userPerm, groupPerm)
 }
 
 func testAccPipelinePermissionsGroup(domain string, projectName string, name string, ref string, email string, groupName string, othersPerm string, groupPerm string) string {
@@ -2568,14 +2596,15 @@ resource "buddy_pipeline" "bar" {
     domain = "${buddy_workspace.foo.domain}"
     project_name = "${buddy_project.proj.name}"
     name = "%s"
-	refs = ["%s"]
-	permissions {
-		others = "%s"
-		group {
-			id = "${buddy_project_group.bar.group_id}"
-			access_level = "%s"
+		refs = ["%s"]
+		loop = []
+		permissions {
+			others = "%s"
+			group {
+				id = "${buddy_project_group.bar.group_id}"
+				access_level = "%s"
+			}
 		}
-	}
 }
 `, domain, email, groupName, projectName, name, ref, othersPerm, groupPerm)
 }
