@@ -24,6 +24,8 @@ func TestAccSourcePipeline(t *testing.T) {
 	newGitChangeSet := buddy.PipelineGitChangeSetBaseLatestRunMatchingRef
 	newFilesystemChangeSet := buddy.PipelineFilesystemChangeSetBaseDateModified
 	cpu := buddy.PipelineCpuArm
+	loop := util.UniqueString()
+	newLoop := util.UniqueString()
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -33,14 +35,14 @@ func TestAccSourcePipeline(t *testing.T) {
 		Steps: []resource.TestStep{
 			// click
 			{
-				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh, cpu, true, true, gitChangeSet, filesystemChangeSet),
+				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh, cpu, true, true, gitChangeSet, filesystemChangeSet, loop),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, loop, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
 						Branch:  "main",
 						Path:    "def.yml",
 					}),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, loop, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
 						Branch:  "main",
 						Path:    "def.yml",
@@ -49,42 +51,42 @@ func TestAccSourcePipeline(t *testing.T) {
 			},
 			// click disabled
 			{
-				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, buddy.PipelinePriorityHigh, reason),
+				Config: testAccSourcePipelineConfigClickDisabled(domain, projectName, name, ref, buddy.PipelinePriorityHigh, reason, newLoop),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, newLoop, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, newLoop, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, true, reason, buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 			// event
 			{
 				Config: testAccSourcePipelineConfigEvent(domain, projectName, name, ref, buddy.PipelinePriorityLow),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", buddy.PipelineEventTypePush, ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", buddy.PipelineEventTypePush, ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", "", buddy.PipelineEventTypePush, ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", "", buddy.PipelineEventTypePush, ref, "", "", buddy.PipelinePriorityLow, true, true, buddy.PipelineGitChangeSetBaseLatestRun, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefDynamic, nil),
 				),
 			},
 			// pr event
 			{
 				Config: testAccSourcePipelineConfigPullRequest(domain, projectName, name, prBranch, prEvent, false, false, newGitChangeSet, newFilesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", buddy.PipelineEventTypePullRequest, "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", buddy.PipelineEventTypePullRequest, "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", "", buddy.PipelineEventTypePullRequest, "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", "", buddy.PipelineEventTypePullRequest, "", prBranch, prEvent, buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 			// email
 			{
 				Config: testAccSourcePipelineConfigEmail(domain, projectName, name, false, false, newGitChangeSet, newFilesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", buddy.PipelineEventTypeEmail, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", buddy.PipelineEventTypeEmail, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", "", buddy.PipelineEventTypeEmail, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", "", buddy.PipelineEventTypeEmail, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 			// webhook
 			{
 				Config: testAccSourcePipelineConfigWebhook(domain, projectName, name, false, false, newGitChangeSet, newFilesystemChangeSet),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", buddy.PipelineEventTypeWebhook, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
-					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", buddy.PipelineEventTypeWebhook, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, "", "", buddy.PipelineEventTypeWebhook, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
+					testAccSourcePipelineAttributes("data.buddy_pipeline.id", name, cpu, "", "", buddy.PipelineEventTypeWebhook, "", "", "", buddy.PipelinePriorityLow, false, false, newGitChangeSet, newFilesystemChangeSet, false, "", buddy.PipelineGitConfigRefNone, nil),
 				),
 			},
 		},
@@ -124,7 +126,7 @@ func testAccPipelineGitConfig(attrs map[string]string, gitConfigRef string, gitC
 	return nil
 }
 
-func testAccSourcePipelineAttributes(n string, name string, cpu string, ref string, eventType string, eventRef string, prBranch string, prEvent string, priority string, descriptionRequired bool, concurrentPipelineRuns bool, gitChangesetBase string, filesystemChangesetBase string, disabled bool, disabledReason string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) resource.TestCheckFunc {
+func testAccSourcePipelineAttributes(n string, name string, cpu string, loop string, ref string, eventType string, eventRef string, prBranch string, prEvent string, priority string, descriptionRequired bool, concurrentPipelineRuns bool, gitChangesetBase string, filesystemChangesetBase string, disabled bool, disabledReason string, gitConfigRef string, gitConfig *buddy.PipelineGitConfig) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -174,6 +176,15 @@ func testAccSourcePipelineAttributes(n string, name string, cpu string, ref stri
 		}
 		if ref != "" {
 			if err := util.CheckFieldEqualAndSet("refs.0", attrs["refs.0"], ref); err != nil {
+				return err
+			}
+		}
+		if loop != "" {
+			if err := util.CheckFieldEqualAndSet("loop.0", attrs["loop.0"], loop); err != nil {
+				return err
+			}
+		} else {
+			if err := util.CheckBoolFieldEqual("loop.#", attrs["loop.#"] == "" || attrs["loop.#"] == "0", true); err != nil {
 				return err
 			}
 		}
@@ -347,6 +358,7 @@ resource "buddy_pipeline" "bar" {
        refs = ["%s"]
    }
 	priority = "%s"
+  loop = []
 }
 
 data "buddy_pipeline" "name" {
@@ -363,7 +375,7 @@ data "buddy_pipeline" "id" {
 `, domain, projectName, name, ref, priority)
 }
 
-func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string, cpu string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string) string {
+func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string, cpu string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string, loop string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -391,6 +403,7 @@ resource "buddy_pipeline" "bar" {
    description_required = "%t"
    git_changeset_base = "%s"
    filesystem_changeset_base = "%s"
+   loop = ["%s"]
 }
 
 data "buddy_pipeline" "name" {
@@ -404,10 +417,10 @@ data "buddy_pipeline" "id" {
    project_name = "${buddy_project.proj.name}"
    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
-`, domain, projectName, name, cpu, ref, projectName, priority, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase)
+`, domain, projectName, name, cpu, ref, projectName, priority, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase, loop)
 }
 
-func testAccSourcePipelineConfigClickDisabled(domain string, projectName string, name string, ref string, priority string, reason string) string {
+func testAccSourcePipelineConfigClickDisabled(domain string, projectName string, name string, ref string, priority string, reason string, loop string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -427,6 +440,7 @@ resource "buddy_pipeline" "bar" {
 	 priority = "%s"
 	 disabled = true
 	 disabling_reason = "%s"
+	 loop = ["%s"]
 }
 
 data "buddy_pipeline" "name" {
@@ -440,5 +454,5 @@ data "buddy_pipeline" "id" {
    project_name = "${buddy_project.proj.name}"
    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
-`, domain, projectName, name, ref, priority, reason)
+`, domain, projectName, name, ref, priority, reason, loop)
 }
