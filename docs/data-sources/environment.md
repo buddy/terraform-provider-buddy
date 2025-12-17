@@ -33,17 +33,16 @@ data "buddy_environment" "stage" {
 ### Required
 
 - `domain` (String) The workspace's URL handle
-- `project_name` (String) The project's name
 
 ### Optional
 
 - `environment_id` (String) The environment's ID
 - `name` (String) The environment's name
+- `project_name` (String) The project's name
 
 ### Read-Only
 
 - `html_url` (String) The environment's URL
 - `id` (String) The Terraform resource identifier for this item
 - `identifier` (String) The environment's identifier
-- `public_url` (String) The environment's public URL
-- `tags` (Set of String) The environment's list of tags
+- `scope` (String) The environment's scope

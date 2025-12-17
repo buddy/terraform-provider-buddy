@@ -6,7 +6,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
-	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
@@ -35,11 +34,10 @@ type environmentSourceModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Name          types.String `tfsdk:"name"`
 	Identifier    types.String `tfsdk:"identifier"`
-	Tags          types.Set    `tfsdk:"tags"`
-	PublicUrl     types.String `tfsdk:"public_url"`
+	Scope         types.String `tfsdk:"scope"`
 }
 
-func (e *environmentSourceModel) loadAPI(ctx context.Context, domain string, projectName string, environment *buddy.Environment) diag.Diagnostics {
+func (e *environmentSourceModel) loadAPI(domain string, projectName string, environment *buddy.Environment) {
 	e.ID = types.StringValue(util.ComposeTripleId(domain, projectName, environment.Id))
 	e.Domain = types.StringValue(domain)
 	e.ProjectName = types.StringValue(projectName)
@@ -47,10 +45,7 @@ func (e *environmentSourceModel) loadAPI(ctx context.Context, domain string, pro
 	e.EnvironmentId = types.StringValue(environment.Id)
 	e.Name = types.StringValue(environment.Name)
 	e.Identifier = types.StringValue(environment.Identifier)
-	e.PublicUrl = types.StringValue(environment.PublicUrl)
-	t, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
-	e.Tags = t
-	return d
+	e.Scope = types.StringValue(environment.Scope)
 }
 
 func (s *environmentSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -80,7 +75,7 @@ func (s *environmentSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			},
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The project's name",
-				Required:            true,
+				Optional:            true,
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The environment's name",
@@ -112,13 +107,8 @@ func (s *environmentSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				MarkdownDescription: "The environment's identifier",
 				Computed:            true,
 			},
-			"public_url": schema.StringAttribute{
-				MarkdownDescription: "The environment's public URL",
-				Computed:            true,
-			},
-			"tags": schema.SetAttribute{
-				ElementType:         types.StringType,
-				MarkdownDescription: "The environment's list of tags",
+			"scope": schema.StringAttribute{
+				MarkdownDescription: "The environment's scope",
 				Computed:            true,
 			},
 		},
@@ -134,11 +124,14 @@ func (s *environmentSource) Read(ctx context.Context, req datasource.ReadRequest
 	var environment *buddy.Environment
 	var err error
 	domain := data.Domain.ValueString()
-	projectName := data.ProjectName.ValueString()
+	projectName := ""
+	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+		projectName = data.ProjectName.ValueString()
+	}
 	if !data.EnvironmentId.IsNull() && !data.EnvironmentId.IsUnknown() {
 		var httpResp *http.Response
 		environmentId := data.EnvironmentId.ValueString()
-		environment, httpResp, err = s.client.EnvironmentService.Get(domain, projectName, environmentId)
+		environment, httpResp, err = s.client.EnvironmentService.Get(domain, environmentId)
 		if err != nil {
 			if util.IsResourceNotFound(httpResp, err) {
 				resp.Diagnostics.Append(util.NewDiagnosticApiNotFound("environment"))
@@ -166,9 +159,6 @@ func (s *environmentSource) Read(ctx context.Context, req datasource.ReadRequest
 			return
 		}
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, environment)...)
-	if resp.Diagnostics.HasError() {
-		return
-	}
+	data.loadAPI(domain, projectName, environment)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

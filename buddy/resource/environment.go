@@ -42,38 +42,64 @@ func (e *environmentResource) Configure(_ context.Context, req resource.Configur
 }
 
 type environmentResourceModel struct {
-	ID                  types.String `tfsdk:"id"`
-	Domain              types.String `tfsdk:"domain"`
-	ProjectName         types.String `tfsdk:"project_name"`
-	HtmlUrl             types.String `tfsdk:"html_url"`
-	EnvironmentId       types.String `tfsdk:"environment_id"`
-	Name                types.String `tfsdk:"name"`
-	Identifier          types.String `tfsdk:"identifier"`
-	Tags                types.Set    `tfsdk:"tags"`
-	PublicUrl           types.String `tfsdk:"public_url"`
-	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
-	Project             types.Set    `tfsdk:"project"`
-	Variable            types.Set    `tfsdk:"var"`
-	Permissions         types.Set    `tfsdk:"permissions"`
+	ID                     types.String `tfsdk:"id"`
+	Domain                 types.String `tfsdk:"domain"`
+	ProjectName            types.String `tfsdk:"project_name"`
+	HtmlUrl                types.String `tfsdk:"html_url"`
+	EnvironmentId          types.String `tfsdk:"environment_id"`
+	Identifier             types.String `tfsdk:"identifier"`
+	Name                   types.String `tfsdk:"name"`
+	Icon                   types.String `tfsdk:"icon"`
+	PublicUrl              types.String `tfsdk:"public_url"`
+	AllPipelinesAllowed    types.Bool   `tfsdk:"all_pipelines_allowed"`
+	AllowedPipeline        types.Set    `tfsdk:"allowed_pipeline"`
+	AllEnvironmentsAllowed types.Bool   `tfsdk:"all_environments_allowed"`
+	AllowedEnvironment     types.Set    `tfsdk:"allowed_environment"`
+	CreateDate             types.String `tfsdk:"create_date"`
+	Scope                  types.String `tfsdk:"scope"`
+	BaseOnly               types.Bool   `tfsdk:"base_only"`
+	BaseEnvironments       types.Set    `tfsdk:"base_environments"`
+	Project                types.Set    `tfsdk:"project"`
+	Tags                   types.Set    `tfsdk:"tags"`
+	Permissions            types.Set    `tfsdk:"permissions"`
 }
 
-func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, projectName string, environment *buddy.Environment) diag.Diagnostics {
+func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, environment *buddy.Environment) diag.Diagnostics {
 	var diags diag.Diagnostics
-	r.ID = types.StringValue(util.ComposeTripleId(domain, projectName, environment.Id))
+	// zeby ograniczyc breaking change zostawmy id jako 3 elementowe z pustym projektem (nie istotnym teraz)
+	r.ID = types.StringValue(util.ComposeTripleId(domain, "", environment.Id))
 	r.Domain = types.StringValue(domain)
-	r.ProjectName = types.StringValue(projectName)
+	if environment.Project != nil {
+		r.ProjectName = types.StringValue(environment.Project.Name)
+	} else {
+		r.ProjectName = types.StringNull()
+	}
 	r.HtmlUrl = types.StringValue(environment.HtmlUrl)
 	r.EnvironmentId = types.StringValue(environment.Id)
-	r.Name = types.StringValue(environment.Name)
 	r.Identifier = types.StringValue(environment.Identifier)
-	tags, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
-	diags.Append(d...)
-	r.Tags = tags
+	r.Name = types.StringValue(environment.Name)
+	r.Icon = types.StringValue(environment.Icon)
 	r.PublicUrl = types.StringValue(environment.PublicUrl)
 	r.AllPipelinesAllowed = types.BoolValue(environment.AllPipelinesAllowed)
-	projects, d := util.ProjectsModelFromApi(ctx, &[]*buddy.Project{environment.Project})
+	r.AllEnvironmentsAllowed = types.BoolValue(environment.AllEnvironmentsAllowed)
+	r.CreateDate = types.StringValue(environment.CreateDate)
+	r.Scope = types.StringValue(environment.Scope)
+	r.BaseOnly = types.BoolValue(environment.BaseOnly)
+	tags, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
+	diags.Append(d...)
+	var envProjects []*buddy.Project
+	if environment.Project != nil {
+		envProjects = []*buddy.Project{environment.Project}
+	} else {
+		envProjects = []*buddy.Project{}
+	}
+	r.Tags = tags
+	projects, d := util.ProjectsModelFromApi(ctx, &envProjects)
 	diags.Append(d...)
 	r.Project = projects
+	base, d := types.SetValueFrom(ctx, types.StringType, &environment.BaseEnvironments)
+	diags.Append(d...)
+	r.BaseEnvironments = base
 	return diags
 }
 
@@ -111,7 +137,8 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The project's name",
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -136,6 +163,11 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "The environment's name",
 				Required:            true,
 			},
+			"icon": schema.StringAttribute{
+				MarkdownDescription: "The environment's icon",
+				Optional:            true,
+				Computed:            true,
+			},
 			"public_url": schema.StringAttribute{
 				MarkdownDescription: "The environment's public URL",
 				Optional:            true,
@@ -145,6 +177,30 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 				MarkdownDescription: "Defines whether or not environment can be used in all pipelines",
 				Optional:            true,
 				Computed:            true,
+			},
+			"all_environments_allowed": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not environment can be by inherited by other environements",
+				Optional:            true,
+				Computed:            true,
+			},
+			"create_date": schema.StringAttribute{
+				MarkdownDescription: "The environment's create date",
+				Computed:            true,
+			},
+			"scope": schema.StringAttribute{
+				MarkdownDescription: "The environment's scope",
+				Computed:            true,
+			},
+			"base_only": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not environment can be only used as base environment",
+				Optional:            true,
+				Computed:            true,
+			},
+			"base_environments": schema.SetAttribute{
+				MarkdownDescription: "The environment's list of parent environments ID to inherit from",
+				Optional:            true,
+				Computed:            true,
+				ElementType:         types.StringType,
 			},
 			"project": schema.SetNestedAttribute{
 				MarkdownDescription: "The environment's project",
@@ -174,10 +230,34 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 		},
 		Blocks: map[string]schema.Block{
-			"var": schema.SetNestedBlock{
-				MarkdownDescription: "The environment's variables",
+			"allowed_pipeline": schema.SetNestedBlock{
+				MarkdownDescription: "The environment's allowed pipeline",
 				NestedObject: schema.NestedBlockObject{
-					Attributes: util.EnvironmentVariableModelAttributes(),
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The project's name",
+							Required:            true,
+						},
+						"pipeline": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's identifier",
+							Required:            true,
+						},
+					},
+				},
+			},
+			"allowed_environment": schema.SetNestedBlock{
+				MarkdownDescription: "The environment's allowed child environment",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The project's name",
+							Optional:            true,
+						},
+						"environment": schema.StringAttribute{
+							MarkdownDescription: "The environment's identifier",
+							Required:            true,
+						},
+					},
 				},
 			},
 			"permissions": schema.SetNestedBlock{
@@ -224,18 +304,28 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 		return
 	}
 	domain := data.Domain.ValueString()
-	projectName := data.ProjectName.ValueString()
 	ops := buddy.EnvironmentOps{
-		Name: data.Name.ValueStringPointer(),
+		Name:       data.Name.ValueStringPointer(),
+		Identifier: data.Identifier.ValueStringPointer(),
 	}
-	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
-		ops.Identifier = data.Identifier.ValueStringPointer()
+	var scope string
+	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+		ops.Project = &buddy.ProjectSimple{
+			Name: data.ProjectName.ValueString(),
+		}
+		scope = buddy.EnvironmentScopeProject
+	} else {
+		scope = buddy.EnvironmentScopeWorkspace
+	}
+	ops.Scope = &scope
+	if !data.Icon.IsNull() && !data.Icon.IsUnknown() {
+		ops.Icon = data.Icon.ValueStringPointer()
 	}
 	if !data.PublicUrl.IsNull() && !data.PublicUrl.IsUnknown() {
 		ops.PublicUrl = data.PublicUrl.ValueStringPointer()
 	}
-	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
-		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
+	if !data.BaseOnly.IsNull() && !data.BaseOnly.IsUnknown() {
+		ops.BaseOnly = data.BaseOnly.ValueBoolPointer()
 	}
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &data.Tags)
@@ -245,14 +335,6 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		ops.Tags = tags
 	}
-	if !data.Variable.IsNull() && !data.Variable.IsUnknown() {
-		variables, d := util.EnvironmentVariableModelToApi(ctx, &data.Variable)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		ops.Variables = variables
-	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.EnvironmentPermissionsModelToApi(ctx, &data.Permissions)
 		resp.Diagnostics.Append(d...)
@@ -261,12 +343,46 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		ops.Permissions = permissions
 	}
-	environment, _, err := e.client.EnvironmentService.Create(domain, projectName, &ops)
+	if !data.AllowedPipeline.IsNull() && !data.AllowedPipeline.IsUnknown() {
+		pipelines, d := util.EnvironmentPipelinesModelToApi(ctx, &data.AllowedPipeline)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.AllowedPipelines = pipelines
+		f := false
+		ops.AllPipelinesAllowed = &f
+	}
+	if !data.AllowedEnvironment.IsNull() && !data.AllowedEnvironment.IsUnknown() {
+		environments, d := util.EnvironmentEnvironmentsModelToApi(ctx, &data.AllowedEnvironment)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.AllowedEnvironments = environments
+		f := false
+		ops.AllEnvironmentsAllowed = &f
+	}
+	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
+		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
+	}
+	if !data.AllEnvironmentsAllowed.IsNull() && !data.AllEnvironmentsAllowed.IsUnknown() {
+		ops.AllEnvironmentsAllowed = data.AllEnvironmentsAllowed.ValueBoolPointer()
+	}
+	if !data.BaseEnvironments.IsNull() && !data.BaseEnvironments.IsUnknown() {
+		base, d := util.StringSetToApi(ctx, &data.BaseEnvironments)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.BaseEnvironments = base
+	}
+	environment, _, err := e.client.EnvironmentService.Create(domain, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create environment", err))
 		return
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, environment)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, environment)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -279,12 +395,12 @@ func (e *environmentResource) Read(ctx context.Context, req resource.ReadRequest
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	domain, projectName, environmentId, err := data.decomposeId()
+	domain, _, environmentId, err := data.decomposeId()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("environment", err))
 		return
 	}
-	environment, httpResp, err := e.client.EnvironmentService.Get(domain, projectName, environmentId)
+	environment, httpResp, err := e.client.EnvironmentService.Get(domain, environmentId)
 	if err != nil {
 		if util.IsResourceNotFound(httpResp, err) {
 			resp.State.RemoveResource(ctx)
@@ -293,7 +409,7 @@ func (e *environmentResource) Read(ctx context.Context, req resource.ReadRequest
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get environment", err))
 		return
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, environment)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, environment)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -306,22 +422,33 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	domain, projectName, environmentId, err := data.decomposeId()
+	domain, _, environmentId, err := data.decomposeId()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("environment", err))
 		return
 	}
 	ops := buddy.EnvironmentOps{
-		Name: data.Name.ValueStringPointer(),
+		Name:       data.Name.ValueStringPointer(),
+		Identifier: data.Identifier.ValueStringPointer(),
 	}
-	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
-		ops.Identifier = data.Identifier.ValueStringPointer()
+	var scope string
+	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+		ops.Project = &buddy.ProjectSimple{
+			Name: data.ProjectName.ValueString(),
+		}
+		scope = buddy.EnvironmentScopeProject
+	} else {
+		scope = buddy.EnvironmentScopeWorkspace
+	}
+	ops.Scope = &scope
+	if !data.Icon.IsNull() && !data.Icon.IsUnknown() {
+		ops.Icon = data.Icon.ValueStringPointer()
 	}
 	if !data.PublicUrl.IsNull() && !data.PublicUrl.IsUnknown() {
 		ops.PublicUrl = data.PublicUrl.ValueStringPointer()
 	}
-	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
-		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
+	if !data.BaseOnly.IsNull() && !data.BaseOnly.IsUnknown() {
+		ops.BaseOnly = data.BaseOnly.ValueBoolPointer()
 	}
 	if !data.Tags.IsNull() && !data.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &data.Tags)
@@ -331,14 +458,6 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 		ops.Tags = tags
 	}
-	if !data.Variable.IsNull() && !data.Variable.IsUnknown() {
-		variables, d := util.EnvironmentVariableModelToApi(ctx, &data.Variable)
-		resp.Diagnostics.Append(d...)
-		if resp.Diagnostics.HasError() {
-			return
-		}
-		ops.Variables = variables
-	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.EnvironmentPermissionsModelToApi(ctx, &data.Permissions)
 		resp.Diagnostics.Append(d...)
@@ -347,12 +466,46 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 		}
 		ops.Permissions = permissions
 	}
-	environment, _, err := e.client.EnvironmentService.Update(domain, projectName, environmentId, &ops)
+	if !data.AllowedPipeline.IsNull() && !data.AllowedPipeline.IsUnknown() {
+		pipelines, d := util.EnvironmentPipelinesModelToApi(ctx, &data.AllowedPipeline)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.AllowedPipelines = pipelines
+		f := false
+		ops.AllPipelinesAllowed = &f
+	}
+	if !data.AllowedEnvironment.IsNull() && !data.AllowedEnvironment.IsUnknown() {
+		environments, d := util.EnvironmentEnvironmentsModelToApi(ctx, &data.AllowedEnvironment)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.AllowedEnvironments = environments
+		f := false
+		ops.AllEnvironmentsAllowed = &f
+	}
+	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
+		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
+	}
+	if !data.AllEnvironmentsAllowed.IsNull() && !data.AllEnvironmentsAllowed.IsUnknown() {
+		ops.AllEnvironmentsAllowed = data.AllEnvironmentsAllowed.ValueBoolPointer()
+	}
+	if !data.BaseEnvironments.IsNull() && !data.BaseEnvironments.IsUnknown() {
+		base, d := util.StringSetToApi(ctx, &data.BaseEnvironments)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.BaseEnvironments = base
+	}
+	environment, _, err := e.client.EnvironmentService.Update(domain, environmentId, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("update environment", err))
 		return
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, environment)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, environment)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -365,12 +518,12 @@ func (e *environmentResource) Delete(ctx context.Context, req resource.DeleteReq
 	if resp.Diagnostics.HasError() {
 		return
 	}
-	domain, projectName, environmentId, err := data.decomposeId()
+	domain, _, environmentId, err := data.decomposeId()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("environment", err))
 		return
 	}
-	_, err = e.client.EnvironmentService.Delete(domain, projectName, environmentId)
+	_, err = e.client.EnvironmentService.Delete(domain, environmentId)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete environment", err))
 	}

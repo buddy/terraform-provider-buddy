@@ -36,6 +36,7 @@ type environmentsSourceModel struct {
 func (s *environmentsSourceModel) loadAPI(ctx context.Context, domain string, projectName string, environments *[]*buddy.Environment) diag.Diagnostics {
 	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
+	s.ProjectName = types.StringValue(projectName)
 	e, d := util.EnvironmentsModelFromApi(ctx, environments)
 	s.Environments = e
 	return d
@@ -68,7 +69,8 @@ func (s *environmentsSource) Schema(_ context.Context, _ datasource.SchemaReques
 			},
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The project's name",
-				Required:            true,
+				Optional:            true,
+				Computed:            true,
 			},
 			"name_regex": schema.StringAttribute{
 				MarkdownDescription: "The environment's name regular expression to match",

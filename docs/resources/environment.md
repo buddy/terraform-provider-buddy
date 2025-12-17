@@ -42,22 +42,50 @@ resource "buddy_environment" "dev" {
 - `domain` (String) The workspace's URL handle
 - `identifier` (String) The environment's identifier
 - `name` (String) The environment's name
-- `project_name` (String) The project's name
 
 ### Optional
 
+- `all_environments_allowed` (Boolean) Defines whether or not environment can be by inherited by other environements
 - `all_pipelines_allowed` (Boolean) Defines whether or not environment can be used in all pipelines
+- `allowed_environment` (Block Set) The environment's allowed child environment (see [below for nested schema](#nestedblock--allowed_environment))
+- `allowed_pipeline` (Block Set) The environment's allowed pipeline (see [below for nested schema](#nestedblock--allowed_pipeline))
+- `base_environments` (Set of String) The environment's list of parent environments ID to inherit from
+- `base_only` (Boolean) Defines whether or not environment can be only used as base environment
+- `icon` (String) The environment's icon
 - `permissions` (Block Set) The environment's permissions (see [below for nested schema](#nestedblock--permissions))
+- `project_name` (String) The project's name
 - `public_url` (String) The environment's public URL
 - `tags` (Set of String) The environment's list of tags
-- `var` (Block Set) The environment's variables (see [below for nested schema](#nestedblock--var))
 
 ### Read-Only
 
+- `create_date` (String) The environment's create date
 - `environment_id` (String) The environment's ID
 - `html_url` (String) The environment's URL
 - `id` (String) The Terraform resource identifier for this item
 - `project` (Attributes Set) The environment's project (see [below for nested schema](#nestedatt--project))
+- `scope` (String) The environment's scope
+
+<a id="nestedblock--allowed_environment"></a>
+### Nested Schema for `allowed_environment`
+
+Required:
+
+- `environment` (String) The environment's identifier
+
+Optional:
+
+- `project` (String) The project's name
+
+
+<a id="nestedblock--allowed_pipeline"></a>
+### Nested Schema for `allowed_pipeline`
+
+Required:
+
+- `pipeline` (String) The pipeline's identifier
+- `project` (String) The project's name
+
 
 <a id="nestedblock--permissions"></a>
 ### Nested Schema for `permissions`
@@ -85,21 +113,6 @@ Required:
 - `access_level` (String)
 - `id` (Number)
 
-
-
-<a id="nestedblock--var"></a>
-### Nested Schema for `var`
-
-Required:
-
-- `key` (String)
-- `value` (String, Sensitive)
-
-Optional:
-
-- `description` (String)
-- `encrypted` (Boolean)
-- `settable` (Boolean)
 
 
 <a id="nestedatt--project"></a>
