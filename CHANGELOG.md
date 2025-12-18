@@ -1,4 +1,4 @@
-# Release v1.39.0 (2026-01-16)
+# Release v1.39.0 (2026-01-13)
 * [Breaking] Environment API change (buddy_envrionment)
 
 # Release v1.38.0 (2025-10-30)
