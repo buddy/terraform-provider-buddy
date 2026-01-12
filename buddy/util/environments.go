@@ -15,8 +15,7 @@ type environmentModel struct {
 	EnvironmentId types.String `tfsdk:"environment_id"`
 	Name          types.String `tfsdk:"name"`
 	Identifier    types.String `tfsdk:"identifier"`
-	Tags          types.Set    `tfsdk:"tags"`
-	PublicUrl     types.String `tfsdk:"public_url"`
+	Scope         types.String `tfsdk:"scope"`
 }
 
 func environmentModelAttrs() map[string]attr.Type {
@@ -25,20 +24,16 @@ func environmentModelAttrs() map[string]attr.Type {
 		"environment_id": types.StringType,
 		"name":           types.StringType,
 		"identifier":     types.StringType,
-		"tags":           types.SetType{ElemType: types.StringType},
-		"public_url":     types.StringType,
+		"scope":          types.StringType,
 	}
 }
 
-func (e *environmentModel) loadAPI(ctx context.Context, environment *buddy.Environment) diag.Diagnostics {
+func (e *environmentModel) loadAPI(environment *buddy.Environment) {
 	e.HtmlUrl = types.StringValue(environment.HtmlUrl)
 	e.EnvironmentId = types.StringValue(environment.Id)
 	e.Name = types.StringValue(environment.Name)
 	e.Identifier = types.StringValue(environment.Identifier)
-	e.PublicUrl = types.StringValue(environment.PublicUrl)
-	t, d := types.SetValueFrom(ctx, types.StringType, &environment.Tags)
-	e.Tags = t
-	return d
+	e.Scope = types.StringValue(environment.Scope)
 }
 
 func SourceEnvironmentModelAttributes() map[string]schema.Attribute {
@@ -55,12 +50,8 @@ func SourceEnvironmentModelAttributes() map[string]schema.Attribute {
 		"identifier": schema.StringAttribute{
 			Computed: true,
 		},
-		"public_url": schema.StringAttribute{
+		"scope": schema.StringAttribute{
 			Computed: true,
-		},
-		"tags": schema.SetAttribute{
-			Computed:    true,
-			ElementType: types.StringType,
 		},
 	}
 }
@@ -69,7 +60,7 @@ func EnvironmentsModelFromApi(ctx context.Context, environments *[]*buddy.Enviro
 	l := make([]*environmentModel, len(*environments))
 	for i, v := range *environments {
 		l[i] = &environmentModel{}
-		l[i].loadAPI(ctx, v)
+		l[i].loadAPI(v)
 	}
 	return types.SetValueFrom(ctx, types.ObjectType{AttrTypes: environmentModelAttrs()}, &l)
 }

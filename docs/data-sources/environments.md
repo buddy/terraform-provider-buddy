@@ -34,11 +34,11 @@ data "buddy_environments" "with_name_dev" {
 ### Required
 
 - `domain` (String) The workspace's URL handle
-- `project_name` (String) The project's name
 
 ### Optional
 
 - `name_regex` (String) The environment's name regular expression to match
+- `project_name` (String) The project's name
 
 ### Read-Only
 
@@ -54,5 +54,4 @@ Read-Only:
 - `html_url` (String)
 - `identifier` (String)
 - `name` (String)
-- `public_url` (String)
-- `tags` (Set of String)
+- `scope` (String)

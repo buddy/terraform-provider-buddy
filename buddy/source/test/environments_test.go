@@ -2,6 +2,7 @@ package test
 
 import (
 	"fmt"
+	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 	"strconv"
@@ -66,10 +67,7 @@ func testAccSourceEnvironmentsAttributes(n string, count int, name string) resou
 			if err := util.CheckFieldSet("environments.0.environment_id", attrs["environments.0.environment_id"]); err != nil {
 				return err
 			}
-			if err := util.CheckFieldSet("environments.0.public_url", attrs["environments.0.public_url"]); err != nil {
-				return err
-			}
-			if err := util.CheckFieldEqualAndSet("environments.0.tags.0", attrs["environments.0.tags.0"], "a"); err != nil {
+			if err := util.CheckFieldEqualAndSet("environments.0.scope", attrs["environments.0.scope"], buddy.EnvironmentScopeProject); err != nil {
 				return err
 			}
 		}
@@ -93,8 +91,6 @@ resource "buddy_environment" "a" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    identifier = "%s"
-	 public_url = "https://a.com"
-   tags = ["a"]
 }
 
 resource "buddy_environment" "b" {
@@ -102,8 +98,6 @@ resource "buddy_environment" "b" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    identifier = "%s"
-   public_url = "https://b.com"
-   tags = ["a"]
 }
 
 data "buddy_environments" "all" {
