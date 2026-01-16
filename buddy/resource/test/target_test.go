@@ -18,6 +18,7 @@ var targetIgnoreImportVerify = []string{
 	"project_name",
 	"pipeline_id",
 	"environment_id",
+	"allowed_pipeline",
 }
 
 func TestAccTarget_ftp(t *testing.T) {
@@ -31,6 +32,7 @@ func TestAccTarget_ftp(t *testing.T) {
 	password := util.RandString(10)
 	secure := true
 	disabled := true
+	allPipelinesAllowed := true
 
 	newName := util.RandString(10)
 	newIdentifier := util.UniqueString()
@@ -40,6 +42,7 @@ func TestAccTarget_ftp(t *testing.T) {
 	newPassword := util.RandString(10)
 	newSecure := false
 	newDisabled := false
+	newAllPipelinesAllowed := false
 
 	typ := buddy.TargetTypeFtp
 
@@ -51,17 +54,18 @@ func TestAccTarget_ftp(t *testing.T) {
 		CheckDestroy:             testAccTargetCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTargetFtpsConfig(domain, name, identifier, host, port, username, password, true, true),
+				Config: testAccTargetFtpsConfig(domain, name, identifier, host, port, username, password, true, true, allPipelinesAllowed),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetGet("buddy_target.test", &target),
 					testAccTargetAttributes("buddy_target.test", &target, &buddy.TargetOps{
-						Name:       &name,
-						Identifier: &identifier,
-						Type:       &typ,
-						Host:       &host,
-						Port:       &port,
-						Secure:     &secure,
-						Disabled:   &disabled,
+						Name:                &name,
+						Identifier:          &identifier,
+						Type:                &typ,
+						Host:                &host,
+						Port:                &port,
+						Secure:              &secure,
+						Disabled:            &disabled,
+						AllPipelinesAllowed: &allPipelinesAllowed,
 						Auth: &buddy.TargetAuth{
 							Username: username,
 							Password: password,
@@ -70,17 +74,18 @@ func TestAccTarget_ftp(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccTargetFtpsConfig(domain, newName, newIdentifier, newHost, newPort, newUsername, newPassword, false, false),
+				Config: testAccTargetFtpsConfig(domain, newName, newIdentifier, newHost, newPort, newUsername, newPassword, false, false, newAllPipelinesAllowed),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetGet("buddy_target.test", &target),
 					testAccTargetAttributes("buddy_target.test", &target, &buddy.TargetOps{
-						Name:       &newName,
-						Identifier: &newIdentifier,
-						Type:       &typ,
-						Host:       &newHost,
-						Port:       &newPort,
-						Secure:     &newSecure,
-						Disabled:   &newDisabled,
+						Name:                &newName,
+						Identifier:          &newIdentifier,
+						Type:                &typ,
+						Host:                &newHost,
+						Port:                &newPort,
+						Secure:              &newSecure,
+						Disabled:            &newDisabled,
+						AllPipelinesAllowed: &newAllPipelinesAllowed,
 						Auth: &buddy.TargetAuth{
 							Username: newUsername,
 							Password: newPassword,
@@ -276,6 +281,8 @@ func TestAccTarget_sshKey(t *testing.T) {
 	otherLevel := buddy.TargetPermissionManage
 	userLevel := buddy.TargetPermissionUseOnly
 	groupLevel := buddy.TargetPermissionManage
+	pipelineIdentifier := util.UniqueString()
+	projectName := util.UniqueString()
 
 	newName := util.RandString(10)
 	newHost := "2.2.2.2"
@@ -283,6 +290,7 @@ func TestAccTarget_sshKey(t *testing.T) {
 	newOtherLevel := buddy.TargetPermissionUseOnly
 	newUserLevel := buddy.TargetPermissionManage
 	newGroupLevel := buddy.TargetPermissionUseOnly
+	newPipelineIdentifier := util.UniqueString()
 
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -292,7 +300,7 @@ func TestAccTarget_sshKey(t *testing.T) {
 		CheckDestroy:             testAccTargetCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTargetSshKeyConfig(domain, email, groupName, name, identifier, host, port, username, key, passphrase, otherLevel, userLevel, groupLevel),
+				Config: testAccTargetSshKeyConfig(domain, projectName, email, groupName, name, identifier, host, port, username, key, passphrase, otherLevel, userLevel, groupLevel, pipelineIdentifier),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetGet("buddy_target.test", &target),
 					testAccTargetAttributes("buddy_target.test", &target, &buddy.TargetOps{
@@ -316,11 +324,17 @@ func TestAccTarget_sshKey(t *testing.T) {
 								AccessLevel: groupLevel,
 							}},
 						},
+						AllowedPipelines: &[]*buddy.TargetAllowedPipeline{
+							{
+								Project:  projectName,
+								Pipeline: pipelineIdentifier,
+							},
+						},
 					}),
 				),
 			},
 			{
-				Config: testAccTargetSshKeyConfig(domain, email, groupName, newName, identifier, newHost, port, username, newKey, passphrase, newOtherLevel, newUserLevel, newGroupLevel),
+				Config: testAccTargetSshKeyConfig(domain, projectName, email, groupName, newName, identifier, newHost, port, username, newKey, passphrase, newOtherLevel, newUserLevel, newGroupLevel, newPipelineIdentifier),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetGet("buddy_target.test", &target),
 					testAccTargetAttributes("buddy_target.test", &target, &buddy.TargetOps{
@@ -343,6 +357,12 @@ func TestAccTarget_sshKey(t *testing.T) {
 							Groups: []*buddy.TargetResourcePermission{{
 								AccessLevel: newGroupLevel,
 							}},
+						},
+						AllowedPipelines: &[]*buddy.TargetAllowedPipeline{
+							{
+								Project:  projectName,
+								Pipeline: newPipelineIdentifier,
+							},
 						},
 					}),
 				),
@@ -733,6 +753,7 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 		}
 		attrs := rs.Primary.Attributes
 		attrsSecure, _ := strconv.ParseBool(attrs["secure"])
+		attrsAllPipelinesAllowed, _ := strconv.ParseBool(attrs["all_pipelines_allowed"])
 		attrsDisabled, _ := strconv.ParseBool(attrs["disabled"])
 		if err := util.CheckFieldSet("Id", target.Id); err != nil {
 			return err
@@ -837,6 +858,27 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 			}
 		}
 
+		if ops.AllPipelinesAllowed != nil {
+			if err := util.CheckBoolFieldEqual("AllPipelinesAllowed", target.AllPipelinesAllowed, *ops.AllPipelinesAllowed); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual("all_pipelines_allowed", attrsAllPipelinesAllowed, *ops.AllPipelinesAllowed); err != nil {
+				return err
+			}
+		}
+
+		if ops.AllowedPipelines != nil {
+			if err := util.CheckIntFieldEqualAndSet("AllowedPipelines", len(target.AllowedPipelines), len(*ops.AllowedPipelines)); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("AllowedPipelines[0].Project", target.AllowedPipelines[0].Project, (*ops.AllowedPipelines)[0].Project); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("AllowedPipelines[0].Pipeline", target.AllowedPipelines[0].Pipeline, (*ops.AllowedPipelines)[0].Pipeline); err != nil {
+				return err
+			}
+		}
+
 		if ops.Disabled != nil {
 			if err := util.CheckBoolFieldEqual("Disabled", target.Disabled, *ops.Disabled); err != nil {
 				return err
@@ -921,7 +963,7 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 	}
 }
 
-func testAccTargetFtpsConfig(domain string, name string, identifier string, host string, port string, username string, password string, secure bool, disabled bool) string {
+func testAccTargetFtpsConfig(domain string, name string, identifier string, host string, port string, username string, password string, secure bool, disabled bool, allPipelinesAllowed bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "test" {
     domain = "%s"
@@ -940,7 +982,8 @@ resource "buddy_target" "test" {
         username = "%s"
         password = "%s"
     }
-}`, domain, name, identifier, host, port, secure, disabled, username, password)
+		all_pipelines_allowed = %t
+}`, domain, name, identifier, host, port, secure, disabled, username, password, allPipelinesAllowed)
 }
 
 func testAccTargetSshPasswordConfig(domain string, name string, identifier string, tag string, host string, port string, path string, username string, password string) string {
@@ -1180,7 +1223,7 @@ resource "buddy_target" "test" {
 }`, domain, name, identifier, host, port, path, proxyName, proxyHost, proxyPort, proxyUser, proxyPass)
 }
 
-func testAccTargetSshKeyConfig(domain string, email string, groupName string, name string, identifier string, host string, port string, username string, key string, passphrase string, othersLevel string, userLevel string, groupLevel string) string {
+func testAccTargetSshKeyConfig(domain string, projectName string, email string, groupName string, name string, identifier string, host string, port string, username string, key string, passphrase string, othersLevel string, userLevel string, groupLevel string, pipelineIdentifier string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "test" {
     domain = "%s"
@@ -1188,13 +1231,14 @@ resource "buddy_workspace" "test" {
 
 resource "buddy_project" "test" {
     domain       = buddy_workspace.test.domain
-    display_name = "abcdef" 
+    display_name = "%s"
 }
 
 resource "buddy_pipeline" "test" {
     domain       = buddy_workspace.test.domain
     project_name = buddy_project.test.name
-    name         = "abcdef" 
+    name         = "%s"
+		identifier   = "%s"
 }
 
 resource "buddy_member" "test" {
@@ -1255,5 +1299,9 @@ resource "buddy_target" "test" {
            access_level = "%s"
         }
     }
-}`, domain, email, groupName, name, identifier, host, port, username, key, passphrase, othersLevel, userLevel, groupLevel)
+		allowed_pipeline {
+      project = buddy_project.test.name
+      pipeline = "%s"
+		}
+}`, domain, projectName, pipelineIdentifier, pipelineIdentifier, email, groupName, name, identifier, host, port, username, key, passphrase, othersLevel, userLevel, groupLevel, pipelineIdentifier)
 }

@@ -42,10 +42,12 @@ data "buddy_permission" "by_id" {
 ### Read-Only
 
 - `description` (String) The permission's description
+- `environment_access_level` (String) The permission's access level to environments
 - `html_url` (String) The permission's URL
 - `id` (String) The Terraform resource identifier for this item
 - `pipeline_access_level` (String) The permission's access level to pipelines
 - `project_team_access_level` (String) The permission's access level to team
 - `repository_access_level` (String) The permission's access level to repository
 - `sandbox_access_level` (String) The permission's access level to sandboxes
+- `target_access_level` (String) The permission's access level to targets
 - `type` (String) The permission's type

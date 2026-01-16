@@ -46,6 +46,7 @@ data "buddy_variables_ssh_keys" "pipeline" {
 ### Optional
 
 - `action_id` (Number) Get only from provided action
+- `environment_id` (String) Get only from provided environment
 - `key_regex` (String) The variable's key regular expression to match
 - `pipeline_id` (Number) Get only from provided pipeline
 - `project_name` (String) Get only from provided project

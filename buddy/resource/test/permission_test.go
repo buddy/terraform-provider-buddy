@@ -18,12 +18,16 @@ func TestAccPermission(t *testing.T) {
 	pipelineAccessLevel := buddy.PermissionAccessLevelRunOnly
 	repositoryAccessLevel := buddy.PermissionAccessLevelReadWrite
 	sandboxAccessLevel := buddy.PermissionAccessLevelReadOnly
+	targetAccessLevel := buddy.PermissionAccessLevelReadOnly
+	environmentAccessLevel := buddy.PermissionAccessLevelUseOnly
 	newName := util.RandString(5)
 	newPipelineAccessLevel := buddy.PermissionAccessLevelReadWrite
 	newRepositoryAccessLevel := buddy.PermissionAccessLevelManage
 	newSandboxAccessLevel := buddy.PermissionAccessLevelReadWrite
 	newDescription := util.RandString(5)
 	newProjectTeamAccessLevel := buddy.PermissionAccessLevelManage
+	newTargetAccessLevel := buddy.PermissionAccessLevelManage
+	newEnvironmentAccessLevel := buddy.PermissionAccessLevelManage
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acc.PreCheck(t) },
 		ProtoV6ProviderFactories: acc.ProviderFactories,
@@ -31,22 +35,24 @@ func TestAccPermission(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create a permission
 			{
-				Config: testAccPermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel),
+				Config: testAccPermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, targetAccessLevel, environmentAccessLevel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPermissionGet("buddy_permission.bar", &permission),
 					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
-						Name:                  name,
-						PipelineAccessLevel:   pipelineAccessLevel,
-						RepositoryAccessLevel: repositoryAccessLevel,
-						SandboxAccessLevel:    sandboxAccessLevel,
-						Type:                  "CUSTOM",
-						Description:           "",
+						Name:                   name,
+						PipelineAccessLevel:    pipelineAccessLevel,
+						RepositoryAccessLevel:  repositoryAccessLevel,
+						SandboxAccessLevel:     sandboxAccessLevel,
+						TargetAccessLevel:      targetAccessLevel,
+						EnvironmentAccessLevel: environmentAccessLevel,
+						Type:                   "CUSTOM",
+						Description:            "",
 					}),
 				),
 			},
 			// update permission
 			{
-				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newDescription),
+				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, newDescription),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPermissionGet("buddy_permission.bar", &permission),
 					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
@@ -55,6 +61,8 @@ func TestAccPermission(t *testing.T) {
 						RepositoryAccessLevel:  newRepositoryAccessLevel,
 						SandboxAccessLevel:     newSandboxAccessLevel,
 						ProjectTeamAccessLevel: newProjectTeamAccessLevel,
+						TargetAccessLevel:      newTargetAccessLevel,
+						EnvironmentAccessLevel: newEnvironmentAccessLevel,
 						Type:                   "CUSTOM",
 						Description:            newDescription,
 					}),
@@ -76,6 +84,8 @@ type testAccPermissionExpectedAttributes struct {
 	RepositoryAccessLevel  string
 	SandboxAccessLevel     string
 	ProjectTeamAccessLevel string
+	TargetAccessLevel      string
+	EnvironmentAccessLevel string
 	Type                   string
 	Description            string
 }
@@ -128,6 +138,12 @@ func testAccPermissionAttributes(n string, permission *buddy.Permission, want *t
 		if err := util.CheckFieldEqualAndSet("sandbox_access_level", attrs["sandbox_access_level"], want.SandboxAccessLevel); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqualAndSet("target_access_level", attrs["target_access_level"], want.TargetAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("environment_access_level", attrs["environment_access_level"], want.EnvironmentAccessLevel); err != nil {
+			return err
+		}
 		if err := util.CheckIntFieldEqualAndSet("permission_id", attrsPermissionId, permission.Id); err != nil {
 			return err
 		}
@@ -167,7 +183,7 @@ func testAccPermissionGet(n string, permission *buddy.Permission) resource.TestC
 	}
 }
 
-func testAccPermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string) string {
+func testAccPermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, targetAccessLevel string, environmentAccessLevel string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -178,12 +194,14 @@ resource "buddy_permission" "bar" {
    name = "%s"
    pipeline_access_level = "%s"
    repository_access_level = "%s"
-	sandbox_access_level = "%s"
+   sandbox_access_level = "%s"
+	 target_access_level = "%s"
+	 environment_access_level = "%s"
 }
-`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel)
+`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, targetAccessLevel, environmentAccessLevel)
 }
 
-func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, projectTeamAccessLevel string, sandboxAccessLevel string, description string) string {
+func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, projectTeamAccessLevel string, sandboxAccessLevel string, targetAccessLevel string, environmentAccessLevel string, description string) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -195,12 +213,14 @@ func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLev
 	   name = "%s"
 	   pipeline_access_level = "%s"
 	   repository_access_level = "%s"
-		sandbox_access_level = "%s"
-		project_team_access_level = "%s"
+		 sandbox_access_level = "%s"
+		 project_team_access_level = "%s"
+	 	 target_access_level = "%s"
+	 	 environment_access_level = "%s"
 	   description = "%s"
 	}
 
-`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, description)
+`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, targetAccessLevel, environmentAccessLevel, description)
 }
 
 func testAccPermissionCheckDestroy(s *terraform.State) error {
