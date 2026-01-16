@@ -32,28 +32,30 @@ type targetResource struct {
 }
 
 type targetResourceModel struct {
-	ID            types.String `tfsdk:"id"`
-	Domain        types.String `tfsdk:"domain"`
-	TargetId      types.String `tfsdk:"target_id"`
-	HtmlUrl       types.String `tfsdk:"html_url"`
-	Name          types.String `tfsdk:"name"`
-	Identifier    types.String `tfsdk:"identifier"`
-	Tags          types.Set    `tfsdk:"tags"`
-	Type          types.String `tfsdk:"type"`
-	Host          types.String `tfsdk:"host"`
-	Scope         types.String `tfsdk:"scope"`
-	Repository    types.String `tfsdk:"repository"`
-	Port          types.String `tfsdk:"port"`
-	Path          types.String `tfsdk:"path"`
-	Secure        types.Bool   `tfsdk:"secure"`
-	Integration   types.String `tfsdk:"integration"`
-	Disabled      types.Bool   `tfsdk:"disabled"`
-	Auth          types.Set    `tfsdk:"auth"`
-	ProjectName   types.String `tfsdk:"project_name"`
-	PipelineId    types.Int64  `tfsdk:"pipeline_id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Proxy         types.Set    `tfsdk:"proxy"`
-	Permissions   types.Set    `tfsdk:"permissions"`
+	ID                  types.String `tfsdk:"id"`
+	Domain              types.String `tfsdk:"domain"`
+	TargetId            types.String `tfsdk:"target_id"`
+	HtmlUrl             types.String `tfsdk:"html_url"`
+	Name                types.String `tfsdk:"name"`
+	Identifier          types.String `tfsdk:"identifier"`
+	Tags                types.Set    `tfsdk:"tags"`
+	Type                types.String `tfsdk:"type"`
+	Host                types.String `tfsdk:"host"`
+	Scope               types.String `tfsdk:"scope"`
+	Repository          types.String `tfsdk:"repository"`
+	Port                types.String `tfsdk:"port"`
+	Path                types.String `tfsdk:"path"`
+	Secure              types.Bool   `tfsdk:"secure"`
+	Integration         types.String `tfsdk:"integration"`
+	Disabled            types.Bool   `tfsdk:"disabled"`
+	Auth                types.Set    `tfsdk:"auth"`
+	ProjectName         types.String `tfsdk:"project_name"`
+	PipelineId          types.Int64  `tfsdk:"pipeline_id"`
+	EnvironmentId       types.String `tfsdk:"environment_id"`
+	Proxy               types.Set    `tfsdk:"proxy"`
+	Permissions         types.Set    `tfsdk:"permissions"`
+	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
+	AllowedPipeline     types.Set    `tfsdk:"allowed_pipeline"`
 }
 
 func (m *targetResourceModel) decomposeId() (string, string, error) {
@@ -84,6 +86,7 @@ func (m *targetResourceModel) loadAPI(ctx context.Context, domain string, target
 	m.Secure = types.BoolValue(target.Secure)
 	m.Integration = types.StringValue(target.Integration)
 	m.Disabled = types.BoolValue(target.Disabled)
+	m.AllPipelinesAllowed = types.BoolValue(target.AllPipelinesAllowed)
 	return diags
 }
 
@@ -95,6 +98,14 @@ func (m *targetResourceModel) toOps(ctx context.Context) (*buddy.TargetOps, diag
 	}
 	if !m.Name.IsNull() && !m.Name.IsUnknown() {
 		ops.Name = m.Name.ValueStringPointer()
+	}
+	if !m.AllPipelinesAllowed.IsNull() && !m.AllPipelinesAllowed.IsUnknown() {
+		ops.AllPipelinesAllowed = m.AllPipelinesAllowed.ValueBoolPointer()
+	}
+	if !m.AllowedPipeline.IsNull() && !m.AllowedPipeline.IsUnknown() {
+		pips, d := util.TargetPipelinesModelToApi(ctx, &m.AllowedPipeline)
+		diags.Append(d...)
+		ops.AllowedPipelines = pips
 	}
 	if !m.Tags.IsNull() && !m.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &m.Tags)
@@ -284,6 +295,11 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Optional:            true,
 				Computed:            true,
 			},
+			"all_pipelines_allowed": schema.BoolAttribute{
+				MarkdownDescription: "Indicates if all pipelines are allowed to use this target",
+				Optional:            true,
+				Computed:            true,
+			},
 			"disabled": schema.BoolAttribute{
 				MarkdownDescription: "Defines whether or not the target can be run",
 				Optional:            true,
@@ -348,6 +364,21 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 				Validators: []validator.Set{
 					setvalidator.SizeAtMost(1),
+				},
+			},
+			"allowed_pipeline": schema.SetNestedBlock{
+				MarkdownDescription: "List of specific pipelines allowed to use this target",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's project name",
+							Required:            true,
+						},
+						"pipeline": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's identifier",
+							Required:            true,
+						},
+					},
 				},
 			},
 		},

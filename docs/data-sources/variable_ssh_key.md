@@ -40,6 +40,7 @@ data "buddy_variable" "by_key_in_project" {
 ### Optional
 
 - `action_id` (Number) The variable's action ID
+- `environment_id` (String) The variable's environment ID
 - `key` (String) The variable's name
 - `pipeline_id` (Number) The variable's pipeline ID
 - `project_name` (String) The variable's project name
