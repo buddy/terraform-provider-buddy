@@ -1,100 +1,100 @@
 package test
 
 import (
-  "fmt"
-  "github.com/hashicorp/terraform-plugin-testing/helper/resource"
-  "github.com/hashicorp/terraform-plugin-testing/terraform"
-  "strconv"
-  "terraform-provider-buddy/buddy/acc"
-  "terraform-provider-buddy/buddy/util"
-  "testing"
+	"fmt"
+	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
+	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"strconv"
+	"terraform-provider-buddy/buddy/acc"
+	"terraform-provider-buddy/buddy/util"
+	"testing"
 )
 
 func TestAccSourceVariablesSshKeys(t *testing.T) {
-  _, privateKey, err := util.GenerateRsaKeyPair()
-  if err != nil {
-    t.Fatal(err.Error())
-  }
-  _, privateKey2, err := util.GenerateRsaKeyPair()
-  if err != nil {
-    t.Fatal(err.Error())
-  }
-  resource.Test(t, resource.TestCase{
-    PreCheck: func() {
-      acc.PreCheck(t)
-    },
-    CheckDestroy:             acc.DummyCheckDestroy,
-    ProtoV6ProviderFactories: acc.ProviderFactories,
-    Steps: []resource.TestStep{
-      {
-        Config: testAccSourceVariablesSshKeysConfig(privateKey, privateKey2),
-        Check: resource.ComposeTestCheckFunc(
-          testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 3),
-          testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.key", 1),
-          testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.project", 1),
-          testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.env", 1),
-        ),
-      },
-    },
-  })
+	_, privateKey, err := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	_, privateKey2, err := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceVariablesSshKeysConfig(privateKey, privateKey2),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.all", 3),
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.key", 1),
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.project", 1),
+					testAccSourceVariablesSshKeysAttributes("data.buddy_variables_ssh_keys.env", 1),
+				),
+			},
+		},
+	})
 }
 
 func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestCheckFunc {
-  return func(s *terraform.State) error {
-    rs, ok := s.RootModule().Resources[n]
-    if !ok {
-      return fmt.Errorf("not found: %s", n)
-    }
-    attrs := rs.Primary.Attributes
-    attrsVariablesCount, _ := strconv.Atoi(attrs["variables.#"])
-    if err := util.CheckIntFieldEqualAndSet("variables.#", attrsVariablesCount, count); err != nil {
-      return err
-    }
-    for i := 0; i < count; i += 1 {
-      index := "variables." + strconv.Itoa(i)
-      attrsVariableId, _ := strconv.Atoi(attrs[index+".variable_id"])
-      attrsSettable, _ := strconv.ParseBool(attrs[index+".settable"])
-      attrsEncrypted, _ := strconv.ParseBool(attrs[index+".encrypted"])
-      if err := util.CheckIntFieldSet(index+".variable_id", attrsVariableId); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".key", attrs[index+".key"]); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".value", attrs[index+".value"]); err != nil {
-        return err
-      }
-      if err := util.CheckBoolFieldEqual(index+".settable", attrsSettable, false); err != nil {
-        return err
-      }
-      if err := util.CheckBoolFieldEqual(index+".encrypted", attrsEncrypted, true); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".file_place", attrs[index+".file_place"]); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".file_path", attrs[index+".file_path"]); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".file_chmod", attrs[index+".file_chmod"]); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".checksum", attrs[index+".checksum"]); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".key_fingerprint", attrs[index+".key_fingerprint"]); err != nil {
-        return err
-      }
-      if err := util.CheckFieldSet(index+".public_value", attrs[index+".public_value"]); err != nil {
-        return err
-      }
-    }
-    return nil
-  }
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		attrs := rs.Primary.Attributes
+		attrsVariablesCount, _ := strconv.Atoi(attrs["variables.#"])
+		if err := util.CheckIntFieldEqualAndSet("variables.#", attrsVariablesCount, count); err != nil {
+			return err
+		}
+		for i := 0; i < count; i += 1 {
+			index := "variables." + strconv.Itoa(i)
+			attrsVariableId, _ := strconv.Atoi(attrs[index+".variable_id"])
+			attrsSettable, _ := strconv.ParseBool(attrs[index+".settable"])
+			attrsEncrypted, _ := strconv.ParseBool(attrs[index+".encrypted"])
+			if err := util.CheckIntFieldSet(index+".variable_id", attrsVariableId); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".key", attrs[index+".key"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".value", attrs[index+".value"]); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual(index+".settable", attrsSettable, false); err != nil {
+				return err
+			}
+			if err := util.CheckBoolFieldEqual(index+".encrypted", attrsEncrypted, true); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".file_place", attrs[index+".file_place"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".file_path", attrs[index+".file_path"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".file_chmod", attrs[index+".file_chmod"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".checksum", attrs[index+".checksum"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".key_fingerprint", attrs[index+".key_fingerprint"]); err != nil {
+				return err
+			}
+			if err := util.CheckFieldSet(index+".public_value", attrs[index+".public_value"]); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
 }
 
 func testAccSourceVariablesSshKeysConfig(privateKey string, privateKey2 string) string {
-  return fmt.Sprintf(`
+	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
 }

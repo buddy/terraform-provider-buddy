@@ -1,3 +1,7 @@
+# Release v1.40.0 (2026-01-27)
+* Added target_access_level, environment_access_level to buddy_permission
+* Added all_pipelines_allowed, allowed_pipeline to buddy_target 
+
 # Release v1.39.0 (2026-01-13)
 * [Breaking] Environment API change (buddy_envrionment)
 
