@@ -223,6 +223,8 @@ resource "buddy_target" "restricted" {
 
 ### Optional
 
+- `all_pipelines_allowed` (Boolean) Indicates if all pipelines are allowed to use this target
+- `allowed_pipeline` (Block Set) List of specific pipelines allowed to use this target (see [below for nested schema](#nestedblock--allowed_pipeline))
 - `auth` (Block Set) The target's auth. Set for `FTP`, `GIT`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN` (see [below for nested schema](#nestedblock--auth))
 - `disabled` (Boolean) Defines whether or not the target can be run
 - `environment_id` (String) The environment's id
@@ -244,6 +246,15 @@ resource "buddy_target" "restricted" {
 - `html_url` (String) The target's URL
 - `id` (String) The Terraform resource identifier for this item
 - `target_id` (String) The targets's ID
+
+<a id="nestedblock--allowed_pipeline"></a>
+### Nested Schema for `allowed_pipeline`
+
+Required:
+
+- `pipeline` (String) The pipeline's identifier
+- `project` (String) The pipeline's project name
+
 
 <a id="nestedblock--auth"></a>
 ### Nested Schema for `auth`

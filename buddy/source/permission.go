@@ -37,6 +37,8 @@ type permissionSourceModel struct {
 	RepositoryAccessLevel  types.String `tfsdk:"repository_access_level"`
 	ProjectTeamAccessLevel types.String `tfsdk:"project_team_access_level"`
 	SandboxAccessLevel     types.String `tfsdk:"sandbox_access_level"`
+	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
+	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
 	HtmlUrl                types.String `tfsdk:"html_url"`
 	Description            types.String `tfsdk:"description"`
 	Type                   types.String `tfsdk:"type"`
@@ -51,6 +53,8 @@ func (s *permissionSourceModel) loadAPI(domain string, permission *buddy.Permiss
 	s.RepositoryAccessLevel = types.StringValue(permission.RepositoryAccessLevel)
 	s.ProjectTeamAccessLevel = types.StringValue(permission.ProjectTeamAccessLevel)
 	s.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
+	s.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
+	s.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
 	s.HtmlUrl = types.StringValue(permission.HtmlUrl)
 	s.Description = types.StringValue(permission.Description)
 	s.Type = types.StringValue(permission.Type)
@@ -117,6 +121,14 @@ func (s *permissionSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			},
 			"sandbox_access_level": schema.StringAttribute{
 				MarkdownDescription: "The permission's access level to sandboxes",
+				Computed:            true,
+			},
+			"environment_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to environments",
+				Computed:            true,
+			},
+			"target_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to targets",
 				Computed:            true,
 			},
 			"html_url": schema.StringAttribute{

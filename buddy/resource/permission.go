@@ -37,6 +37,8 @@ type permissionResourceModel struct {
 	RepositoryAccessLevel  types.String `tfsdk:"repository_access_level"`
 	SandboxAccessLevel     types.String `tfsdk:"sandbox_access_level"`
 	ProjectTeamAccessLevel types.String `tfsdk:"project_team_access_level"`
+	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
+	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
 	PermissionId           types.Int64  `tfsdk:"permission_id"`
 	Description            types.String `tfsdk:"description"`
 	HtmlUrl                types.String `tfsdk:"html_url"`
@@ -63,6 +65,8 @@ func (r *permissionResourceModel) loadAPI(domain string, permission *buddy.Permi
 	r.RepositoryAccessLevel = types.StringValue(permission.RepositoryAccessLevel)
 	r.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
 	r.ProjectTeamAccessLevel = types.StringValue(permission.ProjectTeamAccessLevel)
+	r.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
+	r.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
 	r.PermissionId = types.Int64Value(int64(permission.Id))
 	r.HtmlUrl = types.StringValue(permission.HtmlUrl)
 	r.Type = types.StringValue(permission.Type)
@@ -135,6 +139,27 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 					buddy.PermissionAccessLevelManage,
 				)},
 			},
+			"environment_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to environments. Allowed: `DENIED`, `MANAGE`, `USE_ONLY`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelManage,
+					buddy.PermissionAccessLevelUseOnly,
+				)},
+			},
+			"target_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to environments. Allowed: `DENIED`, 'READ_ONLY`, `MANAGE`, `USE_ONLY`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelManage,
+					buddy.PermissionAccessLevelUseOnly,
+					buddy.PermissionAccessLevelReadOnly,
+				)},
+			},
 			"permission_id": schema.Int64Attribute{
 				MarkdownDescription: "The permission's ID",
 				Computed:            true,
@@ -178,6 +203,12 @@ func (r *permissionResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 	if !data.ProjectTeamAccessLevel.IsNull() && !data.ProjectTeamAccessLevel.IsUnknown() {
 		ops.ProjectTeamAccessLevel = data.ProjectTeamAccessLevel.ValueStringPointer()
+	}
+	if !data.TargetAccessLevel.IsNull() && !data.TargetAccessLevel.IsUnknown() {
+		ops.TargetAccessLevel = data.TargetAccessLevel.ValueStringPointer()
+	}
+	if !data.EnvironmentAccessLevel.IsNull() && !data.EnvironmentAccessLevel.IsUnknown() {
+		ops.EnvironmentAccessLevel = data.EnvironmentAccessLevel.ValueStringPointer()
 	}
 	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Description = data.Description.ValueStringPointer()
@@ -241,6 +272,12 @@ func (r *permissionResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 	if !data.ProjectTeamAccessLevel.IsNull() && !data.ProjectTeamAccessLevel.IsUnknown() {
 		ops.ProjectTeamAccessLevel = data.ProjectTeamAccessLevel.ValueStringPointer()
+	}
+	if !data.TargetAccessLevel.IsNull() && !data.TargetAccessLevel.IsUnknown() {
+		ops.TargetAccessLevel = data.TargetAccessLevel.ValueStringPointer()
+	}
+	if !data.EnvironmentAccessLevel.IsNull() && !data.EnvironmentAccessLevel.IsUnknown() {
+		ops.EnvironmentAccessLevel = data.EnvironmentAccessLevel.ValueStringPointer()
 	}
 	if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Description = data.Description.ValueStringPointer()

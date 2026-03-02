@@ -20,6 +20,8 @@ type permissionModel struct {
 	ProjectTeamAccessLevel types.String `tfsdk:"project_team_access_level"`
 	RepositoryAccessLevel  types.String `tfsdk:"repository_access_level"`
 	SandboxAccessLevel     types.String `tfsdk:"sandbox_access_level"`
+	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
+	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
 }
 
 func permissionModelAttrs() map[string]attr.Type {
@@ -32,6 +34,8 @@ func permissionModelAttrs() map[string]attr.Type {
 		"project_team_access_level": types.StringType,
 		"repository_access_level":   types.StringType,
 		"sandbox_access_level":      types.StringType,
+		"target_access_level":       types.StringType,
+		"environment_access_level":  types.StringType,
 	}
 }
 
@@ -44,6 +48,8 @@ func (r *permissionModel) loadAPI(permission *buddy.Permission) {
 	r.ProjectTeamAccessLevel = types.StringValue(permission.ProjectTeamAccessLevel)
 	r.RepositoryAccessLevel = types.StringValue(permission.RepositoryAccessLevel)
 	r.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
+	r.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
+	r.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
 }
 
 func SourcePermissionModelAttributes() map[string]sourceschema.Attribute {
@@ -70,6 +76,12 @@ func SourcePermissionModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"sandbox_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"target_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"environment_access_level": sourceschema.StringAttribute{
 			Computed: true,
 		},
 	}
@@ -99,6 +111,12 @@ func PermissionModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"sandbox_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"target_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"environment_access_level": schema.StringAttribute{
 			Computed: true,
 		},
 	}

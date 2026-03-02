@@ -42,7 +42,9 @@ resource "buddy_permission" "testers" {
 ### Optional
 
 - `description` (String) The permission's description
+- `environment_access_level` (String) The permission's access level to environments. Allowed: `DENIED`, `MANAGE`, `USE_ONLY`
 - `project_team_access_level` (String) The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`
+- `target_access_level` (String) The permission's access level to environments. Allowed: `DENIED`, 'READ_ONLY`, `MANAGE`, `USE_ONLY`
 
 ### Read-Only
 
