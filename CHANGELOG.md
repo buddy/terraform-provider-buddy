@@ -1,3 +1,6 @@
+# Release v1.41.0 (2026-03-10)
+* [Breaking] Sandbox API change (buddy_sandbox)
+
 # Release v1.40.0 (2026-01-27)
 * Added target_access_level, environment_access_level to buddy_permission
 * Added all_pipelines_allowed, allowed_pipeline to buddy_target 

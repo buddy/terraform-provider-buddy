@@ -43,17 +43,17 @@ resource "buddy_sandbox" "sb" {
 
 ### Optional
 
+- `app_commands` (Set of String) The sandbox's app commands
 - `app_dir` (String) The sandbox's app dir
-- `app_type` (String) The sandbox's app type
 - `endpoints` (Attributes Map) The sandbox's map of endpoints (see [below for nested schema](#nestedatt--endpoints))
 - `identifier` (String) The sandbox's identifier
 - `install_commands` (String) The sandbox's install commands
 - `os` (String) The sandbox's operating system
 - `resources` (String) The sandbox's resources (cpu, ram)
-- `run_command` (String) The sandbox's command for app to start
 - `tags` (Set of String) The sandbox's list of tags
-- `wait_for_app` (Boolean) Wait until sandbox running app commands
-- `wait_for_app_timeout` (Number) Seconds to wait until sandbox ran app commands
+- `timeout` (Number) The sandbox's start timeout
+- `wait_for_apps` (Boolean) Wait until sandbox running apps commands
+- `wait_for_apps_timeout` (Number) Seconds to wait until sandbox ran apps commands
 - `wait_for_configured` (Boolean) Wait until sandbox ran setup commands
 - `wait_for_configured_timeout` (Number) Seconds to wait until sandbox ran setup commands
 - `wait_for_running` (Boolean) Wait until sandbox is running
@@ -61,7 +61,8 @@ resource "buddy_sandbox" "sb" {
 
 ### Read-Only
 
-- `app_status` (String) The sandbox's app status
+- `apps` (Attributes Set) The sandbox's apps (see [below for nested schema](#nestedatt--apps))
+- `boot_logs` (String) The sandbox's boot logs
 - `html_url` (String) The sandbox's URL
 - `id` (String) The Terraform resource identifier for this item
 - `sandbox_id` (String) The sandbox's ID
@@ -113,6 +114,17 @@ Optional:
 - `certificate` (String)
 - `private_key` (String)
 - `terminate_at` (String)
+
+
+
+<a id="nestedatt--apps"></a>
+### Nested Schema for `apps`
+
+Read-Only:
+
+- `command` (String)
+- `id` (String)
+- `status` (String)
 
 ## Import
 

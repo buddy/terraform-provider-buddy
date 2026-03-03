@@ -15,6 +15,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
+	"strings"
 	"terraform-provider-buddy/buddy/util"
 )
 
@@ -34,21 +35,22 @@ type sandboxResourceModel struct {
 	Name                     types.String `tfsdk:"name"`
 	Status                   types.String `tfsdk:"status"`
 	SetupStatus              types.String `tfsdk:"setup_status"`
-	AppStatus                types.String `tfsdk:"app_status"`
+	BootLogs                 types.String `tfsdk:"boot_logs"`
 	InstallCommands          types.String `tfsdk:"install_commands"`
-	RunCommand               types.String `tfsdk:"run_command"`
 	AppDir                   types.String `tfsdk:"app_dir"`
-	AppType                  types.String `tfsdk:"app_type"`
 	Os                       types.String `tfsdk:"os"`
 	Resources                types.String `tfsdk:"resources"`
+	Timeout                  types.Int32  `tfsdk:"timeout"`
 	Tags                     types.Set    `tfsdk:"tags"`
+	AppCommands              types.Set    `tfsdk:"app_commands"`
+	Apps                     types.Set    `tfsdk:"apps"`
 	Endpoints                types.Map    `tfsdk:"endpoints"`
 	WaitForRunning           types.Bool   `tfsdk:"wait_for_running"`
 	WaitForRunningTimeout    types.Int32  `tfsdk:"wait_for_running_timeout"`
 	WaitForConfigured        types.Bool   `tfsdk:"wait_for_configured"`
 	WaitForConfiguredTimeout types.Int32  `tfsdk:"wait_for_configured_timeout"`
-	WaitForApp               types.Bool   `tfsdk:"wait_for_app"`
-	WaitForAppTimeout        types.Int32  `tfsdk:"wait_for_app_timeout"`
+	WaitForApps              types.Bool   `tfsdk:"wait_for_apps"`
+	WaitForAppsTimeout       types.Int32  `tfsdk:"wait_for_apps_timeout"`
 }
 
 func (r *sandboxResourceModel) decomposeId() (string, string, error) {
@@ -59,7 +61,7 @@ func (r *sandboxResourceModel) decomposeId() (string, string, error) {
 	return domain, sandboxId, nil
 }
 
-func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandbox *buddy.Sandbox, waitForRunning bool, waitForRunningTimeout int32, waitForConfigured bool, waitForConfiguredTimeout int32, waitForApp bool, waitForAppTimeout int32) diag.Diagnostics {
+func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandbox *buddy.Sandbox, waitForRunning bool, waitForRunningTimeout int32, waitForConfigured bool, waitForConfiguredTimeout int32, waitForApps bool, waitForAppsTimeout int32) diag.Diagnostics {
 	var diags diag.Diagnostics
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, sandbox.Id))
 	r.Domain = types.StringValue(domain)
@@ -70,11 +72,9 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	r.Name = types.StringValue(sandbox.Name)
 	r.Status = types.StringValue(sandbox.Status)
 	r.SetupStatus = types.StringValue(sandbox.SetupStatus)
-	r.AppStatus = types.StringValue(sandbox.AppStatus)
-	r.InstallCommands = types.StringValue(sandbox.InstallCommands)
-	r.RunCommand = types.StringValue(sandbox.RunCommand)
+	r.BootLogs = types.StringValue(strings.Join(sandbox.BootLogs, "\n"))
+	r.InstallCommands = types.StringValue(sandbox.FirstBootCommands)
 	r.AppDir = types.StringValue(sandbox.AppDir)
-	r.AppType = types.StringValue(sandbox.AppType)
 	r.Os = types.StringValue(sandbox.Os)
 	r.Resources = types.StringValue(sandbox.Resources)
 	tags, d := types.SetValueFrom(ctx, types.StringType, &sandbox.Tags)
@@ -83,12 +83,16 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	endpoints, d := util.SandboxEndpointsFromApi(ctx, &sandbox.Endpoints)
 	diags.Append(d...)
 	r.Endpoints = endpoints
+	apps, d := util.SandboxAppsFromApi(ctx, &sandbox.Apps)
+	diags.Append(d...)
+	r.Apps = apps
+	r.Timeout = types.Int32Value(int32(sandbox.Timeout))
 	r.WaitForRunning = types.BoolValue(waitForRunning)
 	r.WaitForRunningTimeout = types.Int32Value(waitForRunningTimeout)
 	r.WaitForConfigured = types.BoolValue(waitForConfigured)
 	r.WaitForConfiguredTimeout = types.Int32Value(waitForConfiguredTimeout)
-	r.WaitForApp = types.BoolValue(waitForApp)
-	r.WaitForAppTimeout = types.Int32Value(waitForAppTimeout)
+	r.WaitForApps = types.BoolValue(waitForApps)
+	r.WaitForAppsTimeout = types.Int32Value(waitForAppsTimeout)
 	return diags
 }
 
@@ -156,17 +160,8 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				MarkdownDescription: "The sandbox's setup status",
 				Computed:            true,
 			},
-			"app_status": schema.StringAttribute{
-				MarkdownDescription: "The sandbox's app status",
-				Computed:            true,
-			},
 			"install_commands": schema.StringAttribute{
 				MarkdownDescription: "The sandbox's install commands",
-				Optional:            true,
-				Computed:            true,
-			},
-			"run_command": schema.StringAttribute{
-				MarkdownDescription: "The sandbox's command for app to start",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -175,15 +170,35 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Optional:            true,
 				Computed:            true,
 			},
-			"app_type": schema.StringAttribute{
-				MarkdownDescription: "The sandbox's app type",
+			"app_commands": schema.SetAttribute{
+				MarkdownDescription: "The sandbox's app commands",
+				Optional:            true,
+				ElementType:         types.StringType,
+			},
+			"timeout": schema.Int32Attribute{
+				MarkdownDescription: "The sandbox's start timeout",
 				Optional:            true,
 				Computed:            true,
-				Validators: []validator.String{
-					stringvalidator.OneOf(
-						buddy.SandboxAppTypeCmd,
-						buddy.SandboxAppTypeService,
-					),
+			},
+			"boot_logs": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's boot logs",
+				Computed:            true,
+			},
+			"apps": schema.SetNestedAttribute{
+				MarkdownDescription: "The sandbox's apps",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: map[string]schema.Attribute{
+						"id": schema.StringAttribute{
+							Computed: true,
+						},
+						"command": schema.StringAttribute{
+							Computed: true,
+						},
+						"status": schema.StringAttribute{
+							Computed: true,
+						},
+					},
 				},
 			},
 			"os": schema.StringAttribute{
@@ -260,14 +275,14 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Default:             int32default.StaticInt32(120),
 				Computed:            true,
 			},
-			"wait_for_app": schema.BoolAttribute{
-				MarkdownDescription: "Wait until sandbox running app commands",
+			"wait_for_apps": schema.BoolAttribute{
+				MarkdownDescription: "Wait until sandbox running apps commands",
 				Optional:            true,
 				Default:             booldefault.StaticBool(false),
 				Computed:            true,
 			},
-			"wait_for_app_timeout": schema.Int32Attribute{
-				MarkdownDescription: "Seconds to wait until sandbox ran app commands",
+			"wait_for_apps_timeout": schema.Int32Attribute{
+				MarkdownDescription: "Seconds to wait until sandbox ran apps commands",
 				Optional:            true,
 				Default:             int32default.StaticInt32(120),
 				Computed:            true,
@@ -295,8 +310,8 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 	waitForRunningTimeout := data.WaitForRunningTimeout.ValueInt32()
 	waitForConfigured := data.WaitForConfigured.ValueBool()
 	waitForConfiguredTimeout := data.WaitForConfiguredTimeout.ValueInt32()
-	waitForApp := data.WaitForApp.ValueBool()
-	waitForAppTimeout := data.WaitForAppTimeout.ValueInt32()
+	waitForApps := data.WaitForApps.ValueBool()
+	waitForAppsTimeout := data.WaitForAppsTimeout.ValueInt32()
 	ops := buddy.SandboxOps{
 		Name: data.Name.ValueStringPointer(),
 		Os:   data.Os.ValueStringPointer(),
@@ -305,16 +320,22 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 		ops.Identifier = data.Identifier.ValueStringPointer()
 	}
 	if !data.InstallCommands.IsUnknown() && !data.InstallCommands.IsNull() {
-		ops.InstallCommands = data.InstallCommands.ValueStringPointer()
-	}
-	if !data.RunCommand.IsUnknown() && !data.RunCommand.IsNull() {
-		ops.RunCommand = data.RunCommand.ValueStringPointer()
+		ops.FirstBootCommands = data.InstallCommands.ValueStringPointer()
 	}
 	if !data.AppDir.IsUnknown() && !data.AppDir.IsNull() {
 		ops.AppDir = data.AppDir.ValueStringPointer()
 	}
-	if !data.AppType.IsUnknown() && !data.AppType.IsNull() {
-		ops.AppType = data.AppType.ValueStringPointer()
+	if !data.AppCommands.IsUnknown() && !data.AppCommands.IsNull() {
+		commands, d := util.StringSetToApi(ctx, &data.AppCommands)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Apps = commands
+	}
+	if !data.Timeout.IsUnknown() && !data.Timeout.IsNull() {
+		timeout := int(data.Timeout.ValueInt32())
+		ops.Timeout = &timeout
 	}
 	if !data.Resources.IsUnknown() && !data.Resources.IsNull() {
 		ops.Resources = data.Resources.ValueStringPointer()
@@ -356,38 +377,29 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 		sandbox = sb
 	}
-	if waitForApp {
-		sb, d := r.waitForApp(domain, sandbox.Id, waitForAppTimeout)
+	if waitForApps {
+		sb, d := r.waitForApps(domain, sandbox.Id, waitForAppsTimeout)
 		resp.Diagnostics.Append(d...)
 		if sb == nil || resp.Diagnostics.HasError() {
 			return
 		}
 		sandbox = sb
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox, waitForRunning, waitForRunningTimeout, waitForConfigured, waitForConfiguredTimeout, waitForApp, waitForAppTimeout)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox, waitForRunning, waitForRunningTimeout, waitForConfigured, waitForConfiguredTimeout, waitForApps, waitForAppsTimeout)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
-func (r *sandboxResource) waitForApp(domain string, sandboxId string, timeout int32) (*buddy.Sandbox, diag.Diagnostics) {
+func (r *sandboxResource) waitForApps(domain string, sandboxId string, timeout int32) (*buddy.Sandbox, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	sandbox, err := r.client.SandboxService.WaitForAppStatuses(domain, sandboxId, int(timeout), []string{
 		buddy.SandboxAppStatusRunning,
 		buddy.SandboxAppStatusEnded,
-		buddy.SandboxAppStatusFailed,
 	})
 	if err != nil || sandbox == nil {
 		diags.Append(util.NewDiagnosticSandboxTimeout("timeout waiting for app to start"))
-		return nil, diags
-	}
-	if sandbox.AppStatus == buddy.SandboxAppStatusEnded {
-		diags.Append(util.NewDiagnosticSandboxTimeout("app unexpectedly ended"))
-		return nil, diags
-	}
-	if sandbox.AppStatus == buddy.SandboxAppStatusFailed {
-		diags.Append(util.NewDiagnosticSandboxTimeout("app failed to start"))
 		return nil, diags
 	}
 	return sandbox, diags
@@ -467,9 +479,9 @@ func (r *sandboxResource) Read(ctx context.Context, req resource.ReadRequest, re
 	waitForRunningTimeout := data.WaitForRunningTimeout.ValueInt32()
 	waitForConfigured := data.WaitForConfigured.ValueBool()
 	waitForConfiguredTimeout := data.WaitForConfiguredTimeout.ValueInt32()
-	waitForApp := data.WaitForApp.ValueBool()
-	waitForAppTimeout := data.WaitForAppTimeout.ValueInt32()
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox, waitForRunning, waitForRunningTimeout, waitForConfigured, waitForConfiguredTimeout, waitForApp, waitForAppTimeout)...)
+	waitForApps := data.WaitForApps.ValueBool()
+	waitForAppsTimeout := data.WaitForAppsTimeout.ValueInt32()
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox, waitForRunning, waitForRunningTimeout, waitForConfigured, waitForConfiguredTimeout, waitForApps, waitForAppsTimeout)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -487,8 +499,8 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 	waitForRunningTimeout := data.WaitForRunningTimeout.ValueInt32()
 	waitForConfigured := data.WaitForConfigured.ValueBool()
 	waitForConfiguredTimeout := data.WaitForConfiguredTimeout.ValueInt32()
-	waitForApp := data.WaitForApp.ValueBool()
-	waitForAppTimeout := data.WaitForAppTimeout.ValueInt32()
+	waitForApps := data.WaitForApps.ValueBool()
+	waitForAppsTimeout := data.WaitForAppsTimeout.ValueInt32()
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("sandbox", err))
 		return
@@ -503,16 +515,22 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 		ops.Identifier = data.Identifier.ValueStringPointer()
 	}
 	if !data.InstallCommands.IsUnknown() && !data.InstallCommands.IsNull() {
-		ops.InstallCommands = data.InstallCommands.ValueStringPointer()
-	}
-	if !data.RunCommand.IsUnknown() && !data.RunCommand.IsNull() {
-		ops.RunCommand = data.RunCommand.ValueStringPointer()
+		ops.FirstBootCommands = data.InstallCommands.ValueStringPointer()
 	}
 	if !data.AppDir.IsUnknown() && !data.AppDir.IsNull() {
 		ops.AppDir = data.AppDir.ValueStringPointer()
 	}
-	if !data.AppType.IsUnknown() && !data.AppType.IsNull() {
-		ops.AppType = data.AppType.ValueStringPointer()
+	if !data.Timeout.IsUnknown() && !data.Timeout.IsNull() {
+		timeout := int(data.Timeout.ValueInt32())
+		ops.Timeout = &timeout
+	}
+	if !data.AppCommands.IsUnknown() && !data.AppCommands.IsNull() {
+		commands, d := util.StringSetToApi(ctx, &data.AppCommands)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Apps = commands
 	}
 	if !data.Os.IsUnknown() && !data.Os.IsNull() {
 		ops.Os = data.Os.ValueStringPointer()
@@ -567,15 +585,15 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 		}
 		sandbox = sb
 	}
-	if waitForApp {
-		sb, d := r.waitForApp(domain, sandbox.Id, waitForAppTimeout)
+	if waitForApps {
+		sb, d := r.waitForApps(domain, sandbox.Id, waitForAppsTimeout)
 		resp.Diagnostics.Append(d...)
 		if sb == nil || resp.Diagnostics.HasError() {
 			return
 		}
 		sandbox = sb
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox, waitForRunning, waitForRunningTimeout, waitForConfigured, waitForConfiguredTimeout, waitForApp, waitForAppTimeout)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox, waitForRunning, waitForRunningTimeout, waitForConfigured, waitForConfiguredTimeout, waitForApps, waitForAppsTimeout)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}

@@ -15,6 +15,7 @@ func TestAccSandbox_wait(t *testing.T) {
 	var project buddy.Project
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
+	timeout := 500
 	name := util.RandString(10)
 	installCommands := "sleep 10"
 	runCommand := "while :; do foo; sleep 2; done"
@@ -26,7 +27,7 @@ func TestAccSandbox_wait(t *testing.T) {
 		CheckDestroy:             testAccSandboxCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSandboxConfigWait(domain, projectName, name, installCommands, runCommand),
+				Config: testAccSandboxConfigWait(domain, projectName, name, installCommands, runCommand, timeout),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -35,6 +36,7 @@ func TestAccSandbox_wait(t *testing.T) {
 						InstallCommands:   installCommands,
 						RunCommand:        runCommand,
 						Project:           &project,
+						Timeout:           timeout,
 						WaitForApp:        true,
 						WaitForConfigured: true,
 						WaitForRunning:    true,
@@ -57,7 +59,6 @@ func TestAccSandbox_main(t *testing.T) {
 	installCommands := "pwd"
 	runCommand := "while :; do foo; sleep 2; done"
 	appDir := "/"
-	appType := buddy.SandboxAppTypeCmd
 	os := buddy.SandboxOsUbuntu2204
 	newOs := buddy.SandboxOsUbuntu2404
 	resources := buddy.SandboxResource2X4
@@ -82,7 +83,7 @@ func TestAccSandbox_main(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create
-				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, appType, os, resources, tag, tcpName, tcpEndpoint),
+				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -92,7 +93,6 @@ func TestAccSandbox_main(t *testing.T) {
 						InstallCommands: installCommands,
 						RunCommand:      runCommand,
 						AppDir:          appDir,
-						AppType:         appType,
 						Os:              os,
 						Resources:       resources,
 						Tag:             tag,
@@ -104,7 +104,7 @@ func TestAccSandbox_main(t *testing.T) {
 			},
 			{
 				// update
-				Config: testAccSandboxConfig(domain, projectName, newIdentifier, newName, installCommands, runCommand, appDir, appType, os, resources, newTag, tcpName, newTcpEndppoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader),
+				Config: testAccSandboxConfig(domain, projectName, newIdentifier, newName, installCommands, runCommand, appDir, os, resources, newTag, tcpName, newTcpEndppoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -114,7 +114,6 @@ func TestAccSandbox_main(t *testing.T) {
 						InstallCommands: installCommands,
 						RunCommand:      runCommand,
 						AppDir:          appDir,
-						AppType:         appType,
 						Os:              os,
 						Resources:       resources,
 						Tag:             newTag,
@@ -132,7 +131,7 @@ func TestAccSandbox_main(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, appType, newOs, resources, tag, tcpName, tcpEndpoint),
+				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, newOs, resources, tag, tcpName, tcpEndpoint),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -142,7 +141,6 @@ func TestAccSandbox_main(t *testing.T) {
 						InstallCommands: installCommands,
 						RunCommand:      runCommand,
 						AppDir:          appDir,
-						AppType:         appType,
 						Os:              newOs,
 						Resources:       resources,
 						Tag:             tag,
@@ -158,7 +156,8 @@ func TestAccSandbox_main(t *testing.T) {
 				ImportState:       true,
 				ImportStateVerify: true,
 				ImportStateVerifyIgnore: []string{
-					"wait_for_app_timeout",
+					"app_commands",
+					"wait_for_apps_timeout",
 					"wait_for_configured_timeout",
 					"wait_for_running_timeout",
 				},
@@ -173,9 +172,9 @@ type testAccSandboxExpectedAttributes struct {
 	InstallCommands   string
 	RunCommand        string
 	AppDir            string
-	AppType           string
 	Os                string
 	Resources         string
+	Timeout           int
 	Tag               string
 	TcpName           string
 	TcpEndpoint       string
@@ -221,7 +220,7 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			}
 		}
 		if want.InstallCommands != "" {
-			if err := util.CheckFieldEqualAndSet("InstallCommands", sandbox.InstallCommands, want.InstallCommands); err != nil {
+			if err := util.CheckFieldEqualAndSet("InstallCommands", sandbox.FirstBootCommands, want.InstallCommands); err != nil {
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("installCommands", attrs["install_commands"], want.InstallCommands); err != nil {
@@ -229,10 +228,10 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			}
 		}
 		if want.RunCommand != "" {
-			if err := util.CheckFieldEqualAndSet("RunCommand", sandbox.RunCommand, want.RunCommand); err != nil {
+			if err := util.CheckFieldEqualAndSet("RunCommand", sandbox.Apps[0].Command, want.RunCommand); err != nil {
 				return err
 			}
-			if err := util.CheckFieldEqualAndSet("runCommand", attrs["run_command"], want.RunCommand); err != nil {
+			if err := util.CheckFieldEqualAndSet("runCommand", attrs["apps.0.command"], want.RunCommand); err != nil {
 				return err
 			}
 		}
@@ -241,14 +240,6 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("appDir", attrs["app_dir"], want.AppDir); err != nil {
-				return err
-			}
-		}
-		if want.AppType != "" {
-			if err := util.CheckFieldEqualAndSet("AppType", sandbox.AppType, want.AppType); err != nil {
-				return err
-			}
-			if err := util.CheckFieldEqualAndSet("appType", attrs["app_type"], want.AppType); err != nil {
 				return err
 			}
 		}
@@ -415,10 +406,10 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			}
 		}
 		if want.WaitForApp {
-			if err := util.CheckFieldEqualAndSet("AppStatus", sandbox.AppStatus, buddy.SandboxAppStatusRunning); err != nil {
+			if err := util.CheckFieldEqualAndSet("AppStatus", sandbox.Apps[0].AppStatus, buddy.SandboxAppStatusRunning); err != nil {
 				return err
 			}
-			if err := util.CheckFieldEqualAndSet("app_status", attrs["app_status"], buddy.SandboxAppStatusRunning); err != nil {
+			if err := util.CheckFieldEqualAndSet("app_status", attrs["apps.0.status"], buddy.SandboxAppStatusRunning); err != nil {
 				return err
 			}
 		}
@@ -426,22 +417,22 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 	}
 }
 
-func findEndpointByType(endpoints *[]buddy.SandboxEndpoint, typ string) *buddy.SandboxEndpoint {
+func findEndpointByType(endpoints *[]*buddy.SandboxEndpoint, typ string) *buddy.SandboxEndpoint {
 	if endpoints != nil {
 		for _, v := range *endpoints {
 			if v.Type != nil && *v.Type == typ {
-				return &v
+				return v
 			}
 		}
 	}
 	return nil
 }
 
-func findEndpointByName(endpoints *[]buddy.SandboxEndpoint, name string) *buddy.SandboxEndpoint {
+func findEndpointByName(endpoints *[]*buddy.SandboxEndpoint, name string) *buddy.SandboxEndpoint {
 	if endpoints != nil {
 		for _, v := range *endpoints {
 			if v.Name != nil && *v.Name == name {
-				return &v
+				return v
 			}
 		}
 	}
@@ -467,7 +458,7 @@ func testAccSandboxGet(n string, sandbox *buddy.Sandbox) resource.TestCheckFunc 
 	}
 }
 
-func testAccSandboxConfigWait(domain string, projectName string, name string, installCommands string, runCommand string) string {
+func testAccSandboxConfigWait(domain string, projectName string, name string, installCommands string, runCommand string, timeout int) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -483,15 +474,16 @@ resource "buddy_sandbox" "bar" {
     project_name = "${buddy_project.proj.name}"
     name = "%s"
     install_commands = "%s"
-    run_command = "%s"
+    app_commands = ["%s"]
+    timeout = "%d"
     wait_for_running = true
     wait_for_configured = true
-    wait_for_app = true
+    wait_for_apps = true
 }
-`, domain, projectName, name, installCommands, runCommand)
+`, domain, projectName, name, installCommands, runCommand, timeout)
 }
 
-func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, appType string, os string, resources string, tag string, tcpName string, tcpEndpoint string) string {
+func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -508,9 +500,8 @@ resource "buddy_sandbox" "bar" {
     identifier = "%s"
     name = "%s"
     install_commands = "%s"
-    run_command = "%s"
+    app_commands = ["%s"]
     app_dir = "%s"
-    app_type = "%s"
     os = "%s"
     resources = "%s" 
     tags = ["%s"]
@@ -521,10 +512,10 @@ resource "buddy_sandbox" "bar" {
       }
     }
 }
-`, domain, projectName, identifier, name, installCommands, runCommand, appDir, appType, os, resources, tag, tcpName, tcpEndpoint)
+`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint)
 }
 
-func testAccSandboxConfig(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, appType string, os string, resources string, tag string, tcpName string, tcpEndpoint string, tlsName string, tlsEndpoint string, tlsTerminateAt string, httpName string, httpEndpoint string, httpCompresion bool, httpXHeader string) string {
+func testAccSandboxConfig(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, tlsName string, tlsEndpoint string, tlsTerminateAt string, httpName string, httpEndpoint string, httpCompresion bool, httpXHeader string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -541,9 +532,8 @@ resource "buddy_sandbox" "bar" {
     identifier = "%s"
     name = "%s"
     install_commands = "%s"
-    run_command = "%s"
+    app_commands = ["%s"]
     app_dir = "%s"
-    app_type = "%s"
     os = "%s"
     resources = "%s" 
     tags = ["%s"]
@@ -574,7 +564,7 @@ resource "buddy_sandbox" "bar" {
       }
     }
 }
-`, domain, projectName, identifier, name, installCommands, runCommand, appDir, appType, os, resources, tag, tcpName, tcpEndpoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader, httpXHeader)
+`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader, httpXHeader)
 }
 
 func testAccSandboxCheckDestroy(s *terraform.State) error {
