@@ -454,10 +454,10 @@ func ResourceSandboxEndpointModelAttributes() map[string]schema.Attribute {
 	}
 }
 
-func SandboxEndpointsToApi(ctx context.Context, m *types.Map) (*[]buddy.SandboxEndpoint, diag.Diagnostics) {
+func SandboxEndpointsToApi(ctx context.Context, m *types.Map) (*[]*buddy.SandboxEndpoint, diag.Diagnostics) {
 	var e map[string]sandboxEndpointModel
 	diags := m.ElementsAs(ctx, &e, false)
-	endpoints := make([]buddy.SandboxEndpoint, len(e))
+	endpoints := make([]*buddy.SandboxEndpoint, len(e))
 	i := 0
 	for n, v := range e {
 		endpoint := buddy.SandboxEndpoint{}
@@ -500,20 +500,20 @@ func SandboxEndpointsToApi(ctx context.Context, m *types.Map) (*[]buddy.SandboxE
 			endpointTls := etm.toAPI()
 			endpoint.Tls = endpointTls
 		}
-		endpoints[i] = endpoint
+		endpoints[i] = &endpoint
 		i += 1
 	}
 	return &endpoints, diags
 }
 
-func SandboxEndpointsFromApi(ctx context.Context, endpoints *[]buddy.SandboxEndpoint) (basetypes.MapValue, diag.Diagnostics) {
+func SandboxEndpointsFromApi(ctx context.Context, endpoints *[]*buddy.SandboxEndpoint) (basetypes.MapValue, diag.Diagnostics) {
 	var diags diag.Diagnostics
 	m := map[string]sandboxEndpointModel{}
 	if endpoints != nil {
 		for _, v := range *endpoints {
 			if v.Name != nil {
 				e := sandboxEndpointModel{}
-				d := e.loadAPI(ctx, &v)
+				d := e.loadAPI(ctx, v)
 				diags.Append(d...)
 				m[*v.Name] = e
 			}
