@@ -72,7 +72,6 @@ func TestAccSandbox_main(t *testing.T) {
 	tlsTerminateAt := buddy.SandboxEndpointTlsTerminateAtRegion
 	httpName := util.UniqueString()
 	httpEndpoint := "444"
-	httpCompresion := true
 	httpXHeader := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -83,70 +82,73 @@ func TestAccSandbox_main(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create
-				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint),
+				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, buddy.SandboxPermissionDenied),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
-						Identifier:      identifier,
-						Name:            name,
-						InstallCommands: installCommands,
-						RunCommand:      runCommand,
-						AppDir:          appDir,
-						Os:              os,
-						Resources:       resources,
-						Tag:             tag,
-						TcpName:         tcpName,
-						TcpEndpoint:     tcpEndpoint,
-						Project:         &project,
+						Identifier:        identifier,
+						Name:              name,
+						InstallCommands:   installCommands,
+						RunCommand:        runCommand,
+						AppDir:            appDir,
+						Os:                os,
+						Resources:         resources,
+						Tag:               tag,
+						TcpName:           tcpName,
+						TcpEndpoint:       tcpEndpoint,
+						OthersAccessLevel: buddy.SandboxPermissionDenied,
+						Project:           &project,
 					}),
 				),
 			},
 			{
 				// update
-				Config: testAccSandboxConfig(domain, projectName, newIdentifier, newName, installCommands, runCommand, appDir, os, resources, newTag, tcpName, newTcpEndppoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader),
+				Config: testAccSandboxConfig(domain, projectName, newIdentifier, newName, installCommands, runCommand, appDir, os, resources, newTag, tcpName, newTcpEndppoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, true, httpXHeader, buddy.SandboxPermissionDefault),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
-						Identifier:      newIdentifier,
-						Name:            newName,
-						InstallCommands: installCommands,
-						RunCommand:      runCommand,
-						AppDir:          appDir,
-						Os:              os,
-						Resources:       resources,
-						Tag:             newTag,
-						TcpName:         tcpName,
-						TcpEndpoint:     newTcpEndppoint,
-						TlsName:         tlsName,
-						TlsEndpoint:     tlsEndpoint,
-						TlsTerminateAt:  tlsTerminateAt,
-						HttpName:        httpName,
-						HttpEndpoint:    httpEndpoint,
-						HttpCompresion:  httpCompresion,
-						HttpXHeader:     httpXHeader,
-						Project:         &project,
+						Identifier:        newIdentifier,
+						Name:              newName,
+						InstallCommands:   installCommands,
+						RunCommand:        runCommand,
+						AppDir:            appDir,
+						Os:                os,
+						Resources:         resources,
+						Tag:               newTag,
+						TcpName:           tcpName,
+						TcpEndpoint:       newTcpEndppoint,
+						TlsName:           tlsName,
+						TlsEndpoint:       tlsEndpoint,
+						TlsTerminateAt:    tlsTerminateAt,
+						HttpName:          httpName,
+						HttpEndpoint:      httpEndpoint,
+						HttpCompresion:    true,
+						OthersAccessLevel: buddy.SandboxPermissionDefault,
+						HttpXHeader:       httpXHeader,
+						Project:           &project,
 					}),
 				),
 			},
 			{
-				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, newOs, resources, tag, tcpName, tcpEndpoint),
+				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, newOs, resources, tag, tcpName, tcpEndpoint, buddy.SandboxPermissionManage),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
-						Identifier:      identifier,
-						Name:            name,
-						InstallCommands: installCommands,
-						RunCommand:      runCommand,
-						AppDir:          appDir,
-						Os:              newOs,
-						Resources:       resources,
-						Tag:             tag,
-						TcpName:         tcpName,
-						TcpEndpoint:     tcpEndpoint,
-						Project:         &project,
+						Identifier:        identifier,
+						Name:              name,
+						InstallCommands:   installCommands,
+						RunCommand:        runCommand,
+						AppDir:            appDir,
+						Os:                newOs,
+						Resources:         resources,
+						Tag:               tag,
+						TcpName:           tcpName,
+						TcpEndpoint:       tcpEndpoint,
+						OthersAccessLevel: buddy.SandboxPermissionManage,
+						Project:           &project,
 					}),
 				),
 			},
@@ -160,6 +162,7 @@ func TestAccSandbox_main(t *testing.T) {
 					"wait_for_apps_timeout",
 					"wait_for_configured_timeout",
 					"wait_for_running_timeout",
+					"permissions",
 				},
 			},
 		},
@@ -188,6 +191,7 @@ type testAccSandboxExpectedAttributes struct {
 	WaitForRunning    bool
 	WaitForConfigured bool
 	WaitForApp        bool
+	OthersAccessLevel string
 	Project           *buddy.Project
 }
 
@@ -240,6 +244,11 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("appDir", attrs["app_dir"], want.AppDir); err != nil {
+				return err
+			}
+		}
+		if want.OthersAccessLevel != "" {
+			if err := util.CheckFieldEqualAndSet("Permissions.Others", sandbox.Permissions.Others, want.OthersAccessLevel); err != nil {
 				return err
 			}
 		}
@@ -461,110 +470,116 @@ func testAccSandboxGet(n string, sandbox *buddy.Sandbox) resource.TestCheckFunc 
 func testAccSandboxConfigWait(domain string, projectName string, name string, installCommands string, runCommand string, timeout int) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+		domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+		domain = "${buddy_workspace.foo.domain}"
+		display_name = "%s"
 }
 
 resource "buddy_sandbox" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    name = "%s"
-    install_commands = "%s"
-    app_commands = ["%s"]
-    timeout = "%d"
-    wait_for_running = true
-    wait_for_configured = true
-    wait_for_apps = true
+		domain = "${buddy_workspace.foo.domain}"
+		project_name = "${buddy_project.proj.name}"
+		name = "%s"
+		install_commands = "%s"
+		app_commands = ["%s"]
+		timeout = "%d"
+		wait_for_running = true
+		wait_for_configured = true
+		wait_for_apps = true
 }
 `, domain, projectName, name, installCommands, runCommand, timeout)
 }
 
-func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string) string {
+func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, othersAccessLevel string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+		domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+		domain = "${buddy_workspace.foo.domain}"
+		display_name = "%s"
 }
 
 resource "buddy_sandbox" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    identifier = "%s"
-    name = "%s"
-    install_commands = "%s"
-    app_commands = ["%s"]
-    app_dir = "%s"
-    os = "%s"
-    resources = "%s" 
-    tags = ["%s"]
-    endpoints = {
-      "%s" = {
-        endpoint = "%s"
-        type = "TCP"
-      }
-    }
+		domain = "${buddy_workspace.foo.domain}"
+		project_name = "${buddy_project.proj.name}"
+		identifier = "%s"
+		name = "%s"
+		install_commands = "%s"
+		app_commands = ["%s"]
+		app_dir = "%s"
+		os = "%s"
+		resources = "%s" 
+		tags = ["%s"]
+		endpoints = {
+			"%s" = {
+				endpoint = "%s"
+				type = "TCP"
+			}
+		}
+		permissions {
+			others = "%s"
+		}
 }
-`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint)
+`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, othersAccessLevel)
 }
 
-func testAccSandboxConfig(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, tlsName string, tlsEndpoint string, tlsTerminateAt string, httpName string, httpEndpoint string, httpCompresion bool, httpXHeader string) string {
+func testAccSandboxConfig(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, tlsName string, tlsEndpoint string, tlsTerminateAt string, httpName string, httpEndpoint string, httpCompresion bool, httpXHeader string, othersAccessLevel string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
-    domain = "%s"
+		domain = "%s"
 }
 
 resource "buddy_project" "proj" {
-    domain = "${buddy_workspace.foo.domain}"
-    display_name = "%s"
+		domain = "${buddy_workspace.foo.domain}"
+		display_name = "%s"
 }
 
 resource "buddy_sandbox" "bar" {
-    domain = "${buddy_workspace.foo.domain}"
-    project_name = "${buddy_project.proj.name}"
-    identifier = "%s"
-    name = "%s"
-    install_commands = "%s"
-    app_commands = ["%s"]
-    app_dir = "%s"
-    os = "%s"
-    resources = "%s" 
-    tags = ["%s"]
-    endpoints = {
-      "%s" = {
-        endpoint = "%s"
-        type = "TCP"
-      },
-      "%s" = {
-        endpoint = "%s"
-        type = "TLS"
-        tls = {
-          terminate_at = "%s"
-        }
-      }, 
-      "%s" = {
-        endpoint = "%s"
-        type = "HTTP"
-        http = {
-          compression = "%t"
-          request_headers = {
-            X-Custom = "%s"
-          }
-          response_headers = {
-            X-Custom = "%s"
-          }
-        } 
-      }
-    }
+		domain = "${buddy_workspace.foo.domain}"
+		project_name = "${buddy_project.proj.name}"
+		identifier = "%s"
+		name = "%s"
+		install_commands = "%s"
+		app_commands = ["%s"]
+		app_dir = "%s"
+		os = "%s"
+		resources = "%s" 
+		tags = ["%s"]
+		endpoints = {
+			"%s" = {
+				endpoint = "%s"
+				type = "TCP"
+			},
+			"%s" = {
+				endpoint = "%s"
+				type = "TLS"
+				tls = {
+					terminate_at = "%s"
+				}
+			}, 
+			"%s" = {
+				endpoint = "%s"
+				type = "HTTP"
+				http = {
+					compression = "%t"
+					request_headers = {
+						X-Custom = "%s"
+					}
+					response_headers = {
+						X-Custom = "%s"
+					}
+				} 
+			}
+		}
+		permissions {
+			others = "%s"
+		}
 }
-`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader, httpXHeader)
+`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, tlsName, tlsEndpoint, tlsTerminateAt, httpName, httpEndpoint, httpCompresion, httpXHeader, httpXHeader, othersAccessLevel)
 }
 
 func testAccSandboxCheckDestroy(s *terraform.State) error {

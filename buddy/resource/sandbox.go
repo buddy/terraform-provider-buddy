@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
@@ -51,6 +52,7 @@ type sandboxResourceModel struct {
 	WaitForConfiguredTimeout types.Int32  `tfsdk:"wait_for_configured_timeout"`
 	WaitForApps              types.Bool   `tfsdk:"wait_for_apps"`
 	WaitForAppsTimeout       types.Int32  `tfsdk:"wait_for_apps_timeout"`
+	Permissions              types.Set    `tfsdk:"permissions"`
 }
 
 func (r *sandboxResourceModel) decomposeId() (string, string, error) {
@@ -288,6 +290,41 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:            true,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"permissions": schema.SetNestedBlock{
+				MarkdownDescription: "The sandbox's permissions",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"others": schema.StringAttribute{
+							Optional: true,
+							Validators: []validator.String{
+								stringvalidator.OneOf(
+									buddy.SandboxPermissionDenied,
+									buddy.SandboxPermissionReadOnly,
+									buddy.SandboxPermissionDefault,
+									buddy.SandboxPermissionManage,
+								),
+							},
+						},
+					},
+					Blocks: map[string]schema.Block{
+						"user": schema.SetNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Attributes: util.SandboxPermissionsAccessModelAttributes(),
+							},
+						},
+						"group": schema.SetNestedBlock{
+							NestedObject: schema.NestedBlockObject{
+								Attributes: util.SandboxPermissionsAccessModelAttributes(),
+							},
+						},
+					},
+				},
+				Validators: []validator.Set{
+					setvalidator.SizeAtMost(1),
+				},
+			},
+		},
 	}
 }
 
@@ -321,6 +358,14 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	if !data.InstallCommands.IsUnknown() && !data.InstallCommands.IsNull() {
 		ops.FirstBootCommands = data.InstallCommands.ValueStringPointer()
+	}
+	if !data.Permissions.IsUnknown() && !data.Permissions.IsNull() {
+		permissions, d := util.SandboxPermissionsModelToApi(ctx, &data.Permissions)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Permissions = permissions
 	}
 	if !data.AppDir.IsUnknown() && !data.AppDir.IsNull() {
 		ops.AppDir = data.AppDir.ValueStringPointer()
@@ -508,11 +553,16 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 	ops := buddy.SandboxOps{
 		Name: data.Name.ValueStringPointer(),
 	}
-	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
-		ops.Identifier = data.Identifier.ValueStringPointer()
-	}
 	if !data.Identifier.IsUnknown() && !data.Identifier.IsNull() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
+	}
+	if !data.Permissions.IsUnknown() && !data.Permissions.IsNull() {
+		permissions, d := util.SandboxPermissionsModelToApi(ctx, &data.Permissions)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Permissions = permissions
 	}
 	if !data.InstallCommands.IsUnknown() && !data.InstallCommands.IsNull() {
 		ops.FirstBootCommands = data.InstallCommands.ValueStringPointer()
