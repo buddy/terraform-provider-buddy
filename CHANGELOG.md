@@ -1,3 +1,6 @@
+# Release v1.42.0 (2026-03-12)
+* Adds permissions to buddy_sandbox
+
 # Release v1.41.0 (2026-03-10)
 * [Breaking] Sandbox API change (buddy_sandbox)
 

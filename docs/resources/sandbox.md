@@ -49,6 +49,7 @@ resource "buddy_sandbox" "sb" {
 - `identifier` (String) The sandbox's identifier
 - `install_commands` (String) The sandbox's install commands
 - `os` (String) The sandbox's operating system
+- `permissions` (Block Set) The sandbox's permissions (see [below for nested schema](#nestedblock--permissions))
 - `resources` (String) The sandbox's resources (cpu, ram)
 - `tags` (Set of String) The sandbox's list of tags
 - `timeout` (Number) The sandbox's start timeout
@@ -114,6 +115,34 @@ Optional:
 - `certificate` (String)
 - `private_key` (String)
 - `terminate_at` (String)
+
+
+
+<a id="nestedblock--permissions"></a>
+### Nested Schema for `permissions`
+
+Optional:
+
+- `group` (Block Set) (see [below for nested schema](#nestedblock--permissions--group))
+- `others` (String)
+- `user` (Block Set) (see [below for nested schema](#nestedblock--permissions--user))
+
+<a id="nestedblock--permissions--group"></a>
+### Nested Schema for `permissions.group`
+
+Required:
+
+- `access_level` (String)
+- `id` (Number)
+
+
+<a id="nestedblock--permissions--user"></a>
+### Nested Schema for `permissions.user`
+
+Required:
+
+- `access_level` (String)
+- `id` (Number)
 
 
 
