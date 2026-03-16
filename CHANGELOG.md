@@ -1,3 +1,6 @@
+# Release v1.42.1 (2026-03-16)
+* Bump api dependency
+
 # Release v1.42.0 (2026-03-12)
 * Adds permissions to buddy_sandbox
 
