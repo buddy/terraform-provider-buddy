@@ -103,8 +103,10 @@ func (r *domainResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	workspaceDomain := data.WorkspaceDomain.ValueString()
 	domain := data.Domain.ValueString()
+	typ := buddy.DomainTypePointed
 	ops := buddy.DomainCreateOps{
 		Name: &domain,
+		Type: &typ,
 	}
 	d, _, err := r.client.DomainService.Create(workspaceDomain, &ops)
 	if err != nil {
