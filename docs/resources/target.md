@@ -223,8 +223,8 @@ resource "buddy_target" "restricted" {
 
 ### Optional
 
-- `all_pipelines_allowed` (Boolean) Indicates if all pipelines are allowed to use this target
 - `allowed_pipeline` (Block Set) List of specific pipelines allowed to use this target (see [below for nested schema](#nestedblock--allowed_pipeline))
+- `allowed_sandboxes` (Block Set) List of specific sandboxes allowed to use this target (see [below for nested schema](#nestedblock--allowed_sandboxes))
 - `auth` (Block Set) The target's auth. Set for `FTP`, `GIT`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN` (see [below for nested schema](#nestedblock--auth))
 - `disabled` (Boolean) Defines whether or not the target can be run
 - `environment_id` (String) The environment's id
@@ -233,10 +233,12 @@ resource "buddy_target" "restricted" {
 - `path` (String) The target's path
 - `permissions` (Block Set) The target's permissions (see [below for nested schema](#nestedblock--permissions))
 - `pipeline_id` (Number) The pipeline's id
+- `pipelines_access_level` (String) Indicates if all pipelines are allowed to use this target
 - `port` (String) The target's port. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`
 - `project_name` (String) The project's name
 - `proxy` (Block Set) The target's proxy. Set for `SSH` (see [below for nested schema](#nestedblock--proxy))
 - `repository` (String) The target's repository. Set for `GIT`
+- `sandboxes_access_level` (String) Indicates if all sandboxes are allowed to use this target
 - `scope` (String) The target's scope. Set for `MATCH`
 - `secure` (Boolean) The target's secure setting. Set for `FTP`
 - `tags` (Set of String) The target's list of tags
@@ -252,8 +254,19 @@ resource "buddy_target" "restricted" {
 
 Required:
 
+- `access_level` (String) The pipeline's access level
 - `pipeline` (String) The pipeline's identifier
 - `project` (String) The pipeline's project name
+
+
+<a id="nestedblock--allowed_sandboxes"></a>
+### Nested Schema for `allowed_sandboxes`
+
+Required:
+
+- `access_level` (String) The sandbox's access level
+- `project` (String) The sandbox's project name
+- `sandbox` (String) The sandbox's identifier
 
 
 <a id="nestedblock--auth"></a>

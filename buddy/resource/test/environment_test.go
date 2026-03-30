@@ -36,28 +36,28 @@ func TestAccEnvironmentPermissions(t *testing.T) {
 				Config: testAccEnvironmentPermissionsUserConfig(domain, projectName, identifier, name, email, groupName, buddy.EnvironmentPermissionAccessLevelDenied, buddy.EnvironmentPermissionAccessLevelUseOnly),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", true, true, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelDenied, buddy.EnvironmentPermissionAccessLevelUseOnly, ""),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelDenied, buddy.EnvironmentPermissionAccessLevelUseOnly, ""),
 				),
 			},
 			{
 				Config: testAccEnvironmentPermissionsConfig(domain, projectName, identifier, name, email, groupName, buddy.EnvironmentPermissionAccessLevelDefault),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", true, true, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelDefault, "", ""),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelDefault, "", ""),
 				),
 			},
 			{
 				Config: testAccEnvironmentPermissionsUserGroupConfig(domain, projectName, identifier, name, email, groupName, buddy.EnvironmentPermissionAccessLevelManage, buddy.EnvironmentPermissionAccessLevelDefault, buddy.EnvironmentPermissionAccessLevelDenied),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", true, true, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelManage, buddy.EnvironmentPermissionAccessLevelDefault, buddy.EnvironmentPermissionAccessLevelDenied),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelManage, buddy.EnvironmentPermissionAccessLevelDefault, buddy.EnvironmentPermissionAccessLevelDenied),
 				),
 			},
 			{
 				Config: testAccEnvironmentPermissionsGroupConfig(domain, projectName, identifier, name, email, groupName, buddy.EnvironmentPermissionAccessLevelUseOnly, buddy.EnvironmentPermissionAccessLevelManage),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", true, true, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelUseOnly, "", buddy.EnvironmentPermissionAccessLevelManage),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentScopeProject, false, "", "", buddy.EnvironmentPermissionAccessLevelUseOnly, "", buddy.EnvironmentPermissionAccessLevelManage),
 				),
 			},
 			// import env
@@ -94,7 +94,7 @@ func TestAccEnvironmentWorkspace(t *testing.T) {
 				Config: testAccEnvironmentWorkspace(domain, baseName, baseIdentifier, envProjName, envProjIdentifier, pipName, pipIdentifier, name, identifier),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", false, false, buddy.EnvironmentScopeWorkspace, false, baseIdentifier, "", "", "", ""),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, "", "", buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentScopeWorkspace, false, baseIdentifier, "", "", "", ""),
 				),
 			},
 			// import env
@@ -131,18 +131,18 @@ func TestAccEnvironmentSimple(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create env
 			{
-				Config: testAccEnvironmentConfig(domain, projectName, name, identifier, url, false, false, true, icon, tag),
+				Config: testAccEnvironmentConfig(domain, projectName, name, identifier, url, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelDenied, true, icon, tag),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, url, icon, false, false, buddy.EnvironmentScopeProject, true, "", tag, "", "", ""),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, url, icon, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentScopeProject, true, "", tag, "", "", ""),
 				),
 			},
 			// update env
 			{
-				Config: testAccEnvironmentConfig(domain, projectName, newName, newIdentifier, newUrl, true, true, false, newIcon, newTag),
+				Config: testAccEnvironmentConfig(domain, projectName, newName, newIdentifier, newUrl, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, false, newIcon, newTag),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
-					testAccEnvironmentAttributes("buddy_environment.env", &environment, newName, newIdentifier, newUrl, newIcon, true, true, buddy.EnvironmentScopeProject, false, "", newTag, "", "", ""),
+					testAccEnvironmentAttributes("buddy_environment.env", &environment, newName, newIdentifier, newUrl, newIcon, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentScopeProject, false, "", newTag, "", "", ""),
 				),
 			},
 			// import env
@@ -156,15 +156,13 @@ func TestAccEnvironmentSimple(t *testing.T) {
 	})
 }
 
-func testAccEnvironmentAttributes(n string, environment *buddy.Environment, name string, identifier string, url string, icon string, allPipelinesAllowed bool, allEnvsAllowed bool, scope string, baseOnly bool, baseEnvironment string, tag string, othersLevel string, userLevel string, groupLevel string) resource.TestCheckFunc {
+func testAccEnvironmentAttributes(n string, environment *buddy.Environment, name string, identifier string, url string, icon string, pipAccessLevel string, envAccessLevel string, scope string, baseOnly bool, baseEnvironment string, tag string, othersLevel string, userLevel string, groupLevel string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
 			return fmt.Errorf("not found: %s", n)
 		}
 		attrs := rs.Primary.Attributes
-		attrsAllPipelinesAllowed, _ := strconv.ParseBool(attrs["all_pipelines_allowed"])
-		attrsAllEnvsAllowed, _ := strconv.ParseBool(attrs["all_environments_allowed"])
 		attrsBaseOnly, _ := strconv.ParseBool(attrs["base_only"])
 		if err := util.CheckFieldEqualAndSet("Name", environment.Name, name); err != nil {
 			return err
@@ -172,16 +170,16 @@ func testAccEnvironmentAttributes(n string, environment *buddy.Environment, name
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("AllPipelinesAllowed", environment.AllPipelinesAllowed, allPipelinesAllowed); err != nil {
+		if err := util.CheckFieldEqualAndSet("PipelinesAccessLevel", environment.PipelinesAccessLevel, pipAccessLevel); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("all_pipelines_allowed", attrsAllPipelinesAllowed, allPipelinesAllowed); err != nil {
+		if err := util.CheckFieldEqualAndSet("pipelines_access_level", attrs["pipelines_access_level"], pipAccessLevel); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("AllEnvironmentsAllowed", environment.AllEnvironmentsAllowed, allEnvsAllowed); err != nil {
+		if err := util.CheckFieldEqualAndSet("EnvironmentsAccessLevel", environment.EnvironmentsAccessLevel, envAccessLevel); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("all_environments_allowed", attrsAllEnvsAllowed, allEnvsAllowed); err != nil {
+		if err := util.CheckFieldEqualAndSet("environments_access_level", attrs["environments_access_level"], envAccessLevel); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("BaseOnly", environment.BaseOnly, baseOnly); err != nil {
@@ -588,16 +586,18 @@ resource "buddy_environment" "env" {
 		allowed_pipeline {
 			project = "${buddy_project.proj.name}"
       pipeline = "${buddy_pipeline.pip_proj.identifier}"
+			access_level = "USE_ONLY"
 		}
 		allowed_environment {
 			project = "${buddy_project.proj.name}"
       environment = "${buddy_environment.env_proj.identifier}"
+			access_level = "USE_ONLY"
 		}
 }
 `, domain, baseName, baseIdentifier, projEnvName, projEnvIdentifier, pipName, pipIdentifier, name, identifier)
 }
 
-func testAccEnvironmentConfig(domain string, projectName string, name string, identifier string, url string, allPipelinesAllowed bool, allEnvsAllowed bool, baseOnly bool, icon string, tag string) string {
+func testAccEnvironmentConfig(domain string, projectName string, name string, identifier string, url string, pipAccessLevel string, envAccessLevel string, baseOnly bool, icon string, tag string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -614,13 +614,13 @@ resource "buddy_environment" "env" {
     name = "%s"
     identifier = "%s"
     public_url = "%s"
-    all_pipelines_allowed = "%t"
-		all_environments_allowed = "%t"
+    pipelines_access_level = "%s"
+		environments_access_level = "%s"
 		base_only = "%t"
 		icon = "%s"
     tags = ["%s"]
 }
-`, domain, projectName, name, identifier, url, allPipelinesAllowed, allEnvsAllowed, baseOnly, icon, tag)
+`, domain, projectName, name, identifier, url, pipAccessLevel, envAccessLevel, baseOnly, icon, tag)
 }
 
 func testAccEnvironmentCheckDestroy(s *terraform.State) error {

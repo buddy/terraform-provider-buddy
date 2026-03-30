@@ -10,6 +10,7 @@ import (
 type environmentEnvironmentModel struct {
 	Project     types.String `tfsdk:"project"`
 	Environment types.String `tfsdk:"environment"`
+	AccessLevel types.String `tfsdk:"access_level"`
 }
 
 func EnvironmentEnvironmentsModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.EnvironmentAllowedEnvironment, diag.Diagnostics) {
@@ -23,6 +24,9 @@ func EnvironmentEnvironmentsModelToApi(ctx context.Context, s *types.Set) (*[]*b
 		}
 		if !e.Environment.IsNull() && !e.Environment.IsUnknown() {
 			env.Environment = e.Environment.ValueString()
+		}
+		if !e.AccessLevel.IsNull() && !e.AccessLevel.IsUnknown() {
+			env.AccessLevel = e.AccessLevel.ValueString()
 		}
 		result[i] = &env
 	}

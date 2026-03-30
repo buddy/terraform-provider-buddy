@@ -32,30 +32,32 @@ type targetResource struct {
 }
 
 type targetResourceModel struct {
-	ID                  types.String `tfsdk:"id"`
-	Domain              types.String `tfsdk:"domain"`
-	TargetId            types.String `tfsdk:"target_id"`
-	HtmlUrl             types.String `tfsdk:"html_url"`
-	Name                types.String `tfsdk:"name"`
-	Identifier          types.String `tfsdk:"identifier"`
-	Tags                types.Set    `tfsdk:"tags"`
-	Type                types.String `tfsdk:"type"`
-	Host                types.String `tfsdk:"host"`
-	Scope               types.String `tfsdk:"scope"`
-	Repository          types.String `tfsdk:"repository"`
-	Port                types.String `tfsdk:"port"`
-	Path                types.String `tfsdk:"path"`
-	Secure              types.Bool   `tfsdk:"secure"`
-	Integration         types.String `tfsdk:"integration"`
-	Disabled            types.Bool   `tfsdk:"disabled"`
-	Auth                types.Set    `tfsdk:"auth"`
-	ProjectName         types.String `tfsdk:"project_name"`
-	PipelineId          types.Int64  `tfsdk:"pipeline_id"`
-	EnvironmentId       types.String `tfsdk:"environment_id"`
-	Proxy               types.Set    `tfsdk:"proxy"`
-	Permissions         types.Set    `tfsdk:"permissions"`
-	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
-	AllowedPipeline     types.Set    `tfsdk:"allowed_pipeline"`
+	ID                   types.String `tfsdk:"id"`
+	Domain               types.String `tfsdk:"domain"`
+	TargetId             types.String `tfsdk:"target_id"`
+	HtmlUrl              types.String `tfsdk:"html_url"`
+	Name                 types.String `tfsdk:"name"`
+	Identifier           types.String `tfsdk:"identifier"`
+	Tags                 types.Set    `tfsdk:"tags"`
+	Type                 types.String `tfsdk:"type"`
+	Host                 types.String `tfsdk:"host"`
+	Scope                types.String `tfsdk:"scope"`
+	Repository           types.String `tfsdk:"repository"`
+	Port                 types.String `tfsdk:"port"`
+	Path                 types.String `tfsdk:"path"`
+	Secure               types.Bool   `tfsdk:"secure"`
+	Integration          types.String `tfsdk:"integration"`
+	Disabled             types.Bool   `tfsdk:"disabled"`
+	Auth                 types.Set    `tfsdk:"auth"`
+	ProjectName          types.String `tfsdk:"project_name"`
+	PipelineId           types.Int64  `tfsdk:"pipeline_id"`
+	EnvironmentId        types.String `tfsdk:"environment_id"`
+	Proxy                types.Set    `tfsdk:"proxy"`
+	Permissions          types.Set    `tfsdk:"permissions"`
+	PipelinesAccessLevel types.String `tfsdk:"pipelines_access_level"`
+	AllowedPipeline      types.Set    `tfsdk:"allowed_pipeline"`
+	SandboxesAccessLevel types.String `tfsdk:"sandboxes_access_level"`
+	AllowedSandboxes     types.Set    `tfsdk:"allowed_sandboxes"`
 }
 
 func (m *targetResourceModel) decomposeId() (string, string, error) {
@@ -86,7 +88,8 @@ func (m *targetResourceModel) loadAPI(ctx context.Context, domain string, target
 	m.Secure = types.BoolValue(target.Secure)
 	m.Integration = types.StringValue(target.Integration)
 	m.Disabled = types.BoolValue(target.Disabled)
-	m.AllPipelinesAllowed = types.BoolValue(target.AllPipelinesAllowed)
+	m.PipelinesAccessLevel = types.StringValue(target.PipelinesAccessLevel)
+	m.SandboxesAccessLevel = types.StringValue(target.SandboxesAccessLevel)
 	return diags
 }
 
@@ -99,13 +102,25 @@ func (m *targetResourceModel) toOps(ctx context.Context) (*buddy.TargetOps, diag
 	if !m.Name.IsNull() && !m.Name.IsUnknown() {
 		ops.Name = m.Name.ValueStringPointer()
 	}
-	if !m.AllPipelinesAllowed.IsNull() && !m.AllPipelinesAllowed.IsUnknown() {
-		ops.AllPipelinesAllowed = m.AllPipelinesAllowed.ValueBoolPointer()
-	}
 	if !m.AllowedPipeline.IsNull() && !m.AllowedPipeline.IsUnknown() {
 		pips, d := util.TargetPipelinesModelToApi(ctx, &m.AllowedPipeline)
 		diags.Append(d...)
 		ops.AllowedPipelines = pips
+		denied := buddy.TargetPipelineAccessLevelDenied
+		ops.PipelinesAccessLevel = &denied
+	}
+	if !m.PipelinesAccessLevel.IsNull() && !m.PipelinesAccessLevel.IsUnknown() {
+		ops.PipelinesAccessLevel = m.PipelinesAccessLevel.ValueStringPointer()
+	}
+	if !m.AllowedSandboxes.IsNull() && !m.AllowedSandboxes.IsUnknown() {
+		sbs, d := util.TargetSandboxesModelToApi(ctx, &m.AllowedSandboxes)
+		diags.Append(d...)
+		ops.AllowedSandboxes = sbs
+		denied := buddy.TargetSandboxAccessLevelDenied
+		ops.SandboxesAccessLevel = &denied
+	}
+	if !m.SandboxesAccessLevel.IsNull() && !m.SandboxesAccessLevel.IsUnknown() {
+		ops.SandboxesAccessLevel = m.SandboxesAccessLevel.ValueStringPointer()
 	}
 	if !m.Tags.IsNull() && !m.Tags.IsUnknown() {
 		tags, d := util.StringSetToApi(ctx, &m.Tags)
@@ -295,10 +310,21 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Optional:            true,
 				Computed:            true,
 			},
-			"all_pipelines_allowed": schema.BoolAttribute{
+			"sandboxes_access_level": schema.StringAttribute{
+				MarkdownDescription: "Indicates if all sandboxes are allowed to use this target",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.TargetSandboxAccessLevelDenied, buddy.TargetSandboxAccessLevelReadWrite, buddy.TargetSandboxAccessLevelReadOnly),
+				},
+				Optional: true,
+				Computed: true,
+			},
+			"pipelines_access_level": schema.StringAttribute{
 				MarkdownDescription: "Indicates if all pipelines are allowed to use this target",
-				Optional:            true,
-				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.TargetPipelineAccessLevelDenied, buddy.TargetPipelineAccessLevelReadWrite, buddy.TargetPipelineAccessLevelReadOnly, buddy.TargetPipelineAccessLevelUseOnly),
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"disabled": schema.BoolAttribute{
 				MarkdownDescription: "Defines whether or not the target can be run",
@@ -377,6 +403,35 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						"pipeline": schema.StringAttribute{
 							MarkdownDescription: "The pipeline's identifier",
 							Required:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.TargetPipelineAccessLevelDenied, buddy.TargetPipelineAccessLevelReadWrite, buddy.TargetPipelineAccessLevelReadOnly, buddy.TargetPipelineAccessLevelUseOnly),
+							},
+							Required: true,
+						},
+					},
+				},
+			},
+			"allowed_sandboxes": schema.SetNestedBlock{
+				MarkdownDescription: "List of specific sandboxes allowed to use this target",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's project name",
+							Required:            true,
+						},
+						"sandbox": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's identifier",
+							Required:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.TargetSandboxAccessLevelReadOnly, buddy.TargetSandboxAccessLevelReadWrite, buddy.TargetSandboxAccessLevelDenied),
+							},
+							Required: true,
 						},
 					},
 				},

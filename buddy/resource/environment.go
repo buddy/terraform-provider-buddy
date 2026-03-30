@@ -42,26 +42,26 @@ func (e *environmentResource) Configure(_ context.Context, req resource.Configur
 }
 
 type environmentResourceModel struct {
-	ID                     types.String `tfsdk:"id"`
-	Domain                 types.String `tfsdk:"domain"`
-	ProjectName            types.String `tfsdk:"project_name"`
-	HtmlUrl                types.String `tfsdk:"html_url"`
-	EnvironmentId          types.String `tfsdk:"environment_id"`
-	Identifier             types.String `tfsdk:"identifier"`
-	Name                   types.String `tfsdk:"name"`
-	Icon                   types.String `tfsdk:"icon"`
-	PublicUrl              types.String `tfsdk:"public_url"`
-	AllPipelinesAllowed    types.Bool   `tfsdk:"all_pipelines_allowed"`
-	AllowedPipeline        types.Set    `tfsdk:"allowed_pipeline"`
-	AllEnvironmentsAllowed types.Bool   `tfsdk:"all_environments_allowed"`
-	AllowedEnvironment     types.Set    `tfsdk:"allowed_environment"`
-	CreateDate             types.String `tfsdk:"create_date"`
-	Scope                  types.String `tfsdk:"scope"`
-	BaseOnly               types.Bool   `tfsdk:"base_only"`
-	BaseEnvironments       types.Set    `tfsdk:"base_environments"`
-	Project                types.Set    `tfsdk:"project"`
-	Tags                   types.Set    `tfsdk:"tags"`
-	Permissions            types.Set    `tfsdk:"permissions"`
+	ID                      types.String `tfsdk:"id"`
+	Domain                  types.String `tfsdk:"domain"`
+	ProjectName             types.String `tfsdk:"project_name"`
+	HtmlUrl                 types.String `tfsdk:"html_url"`
+	EnvironmentId           types.String `tfsdk:"environment_id"`
+	Identifier              types.String `tfsdk:"identifier"`
+	Name                    types.String `tfsdk:"name"`
+	Icon                    types.String `tfsdk:"icon"`
+	PublicUrl               types.String `tfsdk:"public_url"`
+	PipelinesAccessLevel    types.String `tfsdk:"pipelines_access_level"`
+	AllowedPipeline         types.Set    `tfsdk:"allowed_pipeline"`
+	EnvironmentsAccessLevel types.String `tfsdk:"environments_access_level"`
+	AllowedEnvironment      types.Set    `tfsdk:"allowed_environment"`
+	CreateDate              types.String `tfsdk:"create_date"`
+	Scope                   types.String `tfsdk:"scope"`
+	BaseOnly                types.Bool   `tfsdk:"base_only"`
+	BaseEnvironments        types.Set    `tfsdk:"base_environments"`
+	Project                 types.Set    `tfsdk:"project"`
+	Tags                    types.Set    `tfsdk:"tags"`
+	Permissions             types.Set    `tfsdk:"permissions"`
 }
 
 func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, environment *buddy.Environment) diag.Diagnostics {
@@ -80,8 +80,8 @@ func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, e
 	r.Name = types.StringValue(environment.Name)
 	r.Icon = types.StringValue(environment.Icon)
 	r.PublicUrl = types.StringValue(environment.PublicUrl)
-	r.AllPipelinesAllowed = types.BoolValue(environment.AllPipelinesAllowed)
-	r.AllEnvironmentsAllowed = types.BoolValue(environment.AllEnvironmentsAllowed)
+	r.PipelinesAccessLevel = types.StringValue(environment.PipelinesAccessLevel)
+	r.EnvironmentsAccessLevel = types.StringValue(environment.EnvironmentsAccessLevel)
 	r.CreateDate = types.StringValue(environment.CreateDate)
 	r.Scope = types.StringValue(environment.Scope)
 	r.BaseOnly = types.BoolValue(environment.BaseOnly)
@@ -173,15 +173,21 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Optional:            true,
 				Computed:            true,
 			},
-			"all_pipelines_allowed": schema.BoolAttribute{
-				MarkdownDescription: "Defines whether or not environment can be used in all pipelines",
-				Optional:            true,
-				Computed:            true,
+			"environments_access_level": schema.StringAttribute{
+				MarkdownDescription: "Defines whether or not environment can be inherited by other environments",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelUseOnly),
+				},
+				Optional: true,
+				Computed: true,
 			},
-			"all_environments_allowed": schema.BoolAttribute{
-				MarkdownDescription: "Defines whether or not environment can be by inherited by other environements",
-				Optional:            true,
-				Computed:            true,
+			"pipelines_access_level": schema.StringAttribute{
+				MarkdownDescription: "Defines whether or not environment can be used in all pipelines",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelUseOnly),
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"create_date": schema.StringAttribute{
 				MarkdownDescription: "The environment's create date",
@@ -242,6 +248,13 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 							MarkdownDescription: "The pipeline's identifier",
 							Required:            true,
 						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelUseOnly),
+							},
+							Required: true,
+						},
 					},
 				},
 			},
@@ -256,6 +269,13 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 						"environment": schema.StringAttribute{
 							MarkdownDescription: "The environment's identifier",
 							Required:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The environment's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelUseOnly),
+							},
+							Required: true,
 						},
 					},
 				},
@@ -350,8 +370,11 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 			return
 		}
 		ops.AllowedPipelines = pipelines
-		f := false
-		ops.AllPipelinesAllowed = &f
+		access := buddy.EnvironmentAccessLevelDenied
+		ops.PipelinesAccessLevel = &access
+	}
+	if !data.PipelinesAccessLevel.IsNull() && !data.PipelinesAccessLevel.IsUnknown() {
+		ops.PipelinesAccessLevel = data.PipelinesAccessLevel.ValueStringPointer()
 	}
 	if !data.AllowedEnvironment.IsNull() && !data.AllowedEnvironment.IsUnknown() {
 		environments, d := util.EnvironmentEnvironmentsModelToApi(ctx, &data.AllowedEnvironment)
@@ -360,14 +383,11 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 			return
 		}
 		ops.AllowedEnvironments = environments
-		f := false
-		ops.AllEnvironmentsAllowed = &f
+		access := buddy.EnvironmentAccessLevelDenied
+		ops.EnvironmentsAccessLevel = &access
 	}
-	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
-		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
-	}
-	if !data.AllEnvironmentsAllowed.IsNull() && !data.AllEnvironmentsAllowed.IsUnknown() {
-		ops.AllEnvironmentsAllowed = data.AllEnvironmentsAllowed.ValueBoolPointer()
+	if !data.EnvironmentsAccessLevel.IsNull() && !data.EnvironmentsAccessLevel.IsUnknown() {
+		ops.EnvironmentsAccessLevel = data.EnvironmentsAccessLevel.ValueStringPointer()
 	}
 	if !data.BaseEnvironments.IsNull() && !data.BaseEnvironments.IsUnknown() {
 		base, d := util.StringSetToApi(ctx, &data.BaseEnvironments)
@@ -473,8 +493,11 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 			return
 		}
 		ops.AllowedPipelines = pipelines
-		f := false
-		ops.AllPipelinesAllowed = &f
+		denied := buddy.EnvironmentAccessLevelDenied
+		ops.PipelinesAccessLevel = &denied
+	}
+	if !data.PipelinesAccessLevel.IsNull() && !data.PipelinesAccessLevel.IsUnknown() {
+		ops.PipelinesAccessLevel = data.PipelinesAccessLevel.ValueStringPointer()
 	}
 	if !data.AllowedEnvironment.IsNull() && !data.AllowedEnvironment.IsUnknown() {
 		environments, d := util.EnvironmentEnvironmentsModelToApi(ctx, &data.AllowedEnvironment)
@@ -483,14 +506,11 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 			return
 		}
 		ops.AllowedEnvironments = environments
-		f := false
-		ops.AllEnvironmentsAllowed = &f
+		denied := buddy.EnvironmentAccessLevelDenied
+		ops.EnvironmentsAccessLevel = &denied
 	}
-	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
-		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
-	}
-	if !data.AllEnvironmentsAllowed.IsNull() && !data.AllEnvironmentsAllowed.IsUnknown() {
-		ops.AllEnvironmentsAllowed = data.AllEnvironmentsAllowed.ValueBoolPointer()
+	if !data.EnvironmentsAccessLevel.IsNull() && !data.EnvironmentsAccessLevel.IsUnknown() {
+		ops.EnvironmentsAccessLevel = data.EnvironmentsAccessLevel.ValueStringPointer()
 	}
 	if !data.BaseEnvironments.IsNull() && !data.BaseEnvironments.IsUnknown() {
 		base, d := util.StringSetToApi(ctx, &data.BaseEnvironments)
