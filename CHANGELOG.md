@@ -1,3 +1,9 @@
+# Release v1.43.0 (2026-03-30)
+* [Breaking] Replace boolean access flags with string-based access levels in buddy_environment and buddy_target
+* Add access_level to allowed_pipeline, allowed_environment (buddy_environment) and allowed_pipeline (buddy_target)
+* Add sandboxes_access_level and allowed_sandboxes to buddy_target
+* Bump api dependency
+
 # Release v1.42.2 (2026-03-24)
 * Bump api dependency
 

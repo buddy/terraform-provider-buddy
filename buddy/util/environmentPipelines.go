@@ -8,8 +8,9 @@ import (
 )
 
 type environmentPipelineModel struct {
-	Project  types.String `tfsdk:"project"`
-	Pipeline types.String `tfsdk:"pipeline"`
+	Project     types.String `tfsdk:"project"`
+	Pipeline    types.String `tfsdk:"pipeline"`
+	AccessLevel types.String `tfsdk:"access_level"`
 }
 
 func EnvironmentPipelinesModelToApi(ctx context.Context, s *types.Set) (*[]*buddy.EnvironmentAllowedPipeline, diag.Diagnostics) {
@@ -23,6 +24,9 @@ func EnvironmentPipelinesModelToApi(ctx context.Context, s *types.Set) (*[]*budd
 		}
 		if !p.Pipeline.IsNull() && !p.Pipeline.IsUnknown() {
 			pipeline.Pipeline = p.Pipeline.ValueString()
+		}
+		if !p.AccessLevel.IsNull() && !p.AccessLevel.IsUnknown() {
+			pipeline.AccessLevel = p.AccessLevel.ValueString()
 		}
 		result[i] = &pipeline
 	}

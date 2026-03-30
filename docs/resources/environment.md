@@ -45,14 +45,14 @@ resource "buddy_environment" "dev" {
 
 ### Optional
 
-- `all_environments_allowed` (Boolean) Defines whether or not environment can be by inherited by other environements
-- `all_pipelines_allowed` (Boolean) Defines whether or not environment can be used in all pipelines
 - `allowed_environment` (Block Set) The environment's allowed child environment (see [below for nested schema](#nestedblock--allowed_environment))
 - `allowed_pipeline` (Block Set) The environment's allowed pipeline (see [below for nested schema](#nestedblock--allowed_pipeline))
 - `base_environments` (Set of String) The environment's list of parent environments ID to inherit from
 - `base_only` (Boolean) Defines whether or not environment can be only used as base environment
+- `environments_access_level` (String) Defines whether or not environment can be inherited by other environments
 - `icon` (String) The environment's icon
 - `permissions` (Block Set) The environment's permissions (see [below for nested schema](#nestedblock--permissions))
+- `pipelines_access_level` (String) Defines whether or not environment can be used in all pipelines
 - `project_name` (String) The project's name
 - `public_url` (String) The environment's public URL
 - `tags` (Set of String) The environment's list of tags
@@ -71,6 +71,7 @@ resource "buddy_environment" "dev" {
 
 Required:
 
+- `access_level` (String) The environment's access level
 - `environment` (String) The environment's identifier
 
 Optional:
@@ -83,6 +84,7 @@ Optional:
 
 Required:
 
+- `access_level` (String) The pipeline's access level
 - `pipeline` (String) The pipeline's identifier
 - `project` (String) The project's name
 
