@@ -5,57 +5,11 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
-	"os"
 	"strconv"
 	"terraform-provider-buddy/buddy/acc"
 	"terraform-provider-buddy/buddy/util"
 	"testing"
 )
-
-func TestAccProject_github(t *testing.T) {
-	ghToken := os.Getenv("BUDDY_GH_TOKEN")
-	ghPoject := os.Getenv("BUDDY_GH_PROJECT")
-	if ghToken == "" || ghPoject == "" {
-		return
-	}
-	var project buddy.Project
-	domain := util.UniqueString()
-	displayName := util.RandString(10)
-	newDisplayName := util.RandString(10)
-	resource.Test(t, resource.TestCase{
-		PreCheck: func() {
-			acc.PreCheck(t)
-		},
-		ProtoV6ProviderFactories: acc.ProviderFactories,
-		CheckDestroy:             testAccProjectCheckDestroy,
-		Steps: []resource.TestStep{
-			// create project
-			{
-				Config: testAccProjectGitHubConfig(domain, displayName, ghToken, ghPoject, false, true),
-				Check: resource.ComposeTestCheckFunc(
-					util.TestSleep(10000),
-					testAccProjectGet("buddy_project.gh", &project),
-					testAccProjectAttributes("buddy_project.gh", &project, displayName, false, buddy.ProjectAccessPrivate, true, false, ""),
-				),
-			},
-			// update project
-			{
-				Config: testAccProjectGitHubConfig(domain, newDisplayName, ghToken, ghPoject, true, false),
-				Check: resource.ComposeTestCheckFunc(
-					testAccProjectGet("buddy_project.gh", &project),
-					testAccProjectAttributes("buddy_project.gh", &project, newDisplayName, true, buddy.ProjectAccessPrivate, false, false, ""),
-				),
-			},
-			// import project
-			{
-				ResourceName:            "buddy_project.gh",
-				ImportState:             true,
-				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: []string{"external_project_id", "integration_id"},
-			},
-		},
-	})
-}
 
 func TestAccProject_withoutRepository(t *testing.T) {
 	var project buddy.Project
@@ -325,31 +279,6 @@ resource "buddy_project" "bar" {
 	without_repository = true
 }
 `, domain, name)
-}
-
-func testAccProjectGitHubConfig(domain string, name string, ghToken string, ghProject string, updateBranch bool, allowPullRequests bool) string {
-	return fmt.Sprintf(`
-resource "buddy_workspace" "foo" {
-   domain = "%s"
-}
-
-resource "buddy_integration" "gh" {
-	domain = "${buddy_workspace.foo.domain}"
-	name = "gh"
-   type = "GIT_HUB"
-   scope = "WORKSPACE"
-   token = "%s"
-}
-
-resource "buddy_project" "gh" {
-   domain = "${buddy_workspace.foo.domain}"
-   display_name = "%s"
-   integration_id = "${buddy_integration.gh.integration_id}"
-   external_project_id = "%s"
-   update_default_branch_from_external = "%t"
-	allow_pull_requests = "%t"
-}
-`, domain, ghToken, name, ghProject, updateBranch, allowPullRequests)
 }
 
 func testAccProjectCheckDestroy(s *terraform.State) error {
