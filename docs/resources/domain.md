@@ -35,7 +35,7 @@ resource "buddy_domain" "dev" {
 
 ### Optional
 
-- `type` (String) The domain's type. Allowed POINTED (default), PRIVATE
+- `type` (String) The domain's type. Allowed values: POINTED (default), PRIVATE
 
 ### Read-Only
 
