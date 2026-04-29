@@ -1,3 +1,6 @@
+# Release v1.43.1 (2026-04-28)
+* Add PRIVATE domain type
+
 # Release v1.43.0 (2026-03-30)
 * [Breaking] Replace boolean access flags with string-based access levels in buddy_environment and buddy_target
 * Add access_level to allowed_pipeline, allowed_environment (buddy_environment) and allowed_pipeline (buddy_target)
