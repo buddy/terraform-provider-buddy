@@ -3,11 +3,14 @@ package resource
 import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"terraform-provider-buddy/buddy/util"
 )
@@ -30,6 +33,7 @@ type domainResourceModel struct {
 	ID              types.String `tfsdk:"id"`
 	WorkspaceDomain types.String `tfsdk:"workspace_domain"`
 	Domain          types.String `tfsdk:"domain"`
+	Type            types.String `tfsdk:"type"`
 	DomainId        types.String `tfsdk:"domain_id"`
 }
 
@@ -41,11 +45,12 @@ func (r *domainResourceModel) decomposeId() (string, string, error) {
 	return workspaceDomain, domainId, nil
 }
 
-func (r *domainResourceModel) loadAPI(workspaceDomain string, domain string, domainId string) {
+func (r *domainResourceModel) loadAPI(workspaceDomain string, domain string, domainId string, typ string) {
 	r.ID = types.StringValue(util.ComposeDoubleId(workspaceDomain, domainId))
 	r.WorkspaceDomain = types.StringValue(workspaceDomain)
 	r.Domain = types.StringValue(domain)
 	r.DomainId = types.StringValue(domainId)
+	r.Type = types.StringValue(typ)
 }
 
 func (r *domainResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -80,6 +85,21 @@ func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
+			"type": schema.StringAttribute{
+				MarkdownDescription: "The domain's type. Allowed values: POINTED (default), PRIVATE",
+				Optional:            true,
+				Computed:            true,
+				Default:             stringdefault.StaticString(buddy.DomainTypePointed),
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.DomainTypePointed,
+						buddy.DomainTypePrivate,
+					),
+				},
+			},
 			"domain_id": schema.StringAttribute{
 				MarkdownDescription: "The domain's id",
 				Computed:            true,
@@ -104,6 +124,9 @@ func (r *domainResource) Create(ctx context.Context, req resource.CreateRequest,
 	workspaceDomain := data.WorkspaceDomain.ValueString()
 	domain := data.Domain.ValueString()
 	typ := buddy.DomainTypePointed
+	if !data.Type.IsNull() && !data.Type.IsUnknown() {
+		typ = data.Type.ValueString()
+	}
 	ops := buddy.DomainCreateOps{
 		Name: &domain,
 		Type: &typ,
@@ -113,7 +136,7 @@ func (r *domainResource) Create(ctx context.Context, req resource.CreateRequest,
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create domain", err))
 		return
 	}
-	data.loadAPI(workspaceDomain, d.Name, d.Id)
+	data.loadAPI(workspaceDomain, d.Name, d.Id, d.Type)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -137,7 +160,7 @@ func (r *domainResource) Read(ctx context.Context, req resource.ReadRequest, res
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get domain", err))
 		return
 	}
-	data.loadAPI(workspaceDomain, d.Name, domainId)
+	data.loadAPI(workspaceDomain, d.Name, domainId, d.Type)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 

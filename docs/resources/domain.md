@@ -33,6 +33,10 @@ resource "buddy_domain" "dev" {
 - `domain` (String) The domain's name
 - `workspace_domain` (String) The workspace's URL handle
 
+### Optional
+
+- `type` (String) The domain's type. Allowed values: POINTED (default), PRIVATE
+
 ### Read-Only
 
 - `domain_id` (String) The domain's id
