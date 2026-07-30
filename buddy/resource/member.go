@@ -35,6 +35,7 @@ type memberResourceModel struct {
 	AutoAssignToNewProjects   types.Bool   `tfsdk:"auto_assign_to_new_projects"`
 	AutoAssignPermissionSetId types.Int64  `tfsdk:"auto_assign_permission_set_id"`
 	Name                      types.String `tfsdk:"name"`
+	Note                      types.String `tfsdk:"note"`
 	MemberId                  types.Int64  `tfsdk:"member_id"`
 	HtmlUrl                   types.String `tfsdk:"html_url"`
 	AvatarUrl                 types.String `tfsdk:"avatar_url"`
@@ -57,6 +58,7 @@ func (r *memberResourceModel) loadAPI(domain string, member *buddy.Member) {
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(member.Id)))
 	r.Domain = types.StringValue(domain)
 	r.Email = types.StringValue(member.Email)
+	r.Note = types.StringValue(member.Note)
 	r.Admin = types.BoolValue(member.Admin)
 	r.AutoAssignToNewProjects = types.BoolValue(member.AutoAssignToNewProjects)
 	r.Name = types.StringValue(member.Name)
@@ -118,6 +120,11 @@ func (r *memberResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				MarkdownDescription: "The member's name",
 				Computed:            true,
 			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The member's note",
+				Optional:            true,
+				Computed:            true,
+			},
 			"member_id": schema.Int64Attribute{
 				MarkdownDescription: "The member's ID",
 				Computed:            true,
@@ -154,6 +161,9 @@ func (r *memberResource) Create(ctx context.Context, req resource.CreateRequest,
 	domain := data.Domain.ValueString()
 	ops := buddy.MemberCreateOps{
 		Email: data.Email.ValueStringPointer(),
+	}
+	if !data.Note.IsUnknown() && !data.Note.IsNull() {
+		ops.Note = data.Note.ValueStringPointer()
 	}
 	member, _, err := r.client.MemberService.Create(domain, &ops)
 	if err != nil {
@@ -227,6 +237,9 @@ func (r *memberResource) Update(ctx context.Context, req resource.UpdateRequest,
 		if !data.AutoAssignPermissionSetId.IsNull() && !data.AutoAssignPermissionSetId.IsUnknown() {
 			ops.AutoAssignPermissionSetId = util.PointerInt(data.AutoAssignPermissionSetId.ValueInt64())
 		}
+	}
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
 	}
 	member, _, err := r.client.MemberService.Update(domain, memberId, &ops)
 	if err != nil {

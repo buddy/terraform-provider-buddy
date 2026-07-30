@@ -14,6 +14,7 @@ func TestAccSourceEnvironment(t *testing.T) {
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.UniqueString()
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -22,7 +23,7 @@ func TestAccSourceEnvironment(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceEnvironmentConfig(domain, projectName, name),
+				Config: testAccSourceEnvironmentConfig(domain, projectName, name, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSourceEnvironmentAttributes("data.buddy_environment.id", name),
 					testAccSourceEnvironmentAttributes("data.buddy_environment.name", name),
@@ -58,7 +59,7 @@ func testAccSourceEnvironmentAttributes(n string, name string) resource.TestChec
 	}
 }
 
-func testAccSourceEnvironmentConfig(domain string, projectName string, name string) string {
+func testAccSourceEnvironmentConfig(domain string, projectName string, name string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -74,6 +75,7 @@ resource "buddy_environment" "a" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    identifier = "%s"
+   note = "%s"
 }
 
 data "buddy_environment" "id" {
@@ -87,5 +89,5 @@ data "buddy_environment" "name" {
    project_name = "${buddy_project.proj.name}"
    name = "${buddy_environment.a.name}"
 }
-`, domain, projectName, name, name)
+`, domain, projectName, name, name, note)
 }

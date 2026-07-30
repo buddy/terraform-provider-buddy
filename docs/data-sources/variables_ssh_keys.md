@@ -62,13 +62,14 @@ data "buddy_variables_ssh_keys" "pipeline" {
 Read-Only:
 
 - `checksum` (String)
-- `description` (String)
+- `description` (String, Deprecated)
 - `encrypted` (Boolean)
 - `file_chmod` (String)
 - `file_path` (String)
 - `file_place` (String)
 - `key` (String)
 - `key_fingerprint` (String)
+- `note` (String)
 - `public_value` (String)
 - `settable` (Boolean)
 - `value` (String, Sensitive)

@@ -18,6 +18,7 @@ func TestAccSourcePermission(t *testing.T) {
 	repositoryAccessLevel := buddy.PermissionAccessLevelReadOnly
 	sandboxAccessLevel := buddy.PermissionAccessLevelDenied
 	projectTeamAccessLevel := buddy.PermissionAccessLevelReadOnly
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -26,7 +27,7 @@ func TestAccSourcePermission(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
+				Config: testAccSourcePermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSourcePermissionAttributes("data.buddy_permission.id", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
 					testAccSourcePermissionAttributes("data.buddy_permission.name", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
@@ -72,7 +73,7 @@ func testAccSourcePermissionAttributes(n string, name string, pipelineAccessLeve
 	}
 }
 
-func testAccSourcePermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, projectTeamAccessLevel string) string {
+func testAccSourcePermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, projectTeamAccessLevel string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -85,6 +86,7 @@ resource "buddy_permission" "perm" {
    repository_access_level = "%s"
 	sandbox_access_level = "%s"
 	project_team_access_level = "%s"
+	note = "%s"
 }
 
 data "buddy_permission" "id" {
@@ -96,5 +98,5 @@ data "buddy_permission" "name" {
    domain = "${buddy_workspace.foo.domain}"
    name = "${buddy_permission.perm.name}"
 }
-`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel)
+`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, note)
 }

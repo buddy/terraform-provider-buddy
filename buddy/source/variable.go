@@ -40,6 +40,7 @@ type variableSourceModel struct {
 	Encrypted     types.Bool   `tfsdk:"encrypted"`
 	Settable      types.Bool   `tfsdk:"settable"`
 	Description   types.String `tfsdk:"description"`
+	Note          types.String `tfsdk:"note"`
 	Value         types.String `tfsdk:"value"`
 }
 
@@ -50,7 +51,8 @@ func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable, v
 	s.VariableId = types.Int64Value(int64(variable.Id))
 	s.Encrypted = types.BoolValue(variable.Encrypted)
 	s.Settable = types.BoolValue(variable.Settable)
-	s.Description = types.StringValue(variable.Description)
+	s.Description = types.StringValue(variable.Note)
+	s.Note = types.StringValue(variable.Note)
 	s.Value = types.StringValue(variable.Value)
 	if variable.Project != nil {
 		s.ProjectName = types.StringValue(variable.Project.Name)
@@ -179,6 +181,11 @@ func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The variable's description",
+				DeprecationMessage:  "Use note field instead",
+				Computed:            true,
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The variable's note",
 				Computed:            true,
 			},
 			"value": schema.StringAttribute{

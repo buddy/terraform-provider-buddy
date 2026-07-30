@@ -40,7 +40,7 @@ resource "buddy_variable" "in_pipeline" {
   pipeline_id  = 123456
   key          = "KEY"
   value        = "VAL"
-  description  = "variable visibile only in this pipeline"
+  note         = "variable visibile only in this pipeline"
 }
 ```
 
@@ -56,9 +56,10 @@ resource "buddy_variable" "in_pipeline" {
 ### Optional
 
 - `action_id` (Number) The variable's action ID. Set for action scope
-- `description` (String) The variable's description
+- `description` (String, Deprecated) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted
 - `environment_id` (String) The variable's environmental ID. Set for envrionment scope
+- `note` (String) The variable's note
 - `pipeline_id` (Number) The variable's pipeline ID. Set for pipeline scope
 - `project_name` (String) The variable's project name. Set for project scope
 - `settable` (Boolean) Is the variable's value changeable

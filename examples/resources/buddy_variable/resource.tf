@@ -19,5 +19,5 @@ resource "buddy_variable" "in_pipeline" {
   pipeline_id  = 123456
   key          = "KEY"
   value        = "VAL"
-  description  = "variable visibile only in this pipeline"
+  note         = "variable visibile only in this pipeline"
 }

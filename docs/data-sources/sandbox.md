@@ -29,4 +29,5 @@ Token scopes required: `WORKSPACE`, `SANDBOX_INFO`
 - `id` (String) The Terraform resource identifier for this item
 - `identifier` (String) The sandbox's identifier
 - `name` (String) The sandbox's name
+- `note` (String) The sandbox's note
 - `status` (String) The sandbox's status

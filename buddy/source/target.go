@@ -29,6 +29,7 @@ type targetSourceModel struct {
 	TargetId    types.String `tfsdk:"target_id"`
 	HtmlUrl     types.String `tfsdk:"html_url"`
 	Name        types.String `tfsdk:"name"`
+	Note        types.String `tfsdk:"note"`
 	Identifier  types.String `tfsdk:"identifier"`
 	Tags        types.Set    `tfsdk:"tags"`
 	Type        types.String `tfsdk:"type"`
@@ -51,6 +52,7 @@ func (m *targetSourceModel) loadAPI(ctx context.Context, domain string, target *
 	tags, d := types.SetValueFrom(ctx, types.StringType, &target.Tags)
 	m.Tags = tags
 	m.Name = types.StringValue(target.Name)
+	m.Note = types.StringValue(target.Note)
 	m.Type = types.StringValue(target.Type)
 	m.Host = types.StringValue(target.Host)
 	m.Scope = types.StringValue(target.Scope)
@@ -87,6 +89,10 @@ func (s *targetSource) Schema(_ context.Context, _ datasource.SchemaRequest, res
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The target's name",
+				Computed:            true,
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The target's note",
 				Computed:            true,
 			},
 			"identifier": schema.StringAttribute{

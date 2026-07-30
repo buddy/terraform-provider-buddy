@@ -39,6 +39,7 @@ data "buddy_target" "by_id" {
 - `identifier` (String) The target's identifier
 - `integration` (String) The target's integration
 - `name` (String) The target's name
+- `note` (String) The target's note
 - `path` (String) The target's path
 - `port` (String) The target's port
 - `repository` (String) The target's repository

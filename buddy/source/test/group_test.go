@@ -13,7 +13,7 @@ import (
 func TestAccSourceGroup(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(5)
-	desc := util.RandString(5)
+	note := util.RandString(5)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -22,17 +22,17 @@ func TestAccSourceGroup(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceGroupConfig(domain, name, desc),
+				Config: testAccSourceGroupConfig(domain, name, note),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceGroupAttributes("data.buddy_group.id", name, desc),
-					testAccSourceGroupAttributes("data.buddy_group.name", name, desc),
+					testAccSourceGroupAttributes("data.buddy_group.id", name),
+					testAccSourceGroupAttributes("data.buddy_group.name", name),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourceGroupAttributes(n string, name string, desc string) resource.TestCheckFunc {
+func testAccSourceGroupAttributes(n string, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -49,14 +49,11 @@ func testAccSourceGroupAttributes(n string, name string, desc string) resource.T
 		if err := util.CheckFieldSet("html_url", attrs["html_url"]); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("description", attrs["description"], desc); err != nil {
-			return err
-		}
 		return nil
 	}
 }
 
-func testAccSourceGroupConfig(domain string, name string, desc string) string {
+func testAccSourceGroupConfig(domain string, name string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -65,7 +62,7 @@ resource "buddy_workspace" "foo" {
 resource "buddy_group" "bar" {
    domain = "${buddy_workspace.foo.domain}"
    name = "%s"
-	description = "%s"
+	note = "%s"
 }
 
 data "buddy_group" "id" {
@@ -77,5 +74,5 @@ data "buddy_group" "name" {
 	domain = "${buddy_workspace.foo.domain}"
 	name = "${buddy_group.bar.name}"
 }
-`, domain, name, desc)
+`, domain, name, note)
 }

@@ -41,6 +41,5 @@ data "buddy_group" "admins" {
 
 ### Read-Only
 
-- `description` (String) The group's description
 - `html_url` (String) The group's URL
 - `id` (String) The Terraform resource identifier for this item

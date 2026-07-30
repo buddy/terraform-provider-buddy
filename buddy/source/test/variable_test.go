@@ -14,7 +14,7 @@ func TestAccSourceVariable(t *testing.T) {
 	domain := util.UniqueString()
 	key := util.RandString(10)
 	val := util.RandString(10)
-	desc := util.RandString(10)
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -23,17 +23,17 @@ func TestAccSourceVariable(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceVariableConfig(domain, key, val, desc, false, true),
+				Config: testAccSourceVariableConfig(domain, key, val, note, false, true),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceVariableAttributes("data.buddy_variable.id", key, val, desc, false, true),
-					testAccSourceVariableAttributes("data.buddy_variable.key", key, val, desc, false, true),
+					testAccSourceVariableAttributes("data.buddy_variable.id", key, val, note, false, true),
+					testAccSourceVariableAttributes("data.buddy_variable.key", key, val, note, false, true),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourceVariableAttributes(n string, key string, val string, desc string, encrypred bool, settable bool) resource.TestCheckFunc {
+func testAccSourceVariableAttributes(n string, key string, val string, note string, encrypred bool, settable bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -52,7 +52,11 @@ func testAccSourceVariableAttributes(n string, key string, val string, desc stri
 		if err := util.CheckBoolFieldEqual("settable", attrsSettable, settable); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("description", attrs["description"], desc); err != nil {
+		if err := util.CheckFieldEqualAndSet("note", attrs["note"], note); err != nil {
+			return err
+		}
+		// deprecated description mirrors note
+		if err := util.CheckFieldEqualAndSet("description", attrs["description"], note); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("value", attrs["value"], val); err != nil {
@@ -65,7 +69,7 @@ func testAccSourceVariableAttributes(n string, key string, val string, desc stri
 	}
 }
 
-func testAccSourceVariableConfig(domain string, key string, val string, desc string, encrypred bool, settable bool) string {
+func testAccSourceVariableConfig(domain string, key string, val string, note string, encrypred bool, settable bool) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -77,7 +81,7 @@ resource "buddy_variable" "var" {
    value = "%s"
 	 encrypted = %s
 	 settable = %s
-	 description = "%s"
+	 note = "%s"
 }
 
 data "buddy_variable" "id" {
@@ -89,5 +93,5 @@ data "buddy_variable" "key" {
    domain = "${buddy_workspace.foo.domain}"
    key = "${buddy_variable.var.key}"
 }
-`, domain, key, val, strconv.FormatBool(encrypred), strconv.FormatBool(settable), desc)
+`, domain, key, val, strconv.FormatBool(encrypred), strconv.FormatBool(settable), note)
 }

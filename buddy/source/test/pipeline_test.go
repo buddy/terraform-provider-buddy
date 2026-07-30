@@ -26,6 +26,7 @@ func TestAccSourcePipeline(t *testing.T) {
 	cpu := buddy.PipelineCpuArm
 	loop := util.UniqueString()
 	newLoop := util.UniqueString()
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -35,7 +36,7 @@ func TestAccSourcePipeline(t *testing.T) {
 		Steps: []resource.TestStep{
 			// click
 			{
-				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh, cpu, true, true, gitChangeSet, filesystemChangeSet, loop),
+				Config: testAccSourcePipelineConfigClick(domain, projectName, name, ref, buddy.PipelinePriorityHigh, cpu, true, true, gitChangeSet, filesystemChangeSet, loop, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSourcePipelineAttributes("data.buddy_pipeline.name", name, cpu, loop, ref, "", "", "", "", buddy.PipelinePriorityHigh, true, true, gitChangeSet, filesystemChangeSet, false, "", buddy.PipelineGitConfigRefFixed, &buddy.PipelineGitConfig{
 						Project: projectName,
@@ -47,6 +48,8 @@ func TestAccSourcePipeline(t *testing.T) {
 						Branch:  "main",
 						Path:    "def.yml",
 					}),
+					resource.TestCheckResourceAttr("data.buddy_pipeline.name", "note", note),
+					resource.TestCheckResourceAttr("data.buddy_pipeline.id", "note", note),
 				),
 			},
 			// click disabled
@@ -375,7 +378,7 @@ data "buddy_pipeline" "id" {
 `, domain, projectName, name, ref, priority)
 }
 
-func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string, cpu string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string, loop string) string {
+func testAccSourcePipelineConfigClick(domain string, projectName string, name string, ref string, priority string, cpu string, concurrentPipelineRuns bool, descriptionRequired bool, gitChangesetBase string, filesystemChangesetBase string, loop string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -404,6 +407,7 @@ resource "buddy_pipeline" "bar" {
    git_changeset_base = "%s"
    filesystem_changeset_base = "%s"
    loop = ["%s"]
+   note = "%s"
 }
 
 data "buddy_pipeline" "name" {
@@ -417,7 +421,7 @@ data "buddy_pipeline" "id" {
    project_name = "${buddy_project.proj.name}"
    pipeline_id = "${buddy_pipeline.bar.pipeline_id}"
 }
-`, domain, projectName, name, cpu, ref, projectName, priority, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase, loop)
+`, domain, projectName, name, cpu, ref, projectName, priority, concurrentPipelineRuns, descriptionRequired, gitChangesetBase, filesystemChangesetBase, loop, note)
 }
 
 func testAccSourcePipelineConfigClickDisabled(domain string, projectName string, name string, ref string, priority string, reason string, loop string) string {

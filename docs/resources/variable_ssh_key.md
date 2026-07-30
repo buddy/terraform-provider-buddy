@@ -48,8 +48,9 @@ EOT
 ### Optional
 
 - `action_id` (Number) The variable's action ID
-- `description` (String) The variable's description
+- `description` (String, Deprecated) The variable's description
 - `environment_id` (String) The variable's environmental ID. Set for envrionment scope
+- `note` (String) The variable's note
 - `pipeline_id` (Number) The variable's pipeline ID
 - `project_name` (String) The variable's project name
 

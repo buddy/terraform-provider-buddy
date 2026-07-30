@@ -14,7 +14,7 @@ import (
 func TestAccSourceVariableSshKey(t *testing.T) {
 	domain := util.UniqueString()
 	key := util.RandString(10)
-	desc := util.RandString(10)
+	note := util.RandString(10)
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
@@ -30,17 +30,17 @@ func TestAccSourceVariableSshKey(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceVariableSshKeyConfig(domain, key, desc, privateKey, filePlace, filePath, fileChmod),
+				Config: testAccSourceVariableSshKeyConfig(domain, key, note, privateKey, filePlace, filePath, fileChmod),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.id", key, desc, filePlace, filePath, fileChmod),
-					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.key", key, desc, filePlace, filePath, fileChmod),
+					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.id", key, note, filePlace, filePath, fileChmod),
+					testAccSourceVariableSshKeyAttributes("data.buddy_variable_ssh_key.key", key, note, filePlace, filePath, fileChmod),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, filePlace string, filePath string, fileChmod string) resource.TestCheckFunc {
+func testAccSourceVariableSshKeyAttributes(n string, key string, note string, filePlace string, filePath string, fileChmod string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -68,7 +68,11 @@ func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, fi
 		if err := util.CheckBoolFieldEqual("settable", attrsSettable, false); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqualAndSet("description", attrs["description"], desc); err != nil {
+		if err := util.CheckFieldEqualAndSet("note", attrs["note"], note); err != nil {
+			return err
+		}
+		// deprecated description mirrors note
+		if err := util.CheckFieldEqualAndSet("description", attrs["description"], note); err != nil {
 			return err
 		}
 		if err := util.CheckIntFieldSet("variable_id", attrsVariableId); err != nil {
@@ -90,7 +94,7 @@ func testAccSourceVariableSshKeyAttributes(n string, key string, desc string, fi
 	}
 }
 
-func testAccSourceVariableSshKeyConfig(domain string, key string, desc string, val string, filePlace string, filePath string, fileChmod string) string {
+func testAccSourceVariableSshKeyConfig(domain string, key string, note string, val string, filePlace string, filePath string, fileChmod string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -102,7 +106,7 @@ resource "buddy_variable_ssh_key" "var" {
    file_place = "%s"
    file_path = "%s"
    file_chmod = "%s"
-	description = "%s"
+	note = "%s"
    value = <<EOT
 %s
 EOT
@@ -117,5 +121,5 @@ data "buddy_variable_ssh_key" "key" {
    domain = "${buddy_workspace.foo.domain}"
    key = "${buddy_variable_ssh_key.var.key}"
 }
-`, domain, key, filePlace, filePath, fileChmod, desc, val)
+`, domain, key, filePlace, filePath, fileChmod, note, val)
 }

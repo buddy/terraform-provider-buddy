@@ -49,6 +49,7 @@ type environmentResourceModel struct {
 	EnvironmentId           types.String `tfsdk:"environment_id"`
 	Identifier              types.String `tfsdk:"identifier"`
 	Name                    types.String `tfsdk:"name"`
+	Note                    types.String `tfsdk:"note"`
 	Icon                    types.String `tfsdk:"icon"`
 	PublicUrl               types.String `tfsdk:"public_url"`
 	PipelinesAccessLevel    types.String `tfsdk:"pipelines_access_level"`
@@ -78,6 +79,7 @@ func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, e
 	r.EnvironmentId = types.StringValue(environment.Id)
 	r.Identifier = types.StringValue(environment.Identifier)
 	r.Name = types.StringValue(environment.Name)
+	r.Note = types.StringValue(environment.Note)
 	r.Icon = types.StringValue(environment.Icon)
 	r.PublicUrl = types.StringValue(environment.PublicUrl)
 	r.PipelinesAccessLevel = types.StringValue(environment.PipelinesAccessLevel)
@@ -162,6 +164,11 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The environment's name",
 				Required:            true,
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The environment's note",
+				Optional:            true,
+				Computed:            true,
 			},
 			"icon": schema.StringAttribute{
 				MarkdownDescription: "The environment's icon",
@@ -341,6 +348,9 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.Icon.IsNull() && !data.Icon.IsUnknown() {
 		ops.Icon = data.Icon.ValueStringPointer()
 	}
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	}
 	if !data.PublicUrl.IsNull() && !data.PublicUrl.IsUnknown() {
 		ops.PublicUrl = data.PublicUrl.ValueStringPointer()
 	}
@@ -463,6 +473,9 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 	ops.Scope = &scope
 	if !data.Icon.IsNull() && !data.Icon.IsUnknown() {
 		ops.Icon = data.Icon.ValueStringPointer()
+	}
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
 	}
 	if !data.PublicUrl.IsNull() && !data.PublicUrl.IsUnknown() {
 		ops.PublicUrl = data.PublicUrl.ValueStringPointer()

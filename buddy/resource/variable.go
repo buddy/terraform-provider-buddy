@@ -44,6 +44,7 @@ type variableResourceModel struct {
 	EnvironmentId  types.String `tfsdk:"environment_id"`
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
+	Note           types.String `tfsdk:"note"`
 	ValueProcessed types.String `tfsdk:"value_processed"`
 	VariableId     types.Int64  `tfsdk:"variable_id"`
 }
@@ -66,7 +67,8 @@ func (r *variableResourceModel) loadAPI(domain string, variable *buddy.Variable)
 	r.Key = types.StringValue(variable.Key)
 	r.Encrypted = types.BoolValue(variable.Encrypted)
 	r.Settable = types.BoolValue(variable.Settable)
-	r.Description = types.StringValue(variable.Description)
+	r.Note = types.StringValue(variable.Note)
+	r.Description = types.StringValue(variable.Note)
 	r.ValueProcessed = types.StringValue(variable.Value)
 	r.VariableId = types.Int64Value(int64(variable.Id))
 	if variable.Project != nil {
@@ -200,8 +202,21 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The variable's description",
+				DeprecationMessage:  "Use note field instead",
 				Optional:            true,
 				Computed:            true,
+				Validators:          util.StringValidatorsAlias("note"),
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("note"),
+				},
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The variable's note",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("description"),
+				},
 			},
 			"value_processed": schema.StringAttribute{
 				MarkdownDescription: "The variable's processed value. Encrypted if **encrypted** == true",
@@ -242,8 +257,10 @@ func (r *variableResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.Encrypted.IsNull() && !data.Encrypted.IsUnknown() {
 		ops.Encrypted = data.Encrypted.ValueBoolPointer()
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.Project = &buddy.VariableProject{
@@ -322,8 +339,10 @@ func (r *variableResource) Update(ctx context.Context, req resource.UpdateReques
 	if !data.Settable.IsNull() && !data.Settable.IsUnknown() {
 		ops.Settable = data.Settable.ValueBoolPointer()
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	variable, _, err := r.client.VariableService.Update(domain, variableId, &ops)
 	if err != nil {

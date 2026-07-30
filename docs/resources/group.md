@@ -20,9 +20,9 @@ Token scope required: `WORKSPACE`
 
 ```terraform
 resource "buddy_group" "devs" {
-  domain      = "mydomain"
-  name        = "devs"
-  description = "group for www developers"
+  domain = "mydomain"
+  name   = "devs"
+  note   = "group for www developers"
 }
 ```
 
@@ -38,7 +38,8 @@ resource "buddy_group" "devs" {
 
 - `auto_assign_permission_set_id` (Number) The permission's ID with which the group will be assigned to new projects
 - `auto_assign_to_new_projects` (Boolean) Defines whether or not to automatically assign group to new projects
-- `description` (String) The group's description
+- `description` (String, Deprecated) The group's description
+- `note` (String) The group's note
 
 ### Read-Only
 
