@@ -41,6 +41,7 @@ type permissionResourceModel struct {
 	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
 	PermissionId           types.Int64  `tfsdk:"permission_id"`
 	Description            types.String `tfsdk:"description"`
+	Note                   types.String `tfsdk:"note"`
 	HtmlUrl                types.String `tfsdk:"html_url"`
 	Type                   types.String `tfsdk:"type"`
 }
@@ -70,7 +71,8 @@ func (r *permissionResourceModel) loadAPI(domain string, permission *buddy.Permi
 	r.PermissionId = types.Int64Value(int64(permission.Id))
 	r.HtmlUrl = types.StringValue(permission.HtmlUrl)
 	r.Type = types.StringValue(permission.Type)
-	r.Description = types.StringValue(permission.Description)
+	r.Description = types.StringValue(permission.Note)
+	r.Note = types.StringValue(permission.Note)
 }
 
 func (r *permissionResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -101,6 +103,14 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The permission's name",
 				Required:            true,
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The permission's note",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("description"),
+				},
 			},
 			"pipeline_access_level": schema.StringAttribute{
 				MarkdownDescription: "The permission's access level to pipelines. Allowed: `DENIED`, `READ_ONLY`, `RUN_ONLY`, `READ_WRITE`",
@@ -166,8 +176,13 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The permission's description",
+				DeprecationMessage:  "Use note field instead",
 				Optional:            true,
 				Computed:            true,
+				Validators:          util.StringValidatorsAlias("note"),
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("note"),
+				},
 			},
 			"html_url": schema.StringAttribute{
 				MarkdownDescription: "The permission's URL",
@@ -210,8 +225,10 @@ func (r *permissionResource) Create(ctx context.Context, req resource.CreateRequ
 	if !data.EnvironmentAccessLevel.IsNull() && !data.EnvironmentAccessLevel.IsUnknown() {
 		ops.EnvironmentAccessLevel = data.EnvironmentAccessLevel.ValueStringPointer()
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	permission, _, err := r.client.PermissionService.Create(domain, &ops)
 	if err != nil {
@@ -279,8 +296,10 @@ func (r *permissionResource) Update(ctx context.Context, req resource.UpdateRequ
 	if !data.EnvironmentAccessLevel.IsNull() && !data.EnvironmentAccessLevel.IsUnknown() {
 		ops.EnvironmentAccessLevel = data.EnvironmentAccessLevel.ValueStringPointer()
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	permission, _, err := r.client.PermissionService.Update(domain, permissionId, &ops)
 	if err != nil {

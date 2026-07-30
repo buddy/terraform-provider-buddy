@@ -61,6 +61,7 @@ data "buddy_pipeline" "by_id" {
 - `last_execution_revision` (String) The pipeline's last run revision
 - `last_execution_status` (String) The pipeline's last run status
 - `loop` (Set of String) Pipeline will run for each possible combination of the variables
+- `note` (String) The pipeline's note
 - `priority` (String) The pipeline's priority
 - `refs` (Set of String) The pipeline's list of refs
 - `remote_branch` (String, Deprecated) The pipeline's remote definition branch name

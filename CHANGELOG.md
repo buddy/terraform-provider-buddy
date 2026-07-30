@@ -1,3 +1,11 @@
+# Release v1.44.0 (2026-07-29)
+* Add note to various resources
+* Deprecate description in favor of note in group, permission, variable and variable_ssh_key resources
+* Remove description from group and permission data sources, the API no longer returns it
+* Add region to the provider configuration
+* Fix API request logging writing to stdout, which Terraform reported as `unexpected data`
+* Redact sensitive values from API request logging
+
 # Release v1.43.1 (2026-04-28)
 * Add PRIVATE domain type
 

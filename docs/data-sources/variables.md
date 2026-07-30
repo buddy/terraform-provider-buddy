@@ -61,9 +61,10 @@ data "buddy_variables" "pipeline" {
 
 Read-Only:
 
-- `description` (String)
+- `description` (String, Deprecated)
 - `encrypted` (Boolean)
 - `key` (String)
+- `note` (String)
 - `settable` (Boolean)
 - `value` (String, Sensitive)
 - `variable_id` (Number)

@@ -37,6 +37,7 @@ type groupResourceModel struct {
 	GroupId                   types.Int64  `tfsdk:"group_id"`
 	HtmlUrl                   types.String `tfsdk:"html_url"`
 	Description               types.String `tfsdk:"description"`
+	Note                      types.String `tfsdk:"note"`
 }
 
 func (r *groupResourceModel) decomposeId() (string, int, error) {
@@ -57,7 +58,8 @@ func (r *groupResourceModel) loadAPI(domain string, group *buddy.Group) {
 	r.Name = types.StringValue(group.Name)
 	r.GroupId = types.Int64Value(int64(group.Id))
 	r.HtmlUrl = types.StringValue(group.HtmlUrl)
-	r.Description = types.StringValue(group.Description)
+	r.Description = types.StringValue(group.Note)
+	r.Note = types.StringValue(group.Note)
 	r.AutoAssignToNewProjects = types.BoolValue(group.AutoAssignToNewProjects)
 	// auto_assign_permission_set_id we are leaving this prop value as set by client
 }
@@ -91,10 +93,23 @@ func (r *groupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				MarkdownDescription: "The group's name",
 				Required:            true,
 			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The group's description",
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The group's note",
 				Optional:            true,
 				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("description"),
+				},
+			},
+			"description": schema.StringAttribute{
+				MarkdownDescription: "The group's description",
+				DeprecationMessage:  "Use note field instead",
+				Optional:            true,
+				Computed:            true,
+				Validators:          util.StringValidatorsAlias("note"),
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("note"),
+				},
 			},
 			"auto_assign_to_new_projects": schema.BoolAttribute{
 				MarkdownDescription: "Defines whether or not to automatically assign group to new projects",
@@ -137,8 +152,10 @@ func (r *groupResource) Create(ctx context.Context, req resource.CreateRequest, 
 	ops := buddy.GroupOps{
 		Name: data.Name.ValueStringPointer(),
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	if !data.AutoAssignToNewProjects.IsNull() && !data.AutoAssignToNewProjects.IsUnknown() {
 		ops.AutoAssignToNewProjects = data.AutoAssignToNewProjects.ValueBoolPointer()
@@ -193,8 +210,10 @@ func (r *groupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 	ops := buddy.GroupOps{
 		Name: data.Name.ValueStringPointer(),
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	if !data.AutoAssignToNewProjects.IsNull() && !data.AutoAssignToNewProjects.IsUnknown() {
 		ops.AutoAssignToNewProjects = data.AutoAssignToNewProjects.ValueBoolPointer()

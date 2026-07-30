@@ -49,13 +49,14 @@ data "buddy_variable" "by_key_in_project" {
 ### Read-Only
 
 - `checksum` (String) The variable's checksum
-- `description` (String) The variable's description
+- `description` (String, Deprecated) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key
 - `file_chmod` (String) The variable's file permission in an action's container
 - `file_path` (String) The variable's path in the action's container
 - `file_place` (String) Should the variable's be copied to an action's container in **file_path** (`CONTAINER`, `NONE`)
 - `id` (String) The Terraform resource identifier for this item
 - `key_fingerprint` (String) The variable's fingerprint
+- `note` (String) The variable's note
 - `public_value` (String) The variable's public key
 - `settable` (Boolean) Is the variable's value changeable, always false for buddy_variable_ssh_key
 - `value` (String, Sensitive) The variable's value, always encrypted for buddy_variable_ssh_key

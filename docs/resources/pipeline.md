@@ -211,6 +211,7 @@ resource "buddy_pipeline" "conditions" {
 - `manage_permissions_by_yaml` (Boolean) If set to true pipeline permissions will be managed by yaml
 - `manage_variables_by_yaml` (Boolean) If set to true pipeline variables will be managed by yaml
 - `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
+- `note` (String) The pipeline's note
 - `pause_on_repeated_failures` (Number) The pipeline's max failed executions before it is paused. Restricted to schedule
 - `paused` (Boolean) Is the pipeline's run paused. Restricted schedule
 - `permissions` (Block Set) The pipeline's permissions (see [below for nested schema](#nestedblock--permissions))

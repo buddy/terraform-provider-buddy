@@ -16,6 +16,7 @@ func TestAccSourceEnvironments(t *testing.T) {
 	projectName := util.UniqueString()
 	name1 := "aaaa" + util.UniqueString()
 	name2 := util.UniqueString()
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -24,7 +25,7 @@ func TestAccSourceEnvironments(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceEnvironmentsConfig(domain, projectName, name1, name2),
+				Config: testAccSourceEnvironmentsConfig(domain, projectName, name1, name2, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSourceEnvironmentsAttributes("data.buddy_environments.all", 2, ""),
 					testAccSourceEnvironmentsAttributes("data.buddy_environments.name", 1, name1),
@@ -75,7 +76,7 @@ func testAccSourceEnvironmentsAttributes(n string, count int, name string) resou
 	}
 }
 
-func testAccSourceEnvironmentsConfig(domain string, projectName string, name1 string, name2 string) string {
+func testAccSourceEnvironmentsConfig(domain string, projectName string, name1 string, name2 string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -91,6 +92,7 @@ resource "buddy_environment" "a" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    identifier = "%s"
+   note = "%s"
 }
 
 resource "buddy_environment" "b" {
@@ -98,6 +100,7 @@ resource "buddy_environment" "b" {
    project_name = "${buddy_project.proj.name}"
    name = "%s"
    identifier = "%s"
+   note = "%s"
 }
 
 data "buddy_environments" "all" {
@@ -112,5 +115,5 @@ data "buddy_environments" "name" {
    name_regex = "^aaaa"
    depends_on = [buddy_environment.a, buddy_environment.b]
 }
-`, domain, projectName, name1, name1, name2, name2)
+`, domain, projectName, name1, name1, note, name2, name2, note)
 }

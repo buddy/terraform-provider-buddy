@@ -19,8 +19,9 @@ func TestAccVariable_workspace(t *testing.T) {
 	val := util.RandString(10)
 	newValue := util.RandString(10)
 	newKey := util.RandString(10)
-	desc := util.RandString(10)
-	newDesc := util.RandString(10)
+	note := util.RandString(10)
+	newNote := util.RandString(10)
+	legacyDescription := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -46,18 +47,34 @@ func TestAccVariable_workspace(t *testing.T) {
 			},
 			// update variable key
 			{
-				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, false, true, desc),
+				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, false, true, "note", note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, desc, false, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, note, false, true),
 				),
 			},
 			// update options
 			{
-				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, true, true, newDesc),
+				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, true, true, "note", newNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, newDesc, true, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, newNote, true, true),
+				),
+			},
+			// deprecated description feeds note
+			{
+				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, true, true, "description", legacyDescription),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, legacyDescription, true, true),
+				),
+			},
+			// migrate from deprecated description to note
+			{
+				Config: testAccVariableWorkspaceComplexConfig(domain, newKey, newValue, true, true, "note", newNote),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", newKey, newValue, newNote, true, true),
 				),
 			},
 			// import
@@ -78,8 +95,8 @@ func TestAccVariable_project(t *testing.T) {
 	key := util.UniqueString()
 	val := util.RandString(10)
 	newValue := util.RandString(10)
-	desc := util.RandString(10)
-	newDesc := util.RandString(10)
+	note := util.RandString(10)
+	newNote := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -89,18 +106,18 @@ func TestAccVariable_project(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create variable
 			{
-				Config: testAccVariableProjectComplexConfig(domain, projectName, key, val, true, true, desc),
+				Config: testAccVariableProjectComplexConfig(domain, projectName, key, val, true, true, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, projectName, key, val, desc, true, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, projectName, key, val, note, true, true),
 				),
 			},
 			// update variable
 			{
-				Config: testAccVariableProjectComplexConfig(domain, projectName, key, newValue, false, false, newDesc),
+				Config: testAccVariableProjectComplexConfig(domain, projectName, key, newValue, false, false, newNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, projectName, key, newValue, newDesc, false, false),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, projectName, key, newValue, newNote, false, false),
 				),
 			},
 			// import
@@ -120,8 +137,8 @@ func TestAccVariable_environment(t *testing.T) {
 	key := util.UniqueString()
 	val := util.RandString(10)
 	newValue := util.RandString(10)
-	desc := util.RandString(10)
-	newDesc := util.RandString(10)
+	note := util.RandString(10)
+	newNote := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -131,18 +148,18 @@ func TestAccVariable_environment(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create variable
 			{
-				Config: testAccVariableEnvironmentComplexConfig(domain, key, val, true, true, desc),
+				Config: testAccVariableEnvironmentComplexConfig(domain, key, val, true, true, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", key, val, desc, true, true),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", key, val, note, true, true),
 				),
 			},
 			// update variable
 			{
-				Config: testAccVariableEnvironmentComplexConfig(domain, key, newValue, false, false, newDesc),
+				Config: testAccVariableEnvironmentComplexConfig(domain, key, newValue, false, false, newNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable.bar", &variable),
-					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", key, newValue, newDesc, false, false),
+					testAccVariableAttributes("buddy_variable.bar", &variable, domain, "", key, newValue, newNote, false, false),
 				),
 			},
 			// import
@@ -156,7 +173,7 @@ func TestAccVariable_environment(t *testing.T) {
 	})
 }
 
-func testAccVariableAttributes(n string, variable *buddy.Variable, domain string, projectName string, key string, val string, description string, encrypted bool, settable bool) resource.TestCheckFunc {
+func testAccVariableAttributes(n string, variable *buddy.Variable, domain string, projectName string, key string, val string, note string, encrypted bool, settable bool) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -189,7 +206,7 @@ func testAccVariableAttributes(n string, variable *buddy.Variable, domain string
 		if err := util.CheckBoolFieldEqual("Settable", variable.Settable, settable); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqual("Description", variable.Description, description); err != nil {
+		if err := util.CheckFieldEqual("Note", variable.Note, note); err != nil {
 			return err
 		}
 		if err := util.CheckIntFieldSet("VariableId", variable.Id); err != nil {
@@ -224,7 +241,11 @@ func testAccVariableAttributes(n string, variable *buddy.Variable, domain string
 		if err := util.CheckBoolFieldEqual("settable", attrsSettable, settable); err != nil {
 			return err
 		}
-		if err := util.CheckFieldEqual("description", attrs["description"], description); err != nil {
+		if err := util.CheckFieldEqual("note", attrs["note"], note); err != nil {
+			return err
+		}
+		// deprecated description mirrors note
+		if err := util.CheckFieldEqual("description", attrs["description"], note); err != nil {
 			return err
 		}
 		if err := util.CheckIntFieldSet("variable_id", attrsVariableId); err != nil {
@@ -271,7 +292,7 @@ resource "buddy_variable" "bar" {
 `, domain, key, val)
 }
 
-func testAccVariableProjectComplexConfig(domain string, projectName string, key string, val string, encrypted bool, settable bool, description string) string {
+func testAccVariableProjectComplexConfig(domain string, projectName string, key string, val string, encrypted bool, settable bool, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -289,12 +310,12 @@ resource "buddy_variable" "bar" {
    value = "%s"
 	encrypted = %t
 	settable = %t
-	description = "%s"
+	note = "%s"
 }
-`, domain, projectName, key, val, encrypted, settable, description)
+`, domain, projectName, key, val, encrypted, settable, note)
 }
 
-func testAccVariableEnvironmentComplexConfig(domain string, key string, val string, encrypted bool, settable bool, description string) string {
+func testAccVariableEnvironmentComplexConfig(domain string, key string, val string, encrypted bool, settable bool, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -313,12 +334,12 @@ resource "buddy_variable" "bar" {
   value = "%s"
 	encrypted = %t
 	settable = %t
-	description = "%s"
+	note = "%s"
 }
-`, domain, key, val, encrypted, settable, description)
+`, domain, key, val, encrypted, settable, note)
 }
 
-func testAccVariableWorkspaceComplexConfig(domain string, key string, val string, encrypted bool, settable bool, description string) string {
+func testAccVariableWorkspaceComplexConfig(domain string, key string, val string, encrypted bool, settable bool, noteField string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -330,9 +351,9 @@ resource "buddy_variable" "bar" {
    value = "%s"
 	encrypted = %t
 	settable = %t
-	description = "%s"
+	%s = "%s"
 }
-`, domain, key, val, encrypted, settable, description)
+`, domain, key, val, encrypted, settable, noteField, note)
 }
 
 func testAccVariableCheckDestroy(s *terraform.State) error {

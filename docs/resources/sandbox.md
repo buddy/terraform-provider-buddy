@@ -48,6 +48,7 @@ resource "buddy_sandbox" "sb" {
 - `endpoints` (Attributes Map) The sandbox's map of endpoints (see [below for nested schema](#nestedatt--endpoints))
 - `identifier` (String) The sandbox's identifier
 - `install_commands` (String) The sandbox's install commands
+- `note` (String) The sandbox's note
 - `os` (String) The sandbox's operating system
 - `permissions` (Block Set) The sandbox's permissions (see [below for nested schema](#nestedblock--permissions))
 - `resources` (String) The sandbox's resources (cpu, ram)

@@ -58,6 +58,7 @@ resource "buddy_domain_record" "geo" {
 
 - `continent` (Map of Set of String) The record's geolocation continent list
 - `country` (Map of Set of String) The record's geolocation country list
+- `note` (String) The record's note
 - `routing` (String) The record's routing type
 - `ttl` (Number) The record's ttl
 

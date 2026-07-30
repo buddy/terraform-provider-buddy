@@ -13,6 +13,7 @@ func TestAccSourceSandbox(t *testing.T) {
 	domain := util.UniqueString()
 	projectName := util.UniqueString()
 	name := util.RandString(10)
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -21,14 +22,14 @@ func TestAccSourceSandbox(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceSandboxConfig(domain, projectName, name),
-				Check:  testAccSourceSandboxAttributes("data.buddy_sandbox.a", name),
+				Config: testAccSourceSandboxConfig(domain, projectName, name, note),
+				Check:  testAccSourceSandboxAttributes("data.buddy_sandbox.a", name, note),
 			},
 		},
 	})
 }
 
-func testAccSourceSandboxAttributes(n string, name string) resource.TestCheckFunc {
+func testAccSourceSandboxAttributes(n string, name string, note string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -36,6 +37,9 @@ func testAccSourceSandboxAttributes(n string, name string) resource.TestCheckFun
 		}
 		attrs := rs.Primary.Attributes
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("note", attrs["note"], note); err != nil {
 			return err
 		}
 		if err := util.CheckFieldSet("html_url", attrs["html_url"]); err != nil {
@@ -54,7 +58,7 @@ func testAccSourceSandboxAttributes(n string, name string) resource.TestCheckFun
 	}
 }
 
-func testAccSourceSandboxConfig(domain string, projectName string, name string) string {
+func testAccSourceSandboxConfig(domain string, projectName string, name string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -69,11 +73,12 @@ resource "buddy_sandbox" "a" {
    domain = "${buddy_workspace.foo.domain}"
    project_name = "${buddy_project.proj.name}"
    name = "%s"
+   note = "%s"
 }
 
 data "buddy_sandbox" "a" {
    domain = "${buddy_workspace.foo.domain}"
    sandbox_id = "${buddy_sandbox.a.sandbox_id}"
 }
-`, domain, projectName, name)
+`, domain, projectName, name, note)
 }

@@ -23,7 +23,8 @@ provider "buddy" {
 
 ### Optional
 
-- `base_url` (String) The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`
+- `base_url` (String) The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Takes precedence over `region`. Default: `https://api.buddy.works`
 - `insecure` (Boolean) Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable
+- `region` (String) The Buddy cloud region to connect to. Sets the API base url to the endpoint of the given region: `us` - `https://api.buddy.works`, `as` - `https://api.asia.buddy.works`, `eu` - `https://api.eu.buddy.works`. Case insensitive. Ignored when `base_url` is set. Can be specified with the `BUDDY_REGION` environment variable
 - `timeout` (Number) The Buddy API client timeout in seconds. Can be specified with the `BUDDY_TIMEOUT` environmental variable. Default: 30s
 - `token` (String, Sensitive) The OAuth2 token or Personal Access Token. Can be specified with the `BUDDY_TOKEN` environment variable.

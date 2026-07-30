@@ -15,6 +15,7 @@ type variableSshKeyModel struct {
 	Encrypted      types.Bool   `tfsdk:"encrypted"`
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
+	Note           types.String `tfsdk:"note"`
 	Value          types.String `tfsdk:"value"`
 	VariableId     types.Int64  `tfsdk:"variable_id"`
 	FilePlace      types.String `tfsdk:"file_place"`
@@ -31,6 +32,7 @@ func variableSshKeyModelAttrs() map[string]attr.Type {
 		"encrypted":       types.BoolType,
 		"settable":        types.BoolType,
 		"description":     types.StringType,
+		"note":            types.StringType,
 		"value":           types.StringType,
 		"variable_id":     types.Int64Type,
 		"file_place":      types.StringType,
@@ -46,7 +48,8 @@ func (v *variableSshKeyModel) loadAPI(variable *buddy.Variable) {
 	v.Key = types.StringValue(variable.Key)
 	v.Encrypted = types.BoolValue(variable.Encrypted)
 	v.Settable = types.BoolValue(variable.Settable)
-	v.Description = types.StringValue(variable.Description)
+	v.Description = types.StringValue(variable.Note)
+	v.Note = types.StringValue(variable.Note)
 	v.Value = types.StringValue(variable.Value)
 	v.VariableId = types.Int64Value(int64(variable.Id))
 	v.FilePlace = types.StringValue(variable.FilePlace)
@@ -69,6 +72,10 @@ func SourceVariableSshKeyModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"description": schema.StringAttribute{
+			DeprecationMessage: "Use note field instead",
+			Computed:           true,
+		},
+		"note": schema.StringAttribute{
 			Computed: true,
 		},
 		"value": schema.StringAttribute{

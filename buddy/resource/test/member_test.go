@@ -16,6 +16,7 @@ func TestAccMember(t *testing.T) {
 	var permission buddy.Permission
 	domain := util.UniqueString()
 	email := util.RandEmail()
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -28,41 +29,41 @@ func TestAccMember(t *testing.T) {
 				Config: testAccMemberConfig(domain, email),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMemberGet("buddy_member.bar", &member),
-					testAccMemberAttributes("buddy_member.bar", &member, false, email, false, nil),
+					testAccMemberAttributes("buddy_member.bar", &member, false, email, "", false, nil),
 				),
 			},
 			// update member
 			{
-				Config: testAccMemberUpdateConfig(domain, email),
+				Config: testAccMemberUpdateConfig(domain, email, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMemberGet("buddy_member.bar", &member),
-					testAccMemberAttributes("buddy_member.bar", &member, true, email, false, nil),
+					testAccMemberAttributes("buddy_member.bar", &member, true, email, note, false, nil),
 				),
 			},
 			// update auto assign
 			{
-				Config: testAccMemberUpdateAutoAssignConfig(domain, email, false),
+				Config: testAccMemberUpdateAutoAssignConfig(domain, email, note, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMemberGet("buddy_member.bar", &member),
 					testAccPermissionGet("buddy_permission.perm", &permission),
-					testAccMemberAttributes("buddy_member.bar", &member, true, email, false, &permission),
+					testAccMemberAttributes("buddy_member.bar", &member, true, email, note, false, &permission),
 				),
 			},
 			// update auto assign
 			{
-				Config: testAccMemberUpdateAutoAssignConfig(domain, email, true),
+				Config: testAccMemberUpdateAutoAssignConfig(domain, email, note, true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMemberGet("buddy_member.bar", &member),
 					testAccPermissionGet("buddy_permission.perm", &permission),
-					testAccMemberAttributes("buddy_member.bar", &member, true, email, true, &permission),
+					testAccMemberAttributes("buddy_member.bar", &member, true, email, note, true, &permission),
 				),
 			},
 			// update member
 			{
-				Config: testAccMemberUpdateNoAutoAssignConfig(domain, email),
+				Config: testAccMemberUpdateNoAutoAssignConfig(domain, email, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccMemberGet("buddy_member.bar", &member),
-					testAccMemberAttributes("buddy_member.bar", &member, false, email, false, nil),
+					testAccMemberAttributes("buddy_member.bar", &member, false, email, note, false, nil),
 				),
 			},
 			// import member
@@ -76,7 +77,7 @@ func TestAccMember(t *testing.T) {
 	})
 }
 
-func testAccMemberAttributes(n string, member *buddy.Member, admin bool, email string, autoAssign bool, permission *buddy.Permission) resource.TestCheckFunc {
+func testAccMemberAttributes(n string, member *buddy.Member, admin bool, email string, note string, autoAssign bool, permission *buddy.Permission) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -92,6 +93,12 @@ func testAccMemberAttributes(n string, member *buddy.Member, admin bool, email s
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("Email", member.Email, email); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("Note", member.Note, note); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("note", attrs["note"], note); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("admin", attrsAdmin, admin); err != nil {
@@ -155,7 +162,7 @@ func testAccMemberGet(n string, member *buddy.Member) resource.TestCheckFunc {
 	}
 }
 
-func testAccMemberUpdateConfig(domain string, email string) string {
+func testAccMemberUpdateConfig(domain string, email string, note string) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -174,12 +181,13 @@ func testAccMemberUpdateConfig(domain string, email string) string {
 	   domain = "${buddy_workspace.foo.domain}"
 	   email = "%s"
 	   admin = true
+	   note = "%s"
 	}
 
-`, domain, email)
+`, domain, email, note)
 }
 
-func testAccMemberUpdateAutoAssignConfig(domain string, email string, autoAssign bool) string {
+func testAccMemberUpdateAutoAssignConfig(domain string, email string, note string, autoAssign bool) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -198,14 +206,15 @@ func testAccMemberUpdateAutoAssignConfig(domain string, email string, autoAssign
 	   domain = "${buddy_workspace.foo.domain}"
 	   email = "%s"
 	   admin = true
+	   note = "%s"
 		auto_assign_to_new_projects = %t
 		auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
 	}
 
-`, domain, email, autoAssign)
+`, domain, email, note, autoAssign)
 }
 
-func testAccMemberUpdateNoAutoAssignConfig(domain string, email string) string {
+func testAccMemberUpdateNoAutoAssignConfig(domain string, email string, note string) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -224,10 +233,11 @@ func testAccMemberUpdateNoAutoAssignConfig(domain string, email string) string {
 	   domain = "${buddy_workspace.foo.domain}"
 	   email = "%s"
 	   admin = false
+	   note = "%s"
        auto_assign_to_new_projects = false
 	}
 
-`, domain, email)
+`, domain, email, note)
 }
 
 func testAccMemberConfig(domain string, email string) string {

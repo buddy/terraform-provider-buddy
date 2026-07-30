@@ -51,7 +51,11 @@ func testAccSourceVariablesAttributes(n string, count int) resource.TestCheckFun
 		if err := util.CheckFieldSet("variables.0.key", attrs["variables.0.key"]); err != nil {
 			return err
 		}
-		if err := util.CheckFieldSet("variables.0.description", attrs["variables.0.description"]); err != nil {
+		if err := util.CheckFieldSet("variables.0.note", attrs["variables.0.note"]); err != nil {
+			return err
+		}
+		// deprecated description mirrors note
+		if err := util.CheckFieldEqualAndSet("variables.0.description", attrs["variables.0.description"], attrs["variables.0.note"]); err != nil {
 			return err
 		}
 		if err := util.CheckFieldSet("variables.0.value", attrs["variables.0.value"]); err != nil {
@@ -79,7 +83,7 @@ resource "buddy_variable" "a" {
    value = "abcdef"
 	encrypted = true
 	settable = true
-	description = "abcdef"
+	note = "abcdef"
 }
 
 resource "buddy_variable" "aa" {
@@ -88,7 +92,7 @@ resource "buddy_variable" "aa" {
    value = "ueteryw"
 	encrypted = true
 	settable = true
-	description = "ueteryw"
+	note = "ueteryw"
 }
 
 resource "buddy_project" "p" {
@@ -109,7 +113,7 @@ resource "buddy_variable" "b" {
    value = "test"
 	encrypted = true
 	settable = true
-	description = "test"
+	note = "test"
 }
 
 resource "buddy_variable" "e" {
@@ -119,7 +123,7 @@ resource "buddy_variable" "e" {
    value = "test"
 	 encrypted = true
 	 settable = true
-	 description = "test"
+	 note = "test"
 }
 
 data "buddy_variables" "all" {

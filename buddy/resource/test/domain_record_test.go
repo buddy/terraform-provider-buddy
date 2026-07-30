@@ -41,7 +41,7 @@ func TestAccDomainGeoRecord(t *testing.T) {
 				Config: testAccDomainGeoRecordConfig(workspaceDomain, domain, name, typ, ttl, value, countryName, countryValue, continentName, continentValue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDomainRecordGet("buddy_domain_record.foo", &record),
-					testAccDomainRecordAttributes("buddy_domain_record.foo", &record),
+					testAccDomainRecordAttributes("buddy_domain_record.foo", &record, ""),
 				),
 			},
 			// update record
@@ -49,7 +49,7 @@ func TestAccDomainGeoRecord(t *testing.T) {
 				Config: testAccDomainGeoRecordConfig(workspaceDomain, domain, name, typ, newTtl, newValue, newCountryName, newCountryValue, newContinentName, newContinentValue),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDomainRecordGet("buddy_domain_record.foo", &record),
-					testAccDomainRecordAttributes("buddy_domain_record.foo", &record),
+					testAccDomainRecordAttributes("buddy_domain_record.foo", &record, ""),
 				),
 			},
 			// import record
@@ -72,6 +72,8 @@ func TestAccDomainRecord(t *testing.T) {
 	value := "1.1.1.1"
 	newTtl := 3600
 	newValue := "2.2.2.2"
+	note := util.RandString(10)
+	newNote := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -81,18 +83,18 @@ func TestAccDomainRecord(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create domain & record
 			{
-				Config: testAccDomainRecordConfig(workspaceDomain, domain, name, typ, ttl, value),
+				Config: testAccDomainRecordConfig(workspaceDomain, domain, name, typ, ttl, value, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDomainRecordGet("buddy_domain_record.foo", &record),
-					testAccDomainRecordAttributes("buddy_domain_record.foo", &record),
+					testAccDomainRecordAttributes("buddy_domain_record.foo", &record, note),
 				),
 			},
 			// update record
 			{
-				Config: testAccDomainRecordConfig(workspaceDomain, domain, name, typ, newTtl, newValue),
+				Config: testAccDomainRecordConfig(workspaceDomain, domain, name, typ, newTtl, newValue, newNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccDomainRecordGet("buddy_domain_record.foo", &record),
-					testAccDomainRecordAttributes("buddy_domain_record.foo", &record),
+					testAccDomainRecordAttributes("buddy_domain_record.foo", &record, newNote),
 				),
 			},
 			// import record
@@ -105,7 +107,7 @@ func TestAccDomainRecord(t *testing.T) {
 	})
 }
 
-func testAccDomainRecordAttributes(n string, record *buddy.Record) resource.TestCheckFunc {
+func testAccDomainRecordAttributes(n string, record *buddy.Record, note string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -117,6 +119,12 @@ func testAccDomainRecordAttributes(n string, record *buddy.Record) resource.Test
 			return err
 		}
 		if err := util.CheckIntFieldEqualAndSet("ttl", attrsTtl, record.Ttl); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("Note", record.Note, note); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("note", attrs["note"], note); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("value.0", attrs["value.0"], record.Values[0]); err != nil {
@@ -204,7 +212,7 @@ func testAccDomainGeoRecordConfig(workspaceDomain string, domain string, name st
 `, workspaceDomain, domain, name, typ, ttl, value, countryName, countryValue, continentName, continentValue)
 }
 
-func testAccDomainRecordConfig(workspaceDomain string, domain string, name string, typ string, ttl int, value string) string {
+func testAccDomainRecordConfig(workspaceDomain string, domain string, name string, typ string, ttl int, value string, note string) string {
 	return fmt.Sprintf(`
 
   resource "buddy_workspace" "foo" {
@@ -223,8 +231,9 @@ func testAccDomainRecordConfig(workspaceDomain string, domain string, name strin
      type = "%s"
      ttl = %d
      value = ["%s"]
+     note = "%s"
   }
-`, workspaceDomain, domain, name, typ, ttl, value)
+`, workspaceDomain, domain, name, typ, ttl, value, note)
 }
 
 func testAccDomainRecordDestroy(s *terraform.State) error {

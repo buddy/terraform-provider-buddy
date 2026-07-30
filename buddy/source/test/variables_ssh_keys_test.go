@@ -70,6 +70,10 @@ func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestC
 			if err := util.CheckBoolFieldEqual(index+".encrypted", attrsEncrypted, true); err != nil {
 				return err
 			}
+			// deprecated description mirrors note
+			if err := util.CheckFieldEqual(index+".description", attrs[index+".description"], attrs[index+".note"]); err != nil {
+				return err
+			}
 			if err := util.CheckFieldSet(index+".file_place", attrs[index+".file_place"]); err != nil {
 				return err
 			}
@@ -113,7 +117,7 @@ resource "buddy_environment" "e" {
 resource "buddy_variable_ssh_key" "a" {
    domain = "${buddy_workspace.foo.domain}"
    key = "abcdef"
-   description = "abcdef"
+   note = "abcdef"
    file_place = "CONTAINER"
    file_path = "~/abcdef"
    file_chmod = "600"
@@ -125,7 +129,7 @@ EOT
 resource "buddy_variable_ssh_key" "b" {
    domain = "${buddy_workspace.foo.domain}"
    key = "test"
-   description = "test"
+   note = "test"
    file_place = "CONTAINER"
    file_path = "~/test"
    file_chmod = "600"
@@ -138,7 +142,7 @@ resource "buddy_variable_ssh_key" "c" {
    domain = "${buddy_workspace.foo.domain}"
    project_name = "${buddy_project.p.name}"
    key = "test"
-   description = "test"
+   note = "test"
    file_place = "CONTAINER"
    file_path = "~/test"
    file_chmod = "600"
@@ -151,7 +155,7 @@ resource "buddy_variable_ssh_key" "e" {
    domain = "${buddy_workspace.foo.domain}"
    environment_id = "${buddy_environment.e.environment_id}"
    key = "test"
-   description = "test"
+   note = "test"
    file_place = "CONTAINER"
    file_path = "~/test"
    file_chmod = "600"

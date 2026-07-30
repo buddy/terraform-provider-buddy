@@ -40,7 +40,6 @@ type permissionSourceModel struct {
 	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
 	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
 	HtmlUrl                types.String `tfsdk:"html_url"`
-	Description            types.String `tfsdk:"description"`
 	Type                   types.String `tfsdk:"type"`
 }
 
@@ -56,7 +55,6 @@ func (s *permissionSourceModel) loadAPI(domain string, permission *buddy.Permiss
 	s.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
 	s.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
 	s.HtmlUrl = types.StringValue(permission.HtmlUrl)
-	s.Description = types.StringValue(permission.Description)
 	s.Type = types.StringValue(permission.Type)
 }
 
@@ -133,10 +131,6 @@ func (s *permissionSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			},
 			"html_url": schema.StringAttribute{
 				MarkdownDescription: "The permission's URL",
-				Computed:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The permission's description",
 				Computed:            true,
 			},
 			"type": schema.StringAttribute{

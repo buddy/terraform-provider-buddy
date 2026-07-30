@@ -33,6 +33,7 @@ type integrationResourceModel struct {
 	ID                  types.String `tfsdk:"id"`
 	Domain              types.String `tfsdk:"domain"`
 	Name                types.String `tfsdk:"name"`
+	Note                types.String `tfsdk:"note"`
 	Type                types.String `tfsdk:"type"`
 	Scope               types.String `tfsdk:"scope"`
 	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
@@ -73,6 +74,7 @@ func (r *integrationResourceModel) loadAPI(ctx context.Context, domain string, i
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, integration.HashId))
 	r.Domain = types.StringValue(domain)
 	r.Name = types.StringValue(integration.Name)
+	r.Note = types.StringValue(integration.Note)
 	r.Type = types.StringValue(integration.Type)
 	r.AuthType = types.StringValue(integration.AuthType)
 	r.Scope = types.StringValue(integration.Scope)
@@ -132,6 +134,11 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The integration's name",
 				Required:            true,
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The integration's note",
+				Optional:            true,
+				Computed:            true,
 			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "The integration's type. Allowed: `DIGITAL_OCEAN`, `AMAZON`, `SHOPIFY`, `PUSHOVER`, " +
@@ -367,6 +374,9 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 		Type:  data.Type.ValueStringPointer(),
 		Scope: data.Scope.ValueStringPointer(),
 	}
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	}
 	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
 		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
 	}
@@ -530,6 +540,9 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.ProjectName = data.ProjectName.ValueStringPointer()
+	}
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
 	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.IntegrationPermissionsModelToApi(ctx, &data.Permissions)

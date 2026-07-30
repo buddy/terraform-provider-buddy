@@ -46,6 +46,7 @@ type variableSshKeyResourceModel struct {
 	EnvironmentId  types.String `tfsdk:"environment_id"`
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
+	Note           types.String `tfsdk:"note"`
 	VariableId     types.Int64  `tfsdk:"variable_id"`
 	ValueProcessed types.String `tfsdk:"value_processed"`
 	Encrypted      types.Bool   `tfsdk:"encrypted"`
@@ -62,7 +63,8 @@ func (r *variableSshKeyResourceModel) loadAPI(domain string, variable *buddy.Var
 	r.FilePath = types.StringValue(variable.FilePath)
 	r.FileChmod = types.StringValue(variable.FileChmod)
 	r.Settable = types.BoolValue(variable.Settable)
-	r.Description = types.StringValue(variable.Description)
+	r.Description = types.StringValue(variable.Note)
+	r.Note = types.StringValue(variable.Note)
 	r.VariableId = types.Int64Value(int64(variable.Id))
 	r.ValueProcessed = types.StringValue(variable.Value)
 	r.Encrypted = types.BoolValue(variable.Encrypted)
@@ -228,8 +230,21 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The variable's description",
+				DeprecationMessage:  "Use note field instead",
 				Optional:            true,
 				Computed:            true,
+				Validators:          util.StringValidatorsAlias("note"),
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("note"),
+				},
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The variable's note",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					util.AliasPlanModifier("description"),
+				},
 			},
 			"variable_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's ID",
@@ -283,8 +298,10 @@ func (r *variableSshKeyResource) Create(ctx context.Context, req resource.Create
 		FilePath:  data.FilePath.ValueStringPointer(),
 		FileChmod: data.FileChmod.ValueStringPointer(),
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.Project = &buddy.VariableProject{
@@ -366,8 +383,10 @@ func (r *variableSshKeyResource) Update(ctx context.Context, req resource.Update
 		FilePath:  data.FilePath.ValueStringPointer(),
 		FileChmod: data.FileChmod.ValueStringPointer(),
 	}
-	if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Description = data.Description.ValueStringPointer()
+	if !data.Note.IsNull() && !data.Note.IsUnknown() {
+		ops.Note = data.Note.ValueStringPointer()
+	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
+		ops.Note = data.Description.ValueStringPointer()
 	}
 	variable, _, err := r.client.VariableService.Update(domain, variableId, &ops)
 	if err != nil {

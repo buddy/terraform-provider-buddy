@@ -29,12 +29,11 @@ type groupSource struct {
 }
 
 type groupSourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Domain      types.String `tfsdk:"domain"`
-	Name        types.String `tfsdk:"name"`
-	GroupId     types.Int64  `tfsdk:"group_id"`
-	HtmlUrl     types.String `tfsdk:"html_url"`
-	Description types.String `tfsdk:"description"`
+	ID      types.String `tfsdk:"id"`
+	Domain  types.String `tfsdk:"domain"`
+	Name    types.String `tfsdk:"name"`
+	GroupId types.Int64  `tfsdk:"group_id"`
+	HtmlUrl types.String `tfsdk:"html_url"`
 }
 
 func (s *groupSourceModel) loadAPI(domain string, group *buddy.Group) {
@@ -43,7 +42,6 @@ func (s *groupSourceModel) loadAPI(domain string, group *buddy.Group) {
 	s.Name = types.StringValue(group.Name)
 	s.GroupId = types.Int64Value(int64(group.Id))
 	s.HtmlUrl = types.StringValue(group.HtmlUrl)
-	s.Description = types.StringValue(group.Description)
 }
 
 func (s *groupSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -95,10 +93,6 @@ func (s *groupSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp
 			},
 			"html_url": schema.StringAttribute{
 				MarkdownDescription: "The group's URL",
-				Computed:            true,
-			},
-			"description": schema.StringAttribute{
-				MarkdownDescription: "The group's description",
 				Computed:            true,
 			},
 		},

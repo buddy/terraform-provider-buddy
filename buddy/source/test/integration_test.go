@@ -16,6 +16,7 @@ func TestAccSourceIntegration(t *testing.T) {
 	typ := buddy.IntegrationTypeAmazon
 	scope := buddy.IntegrationScopeWorkspace
 	identifier := util.RandString(10)
+	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -24,17 +25,17 @@ func TestAccSourceIntegration(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceIntegrationConfig(domain, name, typ, scope, identifier),
+				Config: testAccSourceIntegrationConfig(domain, name, typ, scope, identifier, note),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceIntegrationAttributes("data.buddy_integration.id", name, typ, identifier),
-					testAccSourceIntegrationAttributes("data.buddy_integration.name", name, typ, identifier),
+					testAccSourceIntegrationAttributes("data.buddy_integration.id", name, typ, identifier, note),
+					testAccSourceIntegrationAttributes("data.buddy_integration.name", name, typ, identifier, note),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourceIntegrationAttributes(n string, name string, typ string, identifier string) resource.TestCheckFunc {
+func testAccSourceIntegrationAttributes(n string, name string, typ string, identifier string, note string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -42,6 +43,9 @@ func testAccSourceIntegrationAttributes(n string, name string, typ string, ident
 		}
 		attrs := rs.Primary.Attributes
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("note", attrs["note"], note); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("type", attrs["type"], typ); err != nil {
@@ -60,7 +64,7 @@ func testAccSourceIntegrationAttributes(n string, name string, typ string, ident
 	}
 }
 
-func testAccSourceIntegrationConfig(domain string, name string, typ string, scope string, identifier string) string {
+func testAccSourceIntegrationConfig(domain string, name string, typ string, scope string, identifier string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -74,6 +78,7 @@ resource "buddy_integration" "int" {
    identifier = "%s"
    access_key = "ABC1234567890"
    secret_key = "ABC1234567890"
+   note = "%s"
 }
 
 data "buddy_integration" "id" {
@@ -85,5 +90,5 @@ data "buddy_integration" "name" {
    domain = "${buddy_workspace.foo.domain}"
    name = "${buddy_integration.int.name}"
 }
-`, domain, name, typ, scope, identifier)
+`, domain, name, typ, scope, identifier, note)
 }

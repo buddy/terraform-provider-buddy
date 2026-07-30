@@ -51,6 +51,7 @@ resource "buddy_environment" "dev" {
 - `base_only` (Boolean) Defines whether or not environment can be only used as base environment
 - `environments_access_level` (String) Defines whether or not environment can be inherited by other environments
 - `icon` (String) The environment's icon
+- `note` (String) The environment's note
 - `permissions` (Block Set) The environment's permissions (see [below for nested schema](#nestedblock--permissions))
 - `pipelines_access_level` (String) Defines whether or not environment can be used in all pipelines
 - `project_name` (String) The project's name

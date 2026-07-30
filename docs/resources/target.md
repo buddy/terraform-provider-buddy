@@ -230,6 +230,7 @@ resource "buddy_target" "restricted" {
 - `environment_id` (String) The environment's id
 - `host` (String) The target's host. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`
 - `integration` (String) The target's integration. Set for `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`
+- `note` (String) The target's note
 - `path` (String) The target's path
 - `permissions` (Block Set) The target's permissions (see [below for nested schema](#nestedblock--permissions))
 - `pipeline_id` (Number) The pipeline's id

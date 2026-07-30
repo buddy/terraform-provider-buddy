@@ -122,6 +122,8 @@ func TestAccEnvironmentSimple(t *testing.T) {
 	newTag := util.RandString(3)
 	icon := util.RandString(5)
 	newIcon := util.RandString(5)
+	note := util.RandString(10)
+	newNote := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
 			acc.PreCheck(t)
@@ -131,18 +133,20 @@ func TestAccEnvironmentSimple(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create env
 			{
-				Config: testAccEnvironmentConfig(domain, projectName, name, identifier, url, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelDenied, true, icon, tag),
+				Config: testAccEnvironmentConfig(domain, projectName, name, identifier, url, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelDenied, true, icon, tag, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
 					testAccEnvironmentAttributes("buddy_environment.env", &environment, name, identifier, url, icon, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentAccessLevelDenied, buddy.EnvironmentScopeProject, true, "", tag, "", "", ""),
+					resource.TestCheckResourceAttr("buddy_environment.env", "note", note),
 				),
 			},
 			// update env
 			{
-				Config: testAccEnvironmentConfig(domain, projectName, newName, newIdentifier, newUrl, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, false, newIcon, newTag),
+				Config: testAccEnvironmentConfig(domain, projectName, newName, newIdentifier, newUrl, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, false, newIcon, newTag, newNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccEnvironmentGet("buddy_environment.env", &environment),
 					testAccEnvironmentAttributes("buddy_environment.env", &environment, newName, newIdentifier, newUrl, newIcon, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentAccessLevelUseOnly, buddy.EnvironmentScopeProject, false, "", newTag, "", "", ""),
+					resource.TestCheckResourceAttr("buddy_environment.env", "note", newNote),
 				),
 			},
 			// import env
@@ -168,6 +172,9 @@ func testAccEnvironmentAttributes(n string, environment *buddy.Environment, name
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("note", attrs["note"], environment.Note); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("PipelinesAccessLevel", environment.PipelinesAccessLevel, pipAccessLevel); err != nil {
@@ -597,7 +604,7 @@ resource "buddy_environment" "env" {
 `, domain, baseName, baseIdentifier, projEnvName, projEnvIdentifier, pipName, pipIdentifier, name, identifier)
 }
 
-func testAccEnvironmentConfig(domain string, projectName string, name string, identifier string, url string, pipAccessLevel string, envAccessLevel string, baseOnly bool, icon string, tag string) string {
+func testAccEnvironmentConfig(domain string, projectName string, name string, identifier string, url string, pipAccessLevel string, envAccessLevel string, baseOnly bool, icon string, tag string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -619,8 +626,9 @@ resource "buddy_environment" "env" {
 		base_only = "%t"
 		icon = "%s"
     tags = ["%s"]
+    note = "%s"
 }
-`, domain, projectName, name, identifier, url, pipAccessLevel, envAccessLevel, baseOnly, icon, tag)
+`, domain, projectName, name, identifier, url, pipAccessLevel, envAccessLevel, baseOnly, icon, tag, note)
 }
 
 func testAccEnvironmentCheckDestroy(s *terraform.State) error {

@@ -48,8 +48,9 @@ data "buddy_variable_ssh_key" "by_key_in_project" {
 
 ### Read-Only
 
-- `description` (String) The variable's description
+- `description` (String, Deprecated) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted
 - `id` (String) The Terraform resource identifier for this item
+- `note` (String) The variable's note
 - `settable` (Boolean) Is the variable's value changeable
 - `value` (String, Sensitive) The variable's value. Encrypted if **encrypted** == true

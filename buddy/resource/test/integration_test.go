@@ -240,6 +240,8 @@ func TestAccIntegration_amazon(t *testing.T) {
 	domain := util.UniqueString()
 	name := util.RandString(10)
 	newName := util.RandString(10)
+	note := util.RandString(10)
+	newNote := util.RandString(10)
 	scope := buddy.IntegrationScopeWorkspace
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -250,18 +252,20 @@ func TestAccIntegration_amazon(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create integration
 			{
-				Config: testAccIntegrationAmazon(domain, name, scope),
+				Config: testAccIntegrationAmazon(domain, name, scope, note),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
 					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, "", nil, true, false),
+					resource.TestCheckResourceAttr("buddy_integration.bar", "note", note),
 				),
 			},
 			// update integration
 			{
-				Config: testAccIntegrationAmazon(domain, newName, scope),
+				Config: testAccIntegrationAmazon(domain, newName, scope, newNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
 					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, "", nil, true, false),
+					resource.TestCheckResourceAttr("buddy_integration.bar", "note", newNote),
 				),
 			},
 			// import integration
@@ -823,6 +827,9 @@ func testAccIntegrationAttributes(n string, integration *buddy.Integration, name
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqual("note", attrs["note"], integration.Note); err != nil {
+			return err
+		}
 		if err := util.CheckFieldEqualAndSet("type", attrs["type"], typ); err != nil {
 			return err
 		}
@@ -1035,7 +1042,7 @@ resource "buddy_integration" "bar" {
 `, domain, name, buddy.IntegrationTypeAmazon, scope, identifier, allPipelinesAllowed, allowedPipeline)
 }
 
-func testAccIntegrationAmazon(domain string, name string, scope string) string {
+func testAccIntegrationAmazon(domain string, name string, scope string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -1058,8 +1065,10 @@ resource "buddy_integration" "bar" {
        external_id = "3"
        duration = 100
    }
+
+   note = "%s"
 }
-`, domain, name, buddy.IntegrationTypeAmazon, scope)
+`, domain, name, buddy.IntegrationTypeAmazon, scope, note)
 }
 
 func testAccIntegrationGitHub(domain string, name string, scope string) string {

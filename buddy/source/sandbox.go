@@ -27,6 +27,7 @@ type sandboxSourceModel struct {
 	Domain     types.String `tfsdk:"domain"`
 	SandboxId  types.String `tfsdk:"sandbox_id"`
 	Name       types.String `tfsdk:"name"`
+	Note       types.String `tfsdk:"note"`
 	Status     types.String `tfsdk:"status"`
 	Identifier types.String `tfsdk:"identifier"`
 	HtmlUrl    types.String `tfsdk:"html_url"`
@@ -37,6 +38,7 @@ func (s *sandboxSourceModel) loadAPI(domain string, sandbox *buddy.Sandbox) {
 	s.Domain = types.StringValue(domain)
 	s.SandboxId = types.StringValue(sandbox.Id)
 	s.Name = types.StringValue(sandbox.Name)
+	s.Note = types.StringValue(sandbox.Note)
 	s.Status = types.StringValue(sandbox.Status)
 	s.Identifier = types.StringValue(sandbox.Identifier)
 	s.HtmlUrl = types.StringValue(sandbox.HtmlUrl)
@@ -73,6 +75,10 @@ func (s *sandboxSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The sandbox's name",
+				Computed:            true,
+			},
+			"note": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's note",
 				Computed:            true,
 			},
 			"identifier": schema.StringAttribute{

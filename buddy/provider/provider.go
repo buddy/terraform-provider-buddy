@@ -4,14 +4,17 @@ import (
 	"context"
 	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/provider"
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
+	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"os"
 	"strconv"
+	"strings"
 	buddyresource "terraform-provider-buddy/buddy/resource"
 	buddysource "terraform-provider-buddy/buddy/source"
 	"time"
@@ -26,8 +29,45 @@ type BuddyProvider struct {
 type BuddyProviderModel struct {
 	Token    types.String `tfsdk:"token"`
 	BaseUrl  types.String `tfsdk:"base_url"`
+	Region   types.String `tfsdk:"region"`
 	Insecure types.Bool   `tfsdk:"insecure"`
 	Timeout  types.Int64  `tfsdk:"timeout"`
+}
+
+var regionBaseUrls = map[string]string{
+	"us": "https://api.buddy.works",
+	"as": "https://api.asia.buddy.works",
+	"eu": "https://api.eu.buddy.works",
+}
+
+func regionBaseUrl(region string) (string, bool) {
+	baseUrl, ok := regionBaseUrls[strings.ToLower(strings.TrimSpace(region))]
+	return baseUrl, ok
+}
+
+// resolveBaseUrl picks the API base url out of the base_url & region settings.
+// An explicitly given base url always wins, region is only consulted when there is none.
+// An empty result means neither was set and the client falls back to its own default.
+func resolveBaseUrl(configBaseUrl types.String, configRegion types.String) (string, error) {
+	baseUrl := os.Getenv("BUDDY_BASE_URL")
+	if !configBaseUrl.IsNull() {
+		baseUrl = configBaseUrl.ValueString()
+	}
+	if baseUrl != "" {
+		return baseUrl, nil
+	}
+	region := os.Getenv("BUDDY_REGION")
+	if !configRegion.IsNull() {
+		region = configRegion.ValueString()
+	}
+	if region == "" {
+		return "", nil
+	}
+	regionUrl, ok := regionBaseUrl(region)
+	if !ok {
+		return "", fmt.Errorf("`%s` is not a known Buddy region, must be one of: us, as, eu", region)
+	}
+	return regionUrl, nil
 }
 
 func (p *BuddyProvider) Metadata(_ context.Context, _ provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -44,8 +84,15 @@ func (p *BuddyProvider) Schema(_ context.Context, _ provider.SchemaRequest, resp
 				Optional:            true,
 			},
 			"base_url": schema.StringAttribute{
-				MarkdownDescription: "The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Default: `https://api.buddy.works`",
+				MarkdownDescription: "The Buddy API base url. You may need to set this to your Buddy On-Premises API endpoint. Can be specified with the `BUDDY_BASE_URL` environment variable. Takes precedence over `region`. Default: `https://api.buddy.works`",
 				Optional:            true,
+			},
+			"region": schema.StringAttribute{
+				MarkdownDescription: "The Buddy cloud region to connect to. Sets the API base url to the endpoint of the given region: `us` - `https://api.buddy.works`, `as` - `https://api.asia.buddy.works`, `eu` - `https://api.eu.buddy.works`. Case insensitive. Ignored when `base_url` is set. Can be specified with the `BUDDY_REGION` environment variable",
+				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOfCaseInsensitive("us", "as", "eu"),
+				},
 			},
 			"insecure": schema.BoolAttribute{
 				MarkdownDescription: "Disable SSL verification of API calls. You may need to set this to `true` if you are using Buddy On-Premises without signed certificate. Can be specified with the `BUDDY_INSECURE` environmental variable",
@@ -79,6 +126,13 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy Base URL",
 		)
 	}
+	if config.Region.IsUnknown() {
+		resp.Diagnostics.AddAttributeError(
+			path.Root("region"),
+			"Unknown Buddy region for the API endpoint",
+			"The provider cannot create the Buddy API client as there is unknown configuration value for the Buddy region",
+		)
+	}
 	if config.BaseUrl.IsUnknown() {
 		resp.Diagnostics.AddAttributeError(
 			path.Root("insecure"),
@@ -101,9 +155,10 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 	if !config.Token.IsNull() {
 		token = config.Token.ValueString()
 	}
-	baseUrl := os.Getenv("BUDDY_BASE_URL")
-	if !config.BaseUrl.IsNull() {
-		baseUrl = config.BaseUrl.ValueString()
+	baseUrl, err := resolveBaseUrl(config.BaseUrl, config.Region)
+	if err != nil {
+		resp.Diagnostics.AddError("Wrong value for the Buddy region", fmt.Sprintf("The provider cannot create the Buddy API client as %s", err.Error()))
+		return
 	}
 	insecure := os.Getenv("BUDDY_INSECURE") == "true"
 	if !config.Insecure.IsNull() {
@@ -128,6 +183,7 @@ func (p *BuddyProvider) Configure(ctx context.Context, req provider.ConfigureReq
 		resp.Diagnostics.AddError("Failed to create Buddy Client from provider configuration", fmt.Sprintf("The provider failed to create a new Buddy Client from the giver configuration: %s", err.Error()))
 		return
 	}
+	client.SetLogger(newApiLogger(ctx))
 	resp.DataSourceData = client
 	resp.ResourceData = client
 }

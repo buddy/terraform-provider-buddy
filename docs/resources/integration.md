@@ -319,6 +319,7 @@ resource "buddy_integration" "google_service_account_oidc" {
 - `google_config` (String) The integration's google config. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `google_project` (String) The integration's google project. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `identifier` (String) The integration's identifier
+- `note` (String) The integration's note
 - `partner_token` (String, Sensitive) The integration's partner token. Provide for: `SHOPIFY`
 - `password` (String, Sensitive) The integration's password. Provide for: `AZURE_CLOUD`, `UPCLOUD`, `DOCKER_HUB`
 - `permissions` (Block Set) The integration's permissions (see [below for nested schema](#nestedblock--permissions))
