@@ -187,6 +187,7 @@ resource "buddy_pipeline" "conditions" {
 
 ### Optional
 
+- `agent_note` (String) The pipeline's agent note
 - `always_from_scratch` (Boolean) Defines whether or not to upload everything from scratch on every run
 - `auto_clear_cache` (Boolean) Defines whether or not to automatically clear cache before running the pipeline
 - `clone_depth` (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits

@@ -309,6 +309,7 @@ resource "buddy_integration" "google_service_account_oidc" {
 ### Optional
 
 - `access_key` (String, Sensitive) The integration's access key. Provide for: `DO_SPACES`, `AMAZON`, `PUSHOVER`
+- `agent_note` (String) The integration's agent note
 - `all_pipelines_allowed` (Boolean) Defines whether or not integration can be used in all pipelines
 - `allowed_pipelines` (Set of Number) List of pipeline IDs that is allowed to use the integration
 - `api_key` (String, Sensitive) The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`, `STACK_HAWK`

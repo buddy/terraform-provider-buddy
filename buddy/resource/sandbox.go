@@ -35,6 +35,7 @@ type sandboxResourceModel struct {
 	SandboxId                types.String `tfsdk:"sandbox_id"`
 	Name                     types.String `tfsdk:"name"`
 	Note                     types.String `tfsdk:"note"`
+	AgentNote                types.String `tfsdk:"agent_note"`
 	Status                   types.String `tfsdk:"status"`
 	SetupStatus              types.String `tfsdk:"setup_status"`
 	BootLogs                 types.String `tfsdk:"boot_logs"`
@@ -74,6 +75,7 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	r.HtmlUrl = types.StringValue(sandbox.HtmlUrl)
 	r.Name = types.StringValue(sandbox.Name)
 	r.Note = types.StringValue(sandbox.Note)
+	r.AgentNote = types.StringValue(sandbox.AgentNote)
 	r.Status = types.StringValue(sandbox.Status)
 	r.SetupStatus = types.StringValue(sandbox.SetupStatus)
 	r.BootLogs = types.StringValue(strings.Join(sandbox.BootLogs, "\n"))
@@ -158,6 +160,11 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The sandbox's note",
+				Optional:            true,
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's agent note",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -362,6 +369,9 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 	}
 	if !data.Note.IsUnknown() && !data.Note.IsNull() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsUnknown() && !data.AgentNote.IsNull() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.Identifier.IsUnknown() && !data.Identifier.IsNull() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
@@ -568,6 +578,9 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 	}
 	if !data.Note.IsUnknown() && !data.Note.IsNull() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsUnknown() && !data.AgentNote.IsNull() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.Permissions.IsUnknown() && !data.Permissions.IsNull() {
 		permissions, d := util.SandboxPermissionsModelToApi(ctx, &data.Permissions)

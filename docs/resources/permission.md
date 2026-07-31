@@ -41,6 +41,7 @@ resource "buddy_permission" "testers" {
 
 ### Optional
 
+- `agent_note` (String) The permission's agent note
 - `description` (String, Deprecated) The permission's description
 - `environment_access_level` (String) The permission's access level to environments. Allowed: `DENIED`, `MANAGE`, `USE_ONLY`
 - `note` (String) The permission's note

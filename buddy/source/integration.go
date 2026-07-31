@@ -33,6 +33,7 @@ type integrationSourceModel struct {
 	IntegrationId types.String `tfsdk:"integration_id"`
 	Identifier    types.String `tfsdk:"identifier"`
 	Note          types.String `tfsdk:"note"`
+	AgentNote     types.String `tfsdk:"agent_note"`
 	Type          types.String `tfsdk:"type"`
 	HtmlUrl       types.String `tfsdk:"html_url"`
 }
@@ -44,6 +45,7 @@ func (s *integrationSourceModel) loadAPI(domain string, integration *buddy.Integ
 	s.IntegrationId = types.StringValue(integration.HashId)
 	s.Identifier = types.StringValue(integration.Identifier)
 	s.Note = types.StringValue(integration.Note)
+	s.AgentNote = types.StringValue(integration.AgentNote)
 	s.Type = types.StringValue(integration.Type)
 	s.HtmlUrl = types.StringValue(integration.HtmlUrl)
 }
@@ -86,6 +88,10 @@ func (s *integrationSource) Schema(_ context.Context, _ datasource.SchemaRequest
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The integration's note",
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The integration's agent note",
 				Computed:            true,
 			},
 			"integration_id": schema.StringAttribute{

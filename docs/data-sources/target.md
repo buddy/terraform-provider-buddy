@@ -32,6 +32,7 @@ data "buddy_target" "by_id" {
 
 ### Read-Only
 
+- `agent_note` (String) The target's agent note
 - `disabled` (Boolean) Defines whether or not the target can be run
 - `host` (String) The target's host
 - `html_url` (String) The target's URL

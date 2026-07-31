@@ -61,6 +61,7 @@ data "buddy_variables" "pipeline" {
 
 Read-Only:
 
+- `agent_note` (String)
 - `description` (String, Deprecated)
 - `encrypted` (Boolean)
 - `key` (String)

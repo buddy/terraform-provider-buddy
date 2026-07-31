@@ -43,6 +43,7 @@ type domainRecordResourceModel struct {
 	Continent       types.Map    `tfsdk:"continent"`
 	Country         types.Map    `tfsdk:"country"`
 	Note            types.String `tfsdk:"note"`
+	AgentNote       types.String `tfsdk:"agent_note"`
 }
 
 func (r *domainRecordResourceModel) decomposeId() (string, string, string, string, error) {
@@ -63,6 +64,7 @@ func (r *domainRecordResourceModel) loadAPI(ctx context.Context, workspaceDomain
 	r.Ttl = types.Int64Value(int64(record.Ttl))
 	r.Routing = types.StringValue(record.Routing)
 	r.Note = types.StringValue(record.Note)
+	r.AgentNote = types.StringValue(record.AgentNote)
 	value, d := types.ListValueFrom(ctx, types.StringType, &record.Values)
 	diags.Append(d...)
 	r.Value = value
@@ -140,6 +142,11 @@ func (r *domainRecordResource) Schema(_ context.Context, _ resource.SchemaReques
 				Optional:            true,
 				Computed:            true,
 			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The record's agent note",
+				Optional:            true,
+				Computed:            true,
+			},
 			"routing": schema.StringAttribute{
 				MarkdownDescription: "The record's routing type",
 				Optional:            true,
@@ -204,6 +211,9 @@ func (r *domainRecordResource) Create(ctx context.Context, req resource.CreateRe
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.Country.IsNull() && !data.Country.IsUnknown() {
 		country, d := util.MapStringListToApi(ctx, &data.Country)
@@ -301,6 +311,9 @@ func (r *domainRecordResource) Update(ctx context.Context, req resource.UpdateRe
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	record, _, err := r.client.DomainService.UpsertRecord(workspaceDomain, domainId, domain, typ, &ops)
 	if err != nil {

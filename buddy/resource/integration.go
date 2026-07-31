@@ -34,6 +34,7 @@ type integrationResourceModel struct {
 	Domain              types.String `tfsdk:"domain"`
 	Name                types.String `tfsdk:"name"`
 	Note                types.String `tfsdk:"note"`
+	AgentNote           types.String `tfsdk:"agent_note"`
 	Type                types.String `tfsdk:"type"`
 	Scope               types.String `tfsdk:"scope"`
 	AllPipelinesAllowed types.Bool   `tfsdk:"all_pipelines_allowed"`
@@ -75,6 +76,7 @@ func (r *integrationResourceModel) loadAPI(ctx context.Context, domain string, i
 	r.Domain = types.StringValue(domain)
 	r.Name = types.StringValue(integration.Name)
 	r.Note = types.StringValue(integration.Note)
+	r.AgentNote = types.StringValue(integration.AgentNote)
 	r.Type = types.StringValue(integration.Type)
 	r.AuthType = types.StringValue(integration.AuthType)
 	r.Scope = types.StringValue(integration.Scope)
@@ -137,6 +139,11 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The integration's note",
+				Optional:            true,
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The integration's agent note",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -377,6 +384,9 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
 	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	}
 	if !data.AllPipelinesAllowed.IsNull() && !data.AllPipelinesAllowed.IsUnknown() {
 		ops.AllPipelinesAllowed = data.AllPipelinesAllowed.ValueBoolPointer()
 	}
@@ -543,6 +553,9 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.IntegrationPermissionsModelToApi(ctx, &data.Permissions)

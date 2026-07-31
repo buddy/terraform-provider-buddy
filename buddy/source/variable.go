@@ -41,6 +41,7 @@ type variableSourceModel struct {
 	Settable      types.Bool   `tfsdk:"settable"`
 	Description   types.String `tfsdk:"description"`
 	Note          types.String `tfsdk:"note"`
+	AgentNote     types.String `tfsdk:"agent_note"`
 	Value         types.String `tfsdk:"value"`
 }
 
@@ -53,6 +54,7 @@ func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable, v
 	s.Settable = types.BoolValue(variable.Settable)
 	s.Description = types.StringValue(variable.Note)
 	s.Note = types.StringValue(variable.Note)
+	s.AgentNote = types.StringValue(variable.AgentNote)
 	s.Value = types.StringValue(variable.Value)
 	if variable.Project != nil {
 		s.ProjectName = types.StringValue(variable.Project.Name)
@@ -186,6 +188,10 @@ func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The variable's note",
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The variable's agent note",
 				Computed:            true,
 			},
 			"value": schema.StringAttribute{

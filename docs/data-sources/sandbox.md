@@ -25,6 +25,7 @@ Token scopes required: `WORKSPACE`, `SANDBOX_INFO`
 
 ### Read-Only
 
+- `agent_note` (String) The sandbox's agent note
 - `html_url` (String) The sandbox's URL
 - `id` (String) The Terraform resource identifier for this item
 - `identifier` (String) The sandbox's identifier

@@ -34,6 +34,7 @@ func TestAccTarget_ftp(t *testing.T) {
 	disabled := true
 	pipelineAccessLevel := buddy.TargetPipelineAccessLevelUseOnly
 	note := util.RandString(10)
+	agentNote := util.RandString(10)
 
 	newName := util.RandString(10)
 	newIdentifier := util.UniqueString()
@@ -45,6 +46,7 @@ func TestAccTarget_ftp(t *testing.T) {
 	newDisabled := false
 	newPipelineAccessLevel := buddy.TargetPipelineAccessLevelDenied
 	newNote := util.RandString(10)
+	newAgentNote := util.RandString(10)
 
 	typ := buddy.TargetTypeFtp
 
@@ -56,12 +58,13 @@ func TestAccTarget_ftp(t *testing.T) {
 		CheckDestroy:             testAccTargetCheckDestroy,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccTargetFtpsConfig(domain, name, identifier, host, port, username, password, true, true, pipelineAccessLevel, note),
+				Config: testAccTargetFtpsConfig(domain, name, identifier, host, port, username, password, true, true, pipelineAccessLevel, note, agentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetGet("buddy_target.test", &target),
 					testAccTargetAttributes("buddy_target.test", &target, &buddy.TargetOps{
 						Name:                 &name,
 						Note:                 &note,
+						AgentNote:            &agentNote,
 						Identifier:           &identifier,
 						Type:                 &typ,
 						Host:                 &host,
@@ -77,12 +80,13 @@ func TestAccTarget_ftp(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccTargetFtpsConfig(domain, newName, newIdentifier, newHost, newPort, newUsername, newPassword, false, false, newPipelineAccessLevel, newNote),
+				Config: testAccTargetFtpsConfig(domain, newName, newIdentifier, newHost, newPort, newUsername, newPassword, false, false, newPipelineAccessLevel, newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccTargetGet("buddy_target.test", &target),
 					testAccTargetAttributes("buddy_target.test", &target, &buddy.TargetOps{
 						Name:                 &newName,
 						Note:                 &newNote,
+						AgentNote:            &newAgentNote,
 						Identifier:           &newIdentifier,
 						Type:                 &typ,
 						Host:                 &newHost,
@@ -799,6 +803,14 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 				return err
 			}
 		}
+		if ops.AgentNote != nil {
+			if err := util.CheckFieldEqual("AgentNote", target.AgentNote, *ops.AgentNote); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqual("agent_note", attrs["agent_note"], *ops.AgentNote); err != nil {
+				return err
+			}
+		}
 		if ops.Type != nil {
 			if err := util.CheckFieldEqual("Type", target.Type, *ops.Type); err != nil {
 				return err
@@ -981,7 +993,7 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 	}
 }
 
-func testAccTargetFtpsConfig(domain string, name string, identifier string, host string, port string, username string, password string, secure bool, disabled bool, pipelineAccessLevel string, note string) string {
+func testAccTargetFtpsConfig(domain string, name string, identifier string, host string, port string, username string, password string, secure bool, disabled bool, pipelineAccessLevel string, note string, agentNote string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "test" {
     domain = "%s"
@@ -1002,7 +1014,8 @@ resource "buddy_target" "test" {
     }
 		pipelines_access_level = "%s"
     note       = "%s"
-}`, domain, name, identifier, host, port, secure, disabled, username, password, pipelineAccessLevel, note)
+    agent_note = "%s"
+}`, domain, name, identifier, host, port, secure, disabled, username, password, pipelineAccessLevel, note, agentNote)
 }
 
 func testAccTargetSshPasswordConfig(domain string, name string, identifier string, tag string, host string, port string, path string, username string, password string) string {

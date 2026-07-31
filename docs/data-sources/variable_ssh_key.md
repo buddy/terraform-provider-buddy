@@ -48,6 +48,7 @@ data "buddy_variable" "by_key_in_project" {
 
 ### Read-Only
 
+- `agent_note` (String) The variable's agent note
 - `checksum` (String) The variable's checksum
 - `description` (String, Deprecated) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key

@@ -37,6 +37,7 @@ resource "buddy_member" "john" {
 ### Optional
 
 - `admin` (Boolean) Is the member a workspace administrator
+- `agent_note` (String) The member's agent note
 - `auto_assign_permission_set_id` (Number) The permission's ID with which the member will be assigned to new projects
 - `auto_assign_to_new_projects` (Boolean) Defines whether or not to automatically assign member to new projects
 - `note` (String) The member's note

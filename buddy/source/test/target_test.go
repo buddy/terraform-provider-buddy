@@ -19,6 +19,7 @@ func TestAccSourceTarget(t *testing.T) {
 	path := "/"
 	tag := util.RandString(3)
 	note := util.RandString(10)
+	agentNote := util.RandString(10)
 	username := util.RandString(10)
 	password := util.RandString(10)
 	resource.Test(t, resource.TestCase{
@@ -28,15 +29,15 @@ func TestAccSourceTarget(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourceTargetConfig(domain, name, identifier, host, port, path, username, password, tag, note),
+				Config: testAccSourceTargetConfig(domain, name, identifier, host, port, path, username, password, tag, note, agentNote),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceTargetAttributes("data.buddy_target.test", name, identifier, host, port, path, tag, note)),
+					testAccSourceTargetAttributes("data.buddy_target.test", name, identifier, host, port, path, tag, note, agentNote)),
 			},
 		},
 	})
 }
 
-func testAccSourceTargetAttributes(n string, name string, identifier string, host string, port string, path string, tag string, note string) resource.TestCheckFunc {
+func testAccSourceTargetAttributes(n string, name string, identifier string, host string, port string, path string, tag string, note string, agentNote string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -47,6 +48,9 @@ func testAccSourceTargetAttributes(n string, name string, identifier string, hos
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("note", attrs["note"], note); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("agent_note", attrs["agent_note"], agentNote); err != nil {
 			return err
 		}
 		if err := util.CheckFieldEqualAndSet("identifier", attrs["identifier"], identifier); err != nil {
@@ -77,7 +81,7 @@ func testAccSourceTargetAttributes(n string, name string, identifier string, hos
 	}
 }
 
-func testAccSourceTargetConfig(domain string, name string, identifier string, host string, port string, path string, username string, password string, tag string, note string) string {
+func testAccSourceTargetConfig(domain string, name string, identifier string, host string, port string, path string, username string, password string, tag string, note string, agentNote string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "test" {
     domain = "%s"
@@ -93,6 +97,7 @@ resource "buddy_target" "test" {
     path       = "%s"
     tags       = ["%s"]
     note       = "%s"
+    agent_note = "%s"
     auth {
         method   = "PASSWORD"
         username = "%s"
@@ -103,5 +108,5 @@ resource "buddy_target" "test" {
 data "buddy_target" "test" {
     domain    = buddy_workspace.test.domain
     target_id = buddy_target.test.target_id
-}`, domain, name, identifier, host, port, path, tag, note, username, password)
+}`, domain, name, identifier, host, port, path, tag, note, agentNote, username, password)
 }

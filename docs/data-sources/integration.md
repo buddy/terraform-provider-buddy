@@ -41,6 +41,7 @@ data "buddy_integration" "azure" {
 
 ### Read-Only
 
+- `agent_note` (String) The integration's agent note
 - `html_url` (String) The integration's URL
 - `id` (String) The Terraform resource identifier for this item
 - `identifier` (String) The integration's identifier

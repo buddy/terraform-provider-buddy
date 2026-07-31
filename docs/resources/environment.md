@@ -45,6 +45,7 @@ resource "buddy_environment" "dev" {
 
 ### Optional
 
+- `agent_note` (String) The environment's agent note
 - `allowed_environment` (Block Set) The environment's allowed child environment (see [below for nested schema](#nestedblock--allowed_environment))
 - `allowed_pipeline` (Block Set) The environment's allowed pipeline (see [below for nested schema](#nestedblock--allowed_pipeline))
 - `base_environments` (Set of String) The environment's list of parent environments ID to inherit from

@@ -50,6 +50,7 @@ type environmentResourceModel struct {
 	Identifier              types.String `tfsdk:"identifier"`
 	Name                    types.String `tfsdk:"name"`
 	Note                    types.String `tfsdk:"note"`
+	AgentNote               types.String `tfsdk:"agent_note"`
 	Icon                    types.String `tfsdk:"icon"`
 	PublicUrl               types.String `tfsdk:"public_url"`
 	PipelinesAccessLevel    types.String `tfsdk:"pipelines_access_level"`
@@ -80,6 +81,7 @@ func (r *environmentResourceModel) loadAPI(ctx context.Context, domain string, e
 	r.Identifier = types.StringValue(environment.Identifier)
 	r.Name = types.StringValue(environment.Name)
 	r.Note = types.StringValue(environment.Note)
+	r.AgentNote = types.StringValue(environment.AgentNote)
 	r.Icon = types.StringValue(environment.Icon)
 	r.PublicUrl = types.StringValue(environment.PublicUrl)
 	r.PipelinesAccessLevel = types.StringValue(environment.PipelinesAccessLevel)
@@ -167,6 +169,11 @@ func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The environment's note",
+				Optional:            true,
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The environment's agent note",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -351,6 +358,9 @@ func (e *environmentResource) Create(ctx context.Context, req resource.CreateReq
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
 	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	}
 	if !data.PublicUrl.IsNull() && !data.PublicUrl.IsUnknown() {
 		ops.PublicUrl = data.PublicUrl.ValueStringPointer()
 	}
@@ -476,6 +486,9 @@ func (e *environmentResource) Update(ctx context.Context, req resource.UpdateReq
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.PublicUrl.IsNull() && !data.PublicUrl.IsUnknown() {
 		ops.PublicUrl = data.PublicUrl.ValueStringPointer()

@@ -44,6 +44,7 @@ data "buddy_pipeline" "by_id" {
 
 ### Read-Only
 
+- `agent_note` (String) The pipeline's agent note
 - `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
 - `cpu` (String) The pipeline's cpu
 - `definition_source` (String) The pipeline's definition source
