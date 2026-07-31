@@ -35,6 +35,7 @@ type pipelineSourceModel struct {
 	ProjectName             types.String `tfsdk:"project_name"`
 	Name                    types.String `tfsdk:"name"`
 	Note                    types.String `tfsdk:"note"`
+	AgentNote               types.String `tfsdk:"agent_note"`
 	Identifier              types.String `tfsdk:"identifier"`
 	PipelineId              types.Int64  `tfsdk:"pipeline_id"`
 	Priority                types.String `tfsdk:"priority"`
@@ -69,6 +70,7 @@ func (s *pipelineSourceModel) loadAPI(ctx context.Context, domain string, projec
 	s.ProjectName = types.StringValue(projectName)
 	s.Name = types.StringValue(pipeline.Name)
 	s.Note = types.StringValue(pipeline.Note)
+	s.AgentNote = types.StringValue(pipeline.AgentNote)
 	s.Identifier = types.StringValue(pipeline.Identifier)
 	s.PipelineId = types.Int64Value(int64(pipeline.Id))
 	s.Priority = types.StringValue(pipeline.Priority)
@@ -151,6 +153,10 @@ func (s *pipelineSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's note",
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's agent note",
 				Computed:            true,
 			},
 			"identifier": schema.StringAttribute{

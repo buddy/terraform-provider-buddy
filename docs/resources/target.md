@@ -223,6 +223,7 @@ resource "buddy_target" "restricted" {
 
 ### Optional
 
+- `agent_note` (String) The target's agent note
 - `allowed_pipeline` (Block Set) List of specific pipelines allowed to use this target (see [below for nested schema](#nestedblock--allowed_pipeline))
 - `allowed_sandboxes` (Block Set) List of specific sandboxes allowed to use this target (see [below for nested schema](#nestedblock--allowed_sandboxes))
 - `auth` (Block Set) The target's auth. Set for `FTP`, `GIT`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN` (see [below for nested schema](#nestedblock--auth))

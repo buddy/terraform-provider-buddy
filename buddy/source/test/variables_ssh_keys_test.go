@@ -74,6 +74,11 @@ func testAccSourceVariablesSshKeysAttributes(n string, count int) resource.TestC
 			if err := util.CheckFieldEqual(index+".description", attrs[index+".description"], attrs[index+".note"]); err != nil {
 				return err
 			}
+			// the config sets agent_note to the same value as note; the workspace's
+			// built-in id_workspace key carries neither, so both are empty for it
+			if err := util.CheckFieldEqual(index+".agent_note", attrs[index+".agent_note"], attrs[index+".note"]); err != nil {
+				return err
+			}
 			if err := util.CheckFieldSet(index+".file_place", attrs[index+".file_place"]); err != nil {
 				return err
 			}
@@ -118,6 +123,7 @@ resource "buddy_variable_ssh_key" "a" {
    domain = "${buddy_workspace.foo.domain}"
    key = "abcdef"
    note = "abcdef"
+   agent_note = "abcdef"
    file_place = "CONTAINER"
    file_path = "~/abcdef"
    file_chmod = "600"
@@ -130,6 +136,7 @@ resource "buddy_variable_ssh_key" "b" {
    domain = "${buddy_workspace.foo.domain}"
    key = "test"
    note = "test"
+   agent_note = "test"
    file_place = "CONTAINER"
    file_path = "~/test"
    file_chmod = "600"
@@ -143,6 +150,7 @@ resource "buddy_variable_ssh_key" "c" {
    project_name = "${buddy_project.p.name}"
    key = "test"
    note = "test"
+   agent_note = "test"
    file_place = "CONTAINER"
    file_path = "~/test"
    file_chmod = "600"
@@ -156,6 +164,7 @@ resource "buddy_variable_ssh_key" "e" {
    environment_id = "${buddy_environment.e.environment_id}"
    key = "test"
    note = "test"
+   agent_note = "test"
    file_place = "CONTAINER"
    file_path = "~/test"
    file_chmod = "600"

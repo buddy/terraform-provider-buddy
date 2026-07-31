@@ -38,6 +38,7 @@ type targetResourceModel struct {
 	HtmlUrl              types.String `tfsdk:"html_url"`
 	Name                 types.String `tfsdk:"name"`
 	Note                 types.String `tfsdk:"note"`
+	AgentNote            types.String `tfsdk:"agent_note"`
 	Identifier           types.String `tfsdk:"identifier"`
 	Tags                 types.Set    `tfsdk:"tags"`
 	Type                 types.String `tfsdk:"type"`
@@ -81,6 +82,7 @@ func (m *targetResourceModel) loadAPI(ctx context.Context, domain string, target
 	m.Tags = tags
 	m.Name = types.StringValue(target.Name)
 	m.Note = types.StringValue(target.Note)
+	m.AgentNote = types.StringValue(target.AgentNote)
 	m.Type = types.StringValue(target.Type)
 	m.Host = types.StringValue(target.Host)
 	m.Scope = types.StringValue(target.Scope)
@@ -106,6 +108,9 @@ func (m *targetResourceModel) toOps(ctx context.Context) (*buddy.TargetOps, diag
 	}
 	if !m.Note.IsNull() && !m.Note.IsUnknown() {
 		ops.Note = m.Note.ValueStringPointer()
+	}
+	if !m.AgentNote.IsNull() && !m.AgentNote.IsUnknown() {
+		ops.AgentNote = m.AgentNote.ValueStringPointer()
 	}
 	if !m.AllowedPipeline.IsNull() && !m.AllowedPipeline.IsUnknown() {
 		pips, d := util.TargetPipelinesModelToApi(ctx, &m.AllowedPipeline)
@@ -258,6 +263,11 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The target's note",
+				Optional:            true,
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The target's agent note",
 				Optional:            true,
 				Computed:            true,
 			},

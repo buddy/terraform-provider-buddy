@@ -45,6 +45,7 @@ type variableResourceModel struct {
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
 	Note           types.String `tfsdk:"note"`
+	AgentNote      types.String `tfsdk:"agent_note"`
 	ValueProcessed types.String `tfsdk:"value_processed"`
 	VariableId     types.Int64  `tfsdk:"variable_id"`
 }
@@ -69,6 +70,7 @@ func (r *variableResourceModel) loadAPI(domain string, variable *buddy.Variable)
 	r.Settable = types.BoolValue(variable.Settable)
 	r.Note = types.StringValue(variable.Note)
 	r.Description = types.StringValue(variable.Note)
+	r.AgentNote = types.StringValue(variable.AgentNote)
 	r.ValueProcessed = types.StringValue(variable.Value)
 	r.VariableId = types.Int64Value(int64(variable.Id))
 	if variable.Project != nil {
@@ -218,6 +220,11 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					util.AliasPlanModifier("description"),
 				},
 			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The variable's agent note",
+				Optional:            true,
+				Computed:            true,
+			},
 			"value_processed": schema.StringAttribute{
 				MarkdownDescription: "The variable's processed value. Encrypted if **encrypted** == true",
 				Computed:            true,
@@ -261,6 +268,9 @@ func (r *variableResource) Create(ctx context.Context, req resource.CreateReques
 		ops.Note = data.Note.ValueStringPointer()
 	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Note = data.Description.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.Project = &buddy.VariableProject{
@@ -343,6 +353,9 @@ func (r *variableResource) Update(ctx context.Context, req resource.UpdateReques
 		ops.Note = data.Note.ValueStringPointer()
 	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Note = data.Description.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	variable, _, err := r.client.VariableService.Update(domain, variableId, &ops)
 	if err != nil {

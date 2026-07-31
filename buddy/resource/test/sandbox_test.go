@@ -66,6 +66,8 @@ func TestAccSandbox_main(t *testing.T) {
 	newTag := util.RandString(10)
 	note := util.RandString(10)
 	newNote := util.RandString(10)
+	agentNote := util.RandString(10)
+	newAgentNote := util.RandString(10)
 	tcpName := util.UniqueString()
 	tcpEndpoint := "22"
 	newTcpEndppoint := "123"
@@ -84,7 +86,7 @@ func TestAccSandbox_main(t *testing.T) {
 		Steps: []resource.TestStep{
 			{
 				// create
-				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, buddy.SandboxPermissionDenied, note),
+				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, buddy.SandboxPermissionDenied, note, agentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -92,6 +94,7 @@ func TestAccSandbox_main(t *testing.T) {
 						Identifier:        identifier,
 						Name:              name,
 						Note:              note,
+						AgentNote:         agentNote,
 						InstallCommands:   installCommands,
 						RunCommand:        runCommand,
 						AppDir:            appDir,
@@ -114,8 +117,9 @@ func TestAccSandbox_main(t *testing.T) {
 					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
 						Identifier: newIdentifier,
 						Name:       newName,
-						// note is not in this config, so it keeps the value from the previous step
+						// note & agent note are not in this config, so they keep the values from the previous step
 						Note:              note,
+						AgentNote:         agentNote,
 						InstallCommands:   installCommands,
 						RunCommand:        runCommand,
 						AppDir:            appDir,
@@ -137,7 +141,7 @@ func TestAccSandbox_main(t *testing.T) {
 				),
 			},
 			{
-				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, newOs, resources, tag, tcpName, tcpEndpoint, buddy.SandboxPermissionManage, newNote),
+				Config: testAccSandboxConfigOneEndpoint(domain, projectName, identifier, name, installCommands, runCommand, appDir, newOs, resources, tag, tcpName, tcpEndpoint, buddy.SandboxPermissionManage, newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -145,6 +149,7 @@ func TestAccSandbox_main(t *testing.T) {
 						Identifier:        identifier,
 						Name:              name,
 						Note:              newNote,
+						AgentNote:         newAgentNote,
 						InstallCommands:   installCommands,
 						RunCommand:        runCommand,
 						AppDir:            appDir,
@@ -181,6 +186,7 @@ func TestAccSandbox_main(t *testing.T) {
 type testAccSandboxExpectedAttributes struct {
 	Name              string
 	Note              string
+	AgentNote         string
 	Identifier        string
 	InstallCommands   string
 	RunCommand        string
@@ -222,6 +228,12 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 			return err
 		}
 		if err := util.CheckFieldEqual("note", attrs["note"], want.Note); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("AgentNote", sandbox.AgentNote, want.AgentNote); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("agent_note", attrs["agent_note"], want.AgentNote); err != nil {
 			return err
 		}
 		if want.Identifier != "" {
@@ -508,7 +520,7 @@ resource "buddy_sandbox" "bar" {
 `, domain, projectName, name, installCommands, runCommand, timeout)
 }
 
-func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, othersAccessLevel string, note string) string {
+func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, othersAccessLevel string, note string, agentNote string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
 		domain = "%s"
@@ -540,8 +552,9 @@ resource "buddy_sandbox" "bar" {
 			others = "%s"
 		}
 		note = "%s"
+		agent_note = "%s"
 }
-`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, othersAccessLevel, note)
+`, domain, projectName, identifier, name, installCommands, runCommand, appDir, os, resources, tag, tcpName, tcpEndpoint, othersAccessLevel, note, agentNote)
 }
 
 func testAccSandboxConfig(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, tlsName string, tlsEndpoint string, tlsTerminateAt string, httpName string, httpEndpoint string, httpCompresion bool, httpXHeader string, othersAccessLevel string) string {

@@ -56,6 +56,7 @@ resource "buddy_domain_record" "geo" {
 
 ### Optional
 
+- `agent_note` (String) The record's agent note
 - `continent` (Map of Set of String) The record's geolocation continent list
 - `country` (Map of Set of String) The record's geolocation country list
 - `note` (String) The record's note

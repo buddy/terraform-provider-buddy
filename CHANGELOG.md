@@ -1,3 +1,6 @@
+# Release v1.44.1 (2026-07-31)
+* Add agent_note to various resources 
+
 # Release v1.44.0 (2026-07-29)
 * Add note to various resources
 * Deprecate description in favor of note in group, permission, variable and variable_ssh_key resources

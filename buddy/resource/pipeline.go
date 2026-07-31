@@ -42,6 +42,7 @@ type pipelineResourceModel struct {
 	PipelineId                types.Int64  `tfsdk:"pipeline_id"`
 	Name                      types.String `tfsdk:"name"`
 	Note                      types.String `tfsdk:"note"`
+	AgentNote                 types.String `tfsdk:"agent_note"`
 	GitConfigRef              types.String `tfsdk:"git_config_ref"`
 	GitConfig                 types.Object `tfsdk:"git_config"`
 	DefinitionSource          types.String `tfsdk:"definition_source"`
@@ -94,6 +95,7 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.HtmlUrl = types.StringValue(pipeline.HtmlUrl)
 	r.Name = types.StringValue(pipeline.Name)
 	r.Note = types.StringValue(pipeline.Note)
+	r.AgentNote = types.StringValue(pipeline.AgentNote)
 	r.Identifier = types.StringValue(pipeline.Identifier)
 	r.GitConfigRef = types.StringValue(pipeline.GitConfigRef)
 	gitConfig, d := util.GitConfigModelFromApi(ctx, pipeline.GitConfig)
@@ -204,6 +206,11 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The pipeline's note",
+				Optional:            true,
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The pipeline's agent note",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -626,6 +633,9 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
 	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	}
 	if !data.Identifier.IsNull() && !data.Identifier.IsUnknown() {
 		ops.Identifier = data.Identifier.ValueStringPointer()
 	}
@@ -832,6 +842,9 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.Permissions.IsNull() && !data.Permissions.IsUnknown() {
 		permissions, d := util.PipelinePermissionsModelToApi(ctx, &data.Permissions)

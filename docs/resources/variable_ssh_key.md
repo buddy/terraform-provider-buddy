@@ -48,6 +48,7 @@ EOT
 ### Optional
 
 - `action_id` (Number) The variable's action ID
+- `agent_note` (String) The variable's agent note
 - `description` (String, Deprecated) The variable's description
 - `environment_id` (String) The variable's environmental ID. Set for envrionment scope
 - `note` (String) The variable's note

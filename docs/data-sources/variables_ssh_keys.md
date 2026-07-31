@@ -61,6 +61,7 @@ data "buddy_variables_ssh_keys" "pipeline" {
 
 Read-Only:
 
+- `agent_note` (String)
 - `checksum` (String)
 - `description` (String, Deprecated)
 - `encrypted` (Boolean)

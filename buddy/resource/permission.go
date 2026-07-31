@@ -42,6 +42,7 @@ type permissionResourceModel struct {
 	PermissionId           types.Int64  `tfsdk:"permission_id"`
 	Description            types.String `tfsdk:"description"`
 	Note                   types.String `tfsdk:"note"`
+	AgentNote              types.String `tfsdk:"agent_note"`
 	HtmlUrl                types.String `tfsdk:"html_url"`
 	Type                   types.String `tfsdk:"type"`
 }
@@ -73,6 +74,7 @@ func (r *permissionResourceModel) loadAPI(domain string, permission *buddy.Permi
 	r.Type = types.StringValue(permission.Type)
 	r.Description = types.StringValue(permission.Note)
 	r.Note = types.StringValue(permission.Note)
+	r.AgentNote = types.StringValue(permission.AgentNote)
 }
 
 func (r *permissionResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -111,6 +113,11 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				PlanModifiers: []planmodifier.String{
 					util.AliasPlanModifier("description"),
 				},
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The permission's agent note",
+				Optional:            true,
+				Computed:            true,
 			},
 			"pipeline_access_level": schema.StringAttribute{
 				MarkdownDescription: "The permission's access level to pipelines. Allowed: `DENIED`, `READ_ONLY`, `RUN_ONLY`, `READ_WRITE`",
@@ -230,6 +237,9 @@ func (r *permissionResource) Create(ctx context.Context, req resource.CreateRequ
 	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Note = data.Description.ValueStringPointer()
 	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	}
 	permission, _, err := r.client.PermissionService.Create(domain, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create permission", err))
@@ -300,6 +310,9 @@ func (r *permissionResource) Update(ctx context.Context, req resource.UpdateRequ
 		ops.Note = data.Note.ValueStringPointer()
 	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Note = data.Description.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	permission, _, err := r.client.PermissionService.Update(domain, permissionId, &ops)
 	if err != nil {

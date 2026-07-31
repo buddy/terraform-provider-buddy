@@ -16,6 +16,7 @@ type variableSshKeyModel struct {
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
 	Note           types.String `tfsdk:"note"`
+	AgentNote      types.String `tfsdk:"agent_note"`
 	Value          types.String `tfsdk:"value"`
 	VariableId     types.Int64  `tfsdk:"variable_id"`
 	FilePlace      types.String `tfsdk:"file_place"`
@@ -33,6 +34,7 @@ func variableSshKeyModelAttrs() map[string]attr.Type {
 		"settable":        types.BoolType,
 		"description":     types.StringType,
 		"note":            types.StringType,
+		"agent_note":      types.StringType,
 		"value":           types.StringType,
 		"variable_id":     types.Int64Type,
 		"file_place":      types.StringType,
@@ -50,6 +52,7 @@ func (v *variableSshKeyModel) loadAPI(variable *buddy.Variable) {
 	v.Settable = types.BoolValue(variable.Settable)
 	v.Description = types.StringValue(variable.Note)
 	v.Note = types.StringValue(variable.Note)
+	v.AgentNote = types.StringValue(variable.AgentNote)
 	v.Value = types.StringValue(variable.Value)
 	v.VariableId = types.Int64Value(int64(variable.Id))
 	v.FilePlace = types.StringValue(variable.FilePlace)
@@ -76,6 +79,9 @@ func SourceVariableSshKeyModelAttributes() map[string]schema.Attribute {
 			Computed:           true,
 		},
 		"note": schema.StringAttribute{
+			Computed: true,
+		},
+		"agent_note": schema.StringAttribute{
 			Computed: true,
 		},
 		"value": schema.StringAttribute{

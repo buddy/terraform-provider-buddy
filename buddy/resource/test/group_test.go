@@ -18,6 +18,7 @@ func TestAccGroup(t *testing.T) {
 	name := util.RandString(5)
 	newName := util.RandString(5)
 	newNote := util.RandString(5)
+	newAgentNote := util.RandString(5)
 	legacyDescription := util.RandString(5)
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acc.PreCheck(t) },
@@ -29,74 +30,74 @@ func TestAccGroup(t *testing.T) {
 				Config: testAccGroupConfig(domain, name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, name, "", false, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, name, "", "", false, nil),
 				),
 			},
 			// update group
 			{
-				Config: testAccGroupUpdateConfig(domain, newName, newNote),
+				Config: testAccGroupUpdateConfig(domain, newName, newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, false, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, newAgentNote, false, nil),
 				),
 			},
 			// update group assign
 			{
-				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newNote, false),
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newNote, newAgentNote, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
 					testAccPermissionGet("buddy_permission.perm", &permission),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, false, &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, newAgentNote, false, &permission),
 				),
 			},
 			// update group assign
 			{
-				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newNote, true),
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newNote, newAgentNote, true),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
 					testAccPermissionGet("buddy_permission.perm", &permission),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, true, &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, newAgentNote, true, &permission),
 				),
 			},
 			// null group assign
 			{
-				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newNote, false),
+				Config: testAccGroupUpdateProjectAssignConfig(domain, newName, newNote, newAgentNote, false),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
 					testAccPermissionGet("buddy_permission.perm", &permission),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, false, &permission),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, newAgentNote, false, &permission),
 				),
 			},
-			// deprecated description feeds note
+			// deprecated description feeds note, agent note is kept, it is optional & computed
 			{
 				Config: testAccGroupUpdateDescriptionConfig(domain, newName, legacyDescription),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, legacyDescription, false, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, legacyDescription, newAgentNote, false, nil),
 				),
 			},
 			// migrate from deprecated description to note
 			{
-				Config: testAccGroupUpdateConfig(domain, newName, newNote),
+				Config: testAccGroupUpdateConfig(domain, newName, newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, false, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, newAgentNote, false, nil),
 				),
 			},
-			// note dropped from the config keeps its value, it is optional & computed
+			// note & agent note dropped from the config keep their values, they are optional & computed
 			{
 				Config: testAccGroupConfig(domain, newName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, false, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, newNote, newAgentNote, false, nil),
 				),
 			},
-			// note explicitly emptied is cleared
+			// note & agent note explicitly emptied are cleared
 			{
-				Config: testAccGroupUpdateConfig(domain, newName, ""),
+				Config: testAccGroupUpdateConfig(domain, newName, "", ""),
 				Check: resource.ComposeTestCheckFunc(
 					testAccGroupGet("buddy_group.bar", &group),
-					testAccGroupAttributes("buddy_group.bar", &group, newName, "", false, nil),
+					testAccGroupAttributes("buddy_group.bar", &group, newName, "", "", false, nil),
 				),
 			},
 			// import group
@@ -110,7 +111,7 @@ func TestAccGroup(t *testing.T) {
 	})
 }
 
-func testAccGroupAttributes(n string, group *buddy.Group, name string, note string, autoAssign bool, defPerm *buddy.Permission) resource.TestCheckFunc {
+func testAccGroupAttributes(n string, group *buddy.Group, name string, note string, agentNote string, autoAssign bool, defPerm *buddy.Permission) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -125,6 +126,9 @@ func testAccGroupAttributes(n string, group *buddy.Group, name string, note stri
 		if err := util.CheckFieldEqual("Note", group.Note, note); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqual("AgentNote", group.AgentNote, agentNote); err != nil {
+			return err
+		}
 		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
 			return err
 		}
@@ -135,6 +139,9 @@ func testAccGroupAttributes(n string, group *buddy.Group, name string, note stri
 			return err
 		}
 		if err := util.CheckFieldEqual("note", attrs["note"], note); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqual("agent_note", attrs["agent_note"], agentNote); err != nil {
 			return err
 		}
 		// deprecated description mirrors note
@@ -182,7 +189,7 @@ func testAccGroupGet(n string, group *buddy.Group) resource.TestCheckFunc {
 	}
 }
 
-func testAccGroupUpdateConfig(domain string, name string, note string) string {
+func testAccGroupUpdateConfig(domain string, name string, note string, agentNote string) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -201,9 +208,10 @@ func testAccGroupUpdateConfig(domain string, name string, note string) string {
 	   domain = "${buddy_workspace.foo.domain}"
 	   name = "%s"
 	   note = "%s"
+	   agent_note = "%s"
 	}
 
-`, domain, name, note)
+`, domain, name, note, agentNote)
 }
 
 func testAccGroupUpdateDescriptionConfig(domain string, name string, description string) string {
@@ -230,7 +238,7 @@ func testAccGroupUpdateDescriptionConfig(domain string, name string, description
 `, domain, name, description)
 }
 
-func testAccGroupUpdateProjectAssignConfig(domain string, name string, note string, autoAssign bool) string {
+func testAccGroupUpdateProjectAssignConfig(domain string, name string, note string, agentNote string, autoAssign bool) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -249,11 +257,12 @@ func testAccGroupUpdateProjectAssignConfig(domain string, name string, note stri
 	   domain = "${buddy_workspace.foo.domain}"
 	   name = "%s"
 	   note = "%s"
+	   agent_note = "%s"
 		auto_assign_to_new_projects = %t
 		auto_assign_permission_set_id = "${buddy_permission.perm.permission_id}"
 	}
 
-`, domain, name, note, autoAssign)
+`, domain, name, note, agentNote, autoAssign)
 }
 func testAccGroupConfig(domain string, name string) string {
 	return fmt.Sprintf(`

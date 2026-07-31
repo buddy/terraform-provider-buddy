@@ -54,6 +54,9 @@ func testAccSourceVariablesAttributes(n string, count int) resource.TestCheckFun
 		if err := util.CheckFieldSet("variables.0.note", attrs["variables.0.note"]); err != nil {
 			return err
 		}
+		if err := util.CheckFieldSet("variables.0.agent_note", attrs["variables.0.agent_note"]); err != nil {
+			return err
+		}
 		// deprecated description mirrors note
 		if err := util.CheckFieldEqualAndSet("variables.0.description", attrs["variables.0.description"], attrs["variables.0.note"]); err != nil {
 			return err
@@ -84,6 +87,7 @@ resource "buddy_variable" "a" {
 	encrypted = true
 	settable = true
 	note = "abcdef"
+	agent_note = "abcdef"
 }
 
 resource "buddy_variable" "aa" {
@@ -93,6 +97,7 @@ resource "buddy_variable" "aa" {
 	encrypted = true
 	settable = true
 	note = "ueteryw"
+	agent_note = "ueteryw"
 }
 
 resource "buddy_project" "p" {
@@ -114,6 +119,7 @@ resource "buddy_variable" "b" {
 	encrypted = true
 	settable = true
 	note = "test"
+	agent_note = "test"
 }
 
 resource "buddy_variable" "e" {
@@ -124,6 +130,7 @@ resource "buddy_variable" "e" {
 	 encrypted = true
 	 settable = true
 	 note = "test"
+	 agent_note = "test"
 }
 
 data "buddy_variables" "all" {

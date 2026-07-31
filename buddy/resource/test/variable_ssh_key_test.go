@@ -18,6 +18,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 	key := util.UniqueString()
 	newKey := util.UniqueString()
 	note := util.RandString(10)
+	agentNote := util.RandString(10)
 	legacyDescription := util.RandString(10)
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test"
@@ -42,7 +43,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceSimpleConfig(domain, key, filePlace, filePath, fileChmod, privateKey),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey, filePlace, filePath, fileChmod, "", ""),
 				),
 			},
 			// update variable value
@@ -50,7 +51,7 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceSimpleConfig(domain, key, filePlace, filePath, fileChmod, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey2, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey2, filePlace, filePath, fileChmod, "", ""),
 				),
 			},
 			// update variable key
@@ -58,31 +59,31 @@ func TestAccVariableSshKey_workspace(t *testing.T) {
 				Config: testAccVariableSshKeyWorkspaceSimpleConfig(domain, newKey, filePlace, filePath, fileChmod, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, "", ""),
 				),
 			},
 			// update options
 			{
-				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, "note", note, privateKey2),
+				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, "note", note, agentNote, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, note),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, note, agentNote),
 				),
 			},
 			// deprecated description feeds note
 			{
-				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, "description", legacyDescription, privateKey2),
+				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, "description", legacyDescription, agentNote, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, legacyDescription),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, legacyDescription, agentNote),
 				),
 			},
 			// migrate from deprecated description to note
 			{
-				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, "note", note, privateKey2),
+				Config: testAccVariableSshKeyWorkspaceComplexConfig(domain, newKey, filePlace, filePath, fileChmod, "note", note, agentNote, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, note),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", newKey, privateKey2, filePlace, filePath, fileChmod, note, agentNote),
 				),
 			},
 			// import
@@ -102,6 +103,7 @@ func TestAccVariableSshKey_project(t *testing.T) {
 	projectName := util.UniqueString()
 	key := util.UniqueString()
 	note := util.RandString(10)
+	agentNote := util.RandString(10)
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test2"
 	fileChmod := "660"
@@ -122,18 +124,18 @@ func TestAccVariableSshKey_project(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create variable
 			{
-				Config: testAccVariableSshKeyProjectComplexConfig(domain, projectName, key, filePlace, filePath, fileChmod, "", privateKey),
+				Config: testAccVariableSshKeyProjectComplexConfig(domain, projectName, key, filePlace, filePath, fileChmod, "", "", privateKey),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, projectName, key, privateKey, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, projectName, key, privateKey, filePlace, filePath, fileChmod, "", ""),
 				),
 			},
 			// update variable
 			{
-				Config: testAccVariableSshKeyProjectComplexConfig(domain, projectName, key, filePlace, filePath, fileChmod, note, privateKey2),
+				Config: testAccVariableSshKeyProjectComplexConfig(domain, projectName, key, filePlace, filePath, fileChmod, note, agentNote, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, projectName, key, privateKey2, filePlace, filePath, fileChmod, note),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, projectName, key, privateKey2, filePlace, filePath, fileChmod, note, agentNote),
 				),
 			},
 			// import
@@ -152,6 +154,7 @@ func TestAccVariableSshKey_environment(t *testing.T) {
 	domain := util.UniqueString()
 	key := util.UniqueString()
 	note := util.RandString(10)
+	agentNote := util.RandString(10)
 	filePlace := buddy.VariableSshKeyFilePlaceContainer
 	filePath := "~/.ssh/test3"
 	fileChmod := "666"
@@ -172,18 +175,18 @@ func TestAccVariableSshKey_environment(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create variable
 			{
-				Config: testAccVariableSshKeyEnvironmentComplexConfig(domain, key, filePlace, filePath, fileChmod, "", privateKey),
+				Config: testAccVariableSshKeyEnvironmentComplexConfig(domain, key, filePlace, filePath, fileChmod, "", "", privateKey),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey, filePlace, filePath, fileChmod, ""),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey, filePlace, filePath, fileChmod, "", ""),
 				),
 			},
 			// update variable
 			{
-				Config: testAccVariableSshKeyEnvironmentComplexConfig(domain, key, filePlace, filePath, fileChmod, note, privateKey2),
+				Config: testAccVariableSshKeyEnvironmentComplexConfig(domain, key, filePlace, filePath, fileChmod, note, agentNote, privateKey2),
 				Check: resource.ComposeTestCheckFunc(
 					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
-					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey2, filePlace, filePath, fileChmod, note),
+					testAccVariableSshKeyAttributes("buddy_variable_ssh_key.bar", &variable, domain, "", key, privateKey2, filePlace, filePath, fileChmod, note, agentNote),
 				),
 			},
 			// import
@@ -197,7 +200,7 @@ func TestAccVariableSshKey_environment(t *testing.T) {
 	})
 }
 
-func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain string, projectName string, key string, val string, filePlace string, filePath string, fileChmod string, note string) resource.TestCheckFunc {
+func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain string, projectName string, key string, val string, filePlace string, filePath string, fileChmod string, note string, agentNote string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -248,6 +251,9 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 		if err := util.CheckFieldEqual("Note", variable.Note, note); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqual("AgentNote", variable.AgentNote, agentNote); err != nil {
+			return err
+		}
 		if err := util.CheckFieldEqualAndSet("FileChmod", variable.FileChmod, fileChmod); err != nil {
 			return err
 		}
@@ -290,6 +296,9 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 		if err := util.CheckFieldEqual("note", attrs["note"], note); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqual("agent_note", attrs["agent_note"], agentNote); err != nil {
+			return err
+		}
 		// deprecated description mirrors note
 		if err := util.CheckFieldEqual("description", attrs["description"], note); err != nil {
 			return err
@@ -301,7 +310,7 @@ func testAccVariableSshKeyAttributes(n string, variable *buddy.Variable, domain 
 	}
 }
 
-func testAccVariableSshKeyProjectComplexConfig(domain string, projectName string, key string, filePlace string, filePath string, fileChmod string, note string, val string) string {
+func testAccVariableSshKeyProjectComplexConfig(domain string, projectName string, key string, filePlace string, filePath string, fileChmod string, note string, agentNote string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -320,14 +329,15 @@ resource "buddy_variable_ssh_key" "bar" {
    file_path = "%s"
    file_chmod = "%s"
 	note = "%s"
+	agent_note = "%s"
    value = <<EOT
 %s
 EOT
 }
-`, domain, projectName, key, filePlace, filePath, fileChmod, note, val)
+`, domain, projectName, key, filePlace, filePath, fileChmod, note, agentNote, val)
 }
 
-func testAccVariableSshKeyEnvironmentComplexConfig(domain string, key string, filePlace string, filePath string, fileChmod string, note string, val string) string {
+func testAccVariableSshKeyEnvironmentComplexConfig(domain string, key string, filePlace string, filePath string, fileChmod string, note string, agentNote string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -347,14 +357,15 @@ resource "buddy_variable_ssh_key" "bar" {
    file_path = "%s"
    file_chmod = "%s"
 	 note = "%s"
+	 agent_note = "%s"
    value = <<EOT
 %s
 EOT
 }
-`, domain, key, filePlace, filePath, fileChmod, note, val)
+`, domain, key, filePlace, filePath, fileChmod, note, agentNote, val)
 }
 
-func testAccVariableSshKeyWorkspaceComplexConfig(domain string, key string, filePlace string, filePath string, fileChmod string, noteField string, note string, val string) string {
+func testAccVariableSshKeyWorkspaceComplexConfig(domain string, key string, filePlace string, filePath string, fileChmod string, noteField string, note string, agentNote string, val string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -367,11 +378,12 @@ resource "buddy_variable_ssh_key" "bar" {
    file_path = "%s"
    file_chmod = "%s"
 	%s = "%s"
+	agent_note = "%s"
    value = <<EOT
 %s
 EOT
 }
-`, domain, key, filePlace, filePath, fileChmod, noteField, note, val)
+`, domain, key, filePlace, filePath, fileChmod, noteField, note, agentNote, val)
 }
 
 func testAccVariableSshKeyWorkspaceSimpleConfig(domain string, key string, filePlace string, filePath string, fileChmod string, val string) string {

@@ -38,6 +38,7 @@ type groupResourceModel struct {
 	HtmlUrl                   types.String `tfsdk:"html_url"`
 	Description               types.String `tfsdk:"description"`
 	Note                      types.String `tfsdk:"note"`
+	AgentNote                 types.String `tfsdk:"agent_note"`
 }
 
 func (r *groupResourceModel) decomposeId() (string, int, error) {
@@ -60,6 +61,7 @@ func (r *groupResourceModel) loadAPI(domain string, group *buddy.Group) {
 	r.HtmlUrl = types.StringValue(group.HtmlUrl)
 	r.Description = types.StringValue(group.Note)
 	r.Note = types.StringValue(group.Note)
+	r.AgentNote = types.StringValue(group.AgentNote)
 	r.AutoAssignToNewProjects = types.BoolValue(group.AutoAssignToNewProjects)
 	// auto_assign_permission_set_id we are leaving this prop value as set by client
 }
@@ -100,6 +102,11 @@ func (r *groupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 				PlanModifiers: []planmodifier.String{
 					util.AliasPlanModifier("description"),
 				},
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The group's agent note",
+				Optional:            true,
+				Computed:            true,
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The group's description",
@@ -156,6 +163,9 @@ func (r *groupResource) Create(ctx context.Context, req resource.CreateRequest, 
 		ops.Note = data.Note.ValueStringPointer()
 	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Note = data.Description.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.AutoAssignToNewProjects.IsNull() && !data.AutoAssignToNewProjects.IsUnknown() {
 		ops.AutoAssignToNewProjects = data.AutoAssignToNewProjects.ValueBoolPointer()
@@ -214,6 +224,9 @@ func (r *groupResource) Update(ctx context.Context, req resource.UpdateRequest, 
 		ops.Note = data.Note.ValueStringPointer()
 	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
 		ops.Note = data.Description.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	if !data.AutoAssignToNewProjects.IsNull() && !data.AutoAssignToNewProjects.IsUnknown() {
 		ops.AutoAssignToNewProjects = data.AutoAssignToNewProjects.ValueBoolPointer()

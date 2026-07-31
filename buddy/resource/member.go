@@ -36,6 +36,7 @@ type memberResourceModel struct {
 	AutoAssignPermissionSetId types.Int64  `tfsdk:"auto_assign_permission_set_id"`
 	Name                      types.String `tfsdk:"name"`
 	Note                      types.String `tfsdk:"note"`
+	AgentNote                 types.String `tfsdk:"agent_note"`
 	MemberId                  types.Int64  `tfsdk:"member_id"`
 	HtmlUrl                   types.String `tfsdk:"html_url"`
 	AvatarUrl                 types.String `tfsdk:"avatar_url"`
@@ -59,6 +60,7 @@ func (r *memberResourceModel) loadAPI(domain string, member *buddy.Member) {
 	r.Domain = types.StringValue(domain)
 	r.Email = types.StringValue(member.Email)
 	r.Note = types.StringValue(member.Note)
+	r.AgentNote = types.StringValue(member.AgentNote)
 	r.Admin = types.BoolValue(member.Admin)
 	r.AutoAssignToNewProjects = types.BoolValue(member.AutoAssignToNewProjects)
 	r.Name = types.StringValue(member.Name)
@@ -125,6 +127,11 @@ func (r *memberResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Optional:            true,
 				Computed:            true,
 			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The member's agent note",
+				Optional:            true,
+				Computed:            true,
+			},
 			"member_id": schema.Int64Attribute{
 				MarkdownDescription: "The member's ID",
 				Computed:            true,
@@ -164,6 +171,9 @@ func (r *memberResource) Create(ctx context.Context, req resource.CreateRequest,
 	}
 	if !data.Note.IsUnknown() && !data.Note.IsNull() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsUnknown() && !data.AgentNote.IsNull() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	member, _, err := r.client.MemberService.Create(domain, &ops)
 	if err != nil {
@@ -240,6 +250,9 @@ func (r *memberResource) Update(ctx context.Context, req resource.UpdateRequest,
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
+	}
+	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
+		ops.AgentNote = data.AgentNote.ValueStringPointer()
 	}
 	member, _, err := r.client.MemberService.Update(domain, memberId, &ops)
 	if err != nil {

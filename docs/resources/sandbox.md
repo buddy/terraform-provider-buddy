@@ -43,6 +43,7 @@ resource "buddy_sandbox" "sb" {
 
 ### Optional
 
+- `agent_note` (String) The sandbox's agent note
 - `app_commands` (Set of String) The sandbox's app commands
 - `app_dir` (String) The sandbox's app dir
 - `endpoints` (Attributes Map) The sandbox's map of endpoints (see [below for nested schema](#nestedatt--endpoints))

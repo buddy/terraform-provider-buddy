@@ -56,6 +56,7 @@ resource "buddy_variable" "in_pipeline" {
 ### Optional
 
 - `action_id` (Number) The variable's action ID. Set for action scope
+- `agent_note` (String) The variable's agent note
 - `description` (String, Deprecated) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted
 - `environment_id` (String) The variable's environmental ID. Set for envrionment scope

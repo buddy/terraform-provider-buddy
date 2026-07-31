@@ -48,6 +48,7 @@ data "buddy_variable_ssh_key" "by_key_in_project" {
 
 ### Read-Only
 
+- `agent_note` (String) The variable's agent note
 - `description` (String, Deprecated) The variable's description
 - `encrypted` (Boolean) Is the variable's value encrypted
 - `id` (String) The Terraform resource identifier for this item

@@ -41,6 +41,7 @@ type variableSshKeySourceModel struct {
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
 	Note           types.String `tfsdk:"note"`
+	AgentNote      types.String `tfsdk:"agent_note"`
 	Value          types.String `tfsdk:"value"`
 	PublicValue    types.String `tfsdk:"public_value"`
 	KeyFingerprint types.String `tfsdk:"key_fingerprint"`
@@ -59,6 +60,7 @@ func (s *variableSshKeySourceModel) loadAPI(domain string, variable *buddy.Varia
 	s.Settable = types.BoolValue(variable.Settable)
 	s.Description = types.StringValue(variable.Note)
 	s.Note = types.StringValue(variable.Note)
+	s.AgentNote = types.StringValue(variable.AgentNote)
 	s.Value = types.StringValue(variable.Value)
 	s.PublicValue = types.StringValue(variable.PublicValue)
 	s.KeyFingerprint = types.StringValue(variable.KeyFingerprint)
@@ -198,6 +200,10 @@ func (s *variableSshKeySource) Schema(_ context.Context, _ datasource.SchemaRequ
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The variable's note",
+				Computed:            true,
+			},
+			"agent_note": schema.StringAttribute{
+				MarkdownDescription: "The variable's agent note",
 				Computed:            true,
 			},
 			"value": schema.StringAttribute{
