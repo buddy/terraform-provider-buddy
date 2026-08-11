@@ -21,11 +21,12 @@ Token scopes required: `WORKSPACE`, `SANDBOX_INFO`
 ### Required
 
 - `domain` (String) The workspace's URL handle
-- `project_name` (String) The project's name
 
 ### Optional
 
+- `environment_id` (String) The environment's id
 - `name_regex` (String) The sandbox's name regular expression to match
+- `project_name` (String) The project's name
 
 ### Read-Only
 

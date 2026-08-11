@@ -31,6 +31,7 @@ type sandboxResourceModel struct {
 	Identifier               types.String `tfsdk:"identifier"`
 	Domain                   types.String `tfsdk:"domain"`
 	ProjectName              types.String `tfsdk:"project_name"`
+	EnvironmentId            types.String `tfsdk:"environment_id"`
 	HtmlUrl                  types.String `tfsdk:"html_url"`
 	SandboxId                types.String `tfsdk:"sandbox_id"`
 	Name                     types.String `tfsdk:"name"`
@@ -69,7 +70,16 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	var diags diag.Diagnostics
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, sandbox.Id))
 	r.Domain = types.StringValue(domain)
-	r.ProjectName = types.StringValue(sandbox.Project.Name)
+	if sandbox.Project != nil {
+		r.ProjectName = types.StringValue(sandbox.Project.Name)
+	} else {
+		r.ProjectName = types.StringNull()
+	}
+	if sandbox.Environment != nil {
+		r.EnvironmentId = types.StringValue(sandbox.Environment.Id)
+	} else {
+		r.EnvironmentId = types.StringNull()
+	}
 	r.Identifier = types.StringValue(sandbox.Identifier)
 	r.SandboxId = types.StringValue(sandbox.Id)
 	r.HtmlUrl = types.StringValue(sandbox.HtmlUrl)
@@ -135,9 +145,26 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				},
 			},
 			"project_name": schema.StringAttribute{
-				MarkdownDescription: "The project's name",
-				Required:            true,
+				MarkdownDescription: "The project's name. Conflicts with `environment_id` - a sandbox belongs either to a project or to an environment, and an environment already carries its own project",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.MatchRoot("environment_id")),
+				},
 				PlanModifiers: []planmodifier.String{
+					// without this an omitted value is planned as unknown, which
+					// RequiresReplace reads as a change and recreates the sandbox on
+					// every update
+					stringplanmodifier.UseStateForUnknown(),
+					stringplanmodifier.RequiresReplace(),
+				},
+			},
+			"environment_id": schema.StringAttribute{
+				MarkdownDescription: "The environment's id. Conflicts with `project_name`",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
 					stringplanmodifier.RequiresReplace(),
 				},
 			},
@@ -356,16 +383,24 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 		return
 	}
 	domain := data.Domain.ValueString()
-	projectName := data.ProjectName.ValueString()
 	waitForRunning := data.WaitForRunning.ValueBool()
 	waitForRunningTimeout := data.WaitForRunningTimeout.ValueInt32()
 	waitForConfigured := data.WaitForConfigured.ValueBool()
 	waitForConfiguredTimeout := data.WaitForConfiguredTimeout.ValueInt32()
 	waitForApps := data.WaitForApps.ValueBool()
 	waitForAppsTimeout := data.WaitForAppsTimeout.ValueInt32()
+	query := buddy.Query{}
 	ops := buddy.SandboxOps{
 		Name: data.Name.ValueStringPointer(),
 		Os:   data.Os.ValueStringPointer(),
+	}
+	if !data.ProjectName.IsUnknown() && !data.ProjectName.IsNull() {
+		query.ProjectName = data.ProjectName.ValueStringPointer()
+	}
+	if !data.EnvironmentId.IsUnknown() && !data.EnvironmentId.IsNull() {
+		ops.Environment = &buddy.SandboxEnvironmentOps{
+			Id: data.EnvironmentId.ValueStringPointer(),
+		}
 	}
 	if !data.Note.IsUnknown() && !data.Note.IsNull() {
 		ops.Note = data.Note.ValueStringPointer()
@@ -421,7 +456,7 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 		}
 		ops.Endpoints = endpoints
 	}
-	sandbox, _, err := r.client.SandboxService.Create(domain, projectName, &ops)
+	sandbox, _, err := r.client.SandboxService.Create(domain, &query, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create sandbox", err))
 		return

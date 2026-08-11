@@ -39,7 +39,6 @@ resource "buddy_sandbox" "sb" {
 
 - `domain` (String) The workspace's URL handle
 - `name` (String) The sandbox's name
-- `project_name` (String) The project's name
 
 ### Optional
 
@@ -47,11 +46,13 @@ resource "buddy_sandbox" "sb" {
 - `app_commands` (Set of String) The sandbox's app commands
 - `app_dir` (String) The sandbox's app dir
 - `endpoints` (Attributes Map) The sandbox's map of endpoints (see [below for nested schema](#nestedatt--endpoints))
+- `environment_id` (String) The environment's id. Conflicts with `project_name`
 - `identifier` (String) The sandbox's identifier
 - `install_commands` (String) The sandbox's install commands
 - `note` (String) The sandbox's note
 - `os` (String) The sandbox's operating system
 - `permissions` (Block Set) The sandbox's permissions (see [below for nested schema](#nestedblock--permissions))
+- `project_name` (String) The project's name. Conflicts with `environment_id` - a sandbox belongs either to a project or to an environment, and an environment already carries its own project
 - `resources` (String) The sandbox's resources (cpu, ram)
 - `tags` (Set of String) The sandbox's list of tags
 - `timeout` (Number) The sandbox's start timeout

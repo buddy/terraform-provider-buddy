@@ -18,17 +18,17 @@ var (
 )
 
 type sandboxesSourceModel struct {
-	ID          types.String `tfsdk:"id"`
-	Domain      types.String `tfsdk:"domain"`
-	ProjectName types.String `tfsdk:"project_name"`
-	NameRegex   types.String `tfsdk:"name_regex"`
-	Sandboxes   types.Set    `tfsdk:"sandboxes"`
+	ID            types.String `tfsdk:"id"`
+	Domain        types.String `tfsdk:"domain"`
+	ProjectName   types.String `tfsdk:"project_name"`
+	EnvironmentId types.String `tfsdk:"environment_id"`
+	NameRegex     types.String `tfsdk:"name_regex"`
+	Sandboxes     types.Set    `tfsdk:"sandboxes"`
 }
 
-func (s *sandboxesSourceModel) loadAPI(ctx context.Context, domain string, projectName string, sandboxes *[]*buddy.Sandbox) diag.Diagnostics {
+func (s *sandboxesSourceModel) loadAPI(ctx context.Context, domain string, sandboxes *[]*buddy.Sandbox) diag.Diagnostics {
 	s.ID = types.StringValue(util.UniqueString())
 	s.Domain = types.StringValue(domain)
-	s.ProjectName = types.StringValue(projectName)
 	ss, d := util.SandboxesModelFromApi(ctx, sandboxes)
 	s.Sandboxes = ss
 	return d
@@ -69,7 +69,11 @@ func (s *sandboxesSource) Schema(_ context.Context, _ datasource.SchemaRequest, 
 			},
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The project's name",
-				Required:            true,
+				Optional:            true,
+			},
+			"environment_id": schema.StringAttribute{
+				MarkdownDescription: "The environment's id",
+				Optional:            true,
 			},
 			"name_regex": schema.StringAttribute{
 				MarkdownDescription: "The sandbox's name regular expression to match",
@@ -96,14 +100,18 @@ func (s *sandboxesSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		return
 	}
 	domain := data.Domain.ValueString()
-	projectName := data.ProjectName.ValueString()
 	var nameRegex *regexp.Regexp
 	if !data.NameRegex.IsNull() && !data.NameRegex.IsUnknown() {
 		nameRegex = regexp.MustCompile(data.NameRegex.ValueString())
 	}
-	sandboxes, _, err := s.client.SandboxService.GetList(domain, buddy.Query{
-		ProjectName: &projectName,
-	})
+	query := buddy.Query{}
+	if !data.ProjectName.IsUnknown() && !data.ProjectName.IsNull() {
+		query.ProjectName = data.ProjectName.ValueStringPointer()
+	}
+	if !data.EnvironmentId.IsUnknown() && !data.EnvironmentId.IsNull() {
+		query.EnvironmentId = data.EnvironmentId.ValueStringPointer()
+	}
+	sandboxes, _, err := s.client.SandboxService.GetList(domain, &query)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get sandboxes", err))
 		return
@@ -115,7 +123,7 @@ func (s *sandboxesSource) Read(ctx context.Context, req datasource.ReadRequest, 
 		}
 		result = append(result, s)
 	}
-	resp.Diagnostics.Append(data.loadAPI(ctx, domain, projectName, &result)...)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, &result)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
