@@ -199,8 +199,16 @@ func testAccProjectAttributes(n string, project *buddy.Project, displayName stri
 		if err := util.CheckFieldEqualAndSet("ssh_repository", attrs["ssh_repository"], project.SshRepository); err != nil {
 			return err
 		}
-		if err := util.CheckFieldSet("default_branch", attrs["default_branch"]); err != nil {
-			return err
+		if project.WithoutRepository {
+			// a project created without a repository has no branches, so the API omits
+			// default_branch entirely
+			if err := util.CheckFieldEqual("default_branch", attrs["default_branch"], ""); err != nil {
+				return err
+			}
+		} else {
+			if err := util.CheckFieldEqualAndSet("default_branch", attrs["default_branch"], project.DefaultBranch); err != nil {
+				return err
+			}
 		}
 		if err := util.CheckFieldEqualAndSet("created_by.0.html_url", attrs["created_by.0.html_url"], project.CreatedBy.HtmlUrl); err != nil {
 			return err
