@@ -1,3 +1,6 @@
+# Release v1.45.0 (2026-08-11)
+* Add sandbox in workspace & environment
+
 # Release v1.44.1 (2026-07-31)
 * Add agent_note to various resources 
 

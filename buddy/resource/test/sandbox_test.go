@@ -5,6 +5,7 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"regexp"
 	"terraform-provider-buddy/buddy/acc"
 	"terraform-provider-buddy/buddy/util"
 	"testing"
@@ -183,6 +184,114 @@ func TestAccSandbox_main(t *testing.T) {
 	})
 }
 
+// TestAccSandbox_scopes walks the four places a sandbox can live: directly in the
+// workspace, in a project, in a workspace environment and in a project environment.
+// project_name and environment_id are both Optional+Computed+RequiresReplace, so every
+// step replaces the sandbox and the unset attribute has to come back from the API.
+//
+// A sandbox has exactly one owner: the API sets either project or environment, never
+// both. "in a project environment" is expressed by the environment being project
+// scoped, so the sandbox itself still reports no project of its own.
+func TestAccSandbox_scopes(t *testing.T) {
+	var sandbox buddy.Sandbox
+	var project buddy.Project
+	var workspaceEnv buddy.Environment
+	var projectEnv buddy.Environment
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	workspaceEnvIdentifier := util.UniqueString()
+	workspaceEnvName := util.RandString(10)
+	projectEnvIdentifier := util.UniqueString()
+	projectEnvName := util.RandString(10)
+	name := util.RandString(10)
+	config := func(placement string) string {
+		return testAccSandboxConfigScope(domain, projectName, workspaceEnvIdentifier, workspaceEnvName, projectEnvIdentifier, projectEnvName, name, placement)
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccSandboxCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				// directly in the workspace - neither attribute set
+				Config: config(""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
+						Name: name,
+					}),
+				),
+			},
+			{
+				// in a project
+				Config: config(`project_name = "${buddy_project.proj.name}"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
+						Name:    name,
+						Project: &project,
+					}),
+				),
+			},
+			{
+				// in an environment that lives in the workspace - project stays null
+				Config: config(`environment_id = "${buddy_environment.wsenv.environment_id}"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccEnvironmentGet("buddy_environment.wsenv", &workspaceEnv),
+					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
+						Name:        name,
+						Environment: &workspaceEnv,
+					}),
+				),
+			},
+			{
+				// in an environment that lives in a project. The sandbox is scoped to the
+				// environment only - the API returns no project of its own, the project is
+				// reachable through the environment - so project_name stays null here.
+				Config: config(`environment_id = "${buddy_environment.projenv.environment_id}"`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccEnvironmentGet("buddy_environment.projenv", &projectEnv),
+					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
+						Name:        name,
+						Environment: &projectEnv,
+					}),
+				),
+			},
+			{
+				// naming both owners is rejected while planning. The API would happily
+				// create the sandbox and silently ignore project_name, which used to
+				// surface as "Provider produced inconsistent result after apply".
+				Config: config(`environment_id = "${buddy_environment.projenv.environment_id}"
+		project_name = "${buddy_project.proj.name}"`),
+				ExpectError: regexp.MustCompile("Invalid Attribute Combination"),
+			},
+			{
+				// import
+				ResourceName:      "buddy_sandbox.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"app_commands",
+					"wait_for_apps_timeout",
+					"wait_for_configured_timeout",
+					"wait_for_running_timeout",
+					"permissions",
+					// these keep moving while the sandbox boots, and this test does not
+					// wait for it, so they can change between the apply and the import
+					"status",
+					"setup_status",
+					"boot_logs",
+				},
+			},
+		},
+	})
+}
+
 type testAccSandboxExpectedAttributes struct {
 	Name              string
 	Note              string
@@ -208,7 +317,11 @@ type testAccSandboxExpectedAttributes struct {
 	WaitForConfigured bool
 	WaitForApp        bool
 	OthersAccessLevel string
-	Project           *buddy.Project
+	// Project/Environment describe where the sandbox is placed. A sandbox lives
+	// directly in the workspace, in a project, in a workspace environment or in a
+	// project environment, so either, both or neither may be nil.
+	Project     *buddy.Project
+	Environment *buddy.Environment
 }
 
 func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSandboxExpectedAttributes) resource.TestCheckFunc {
@@ -318,11 +431,41 @@ func testAccSandboxAttributes(n string, sandbox *buddy.Sandbox, want *testAccSan
 				return err
 			}
 		}
-		if err := util.CheckFieldEqualAndSet("ProjectName", sandbox.Project.Name, want.Project.Name); err != nil {
-			return err
+		if want.Project != nil {
+			if sandbox.Project == nil {
+				return fmt.Errorf("sandbox project is null")
+			}
+			if err := util.CheckFieldEqualAndSet("ProjectName", sandbox.Project.Name, want.Project.Name); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("project_name", attrs["project_name"], want.Project.Name); err != nil {
+				return err
+			}
+		} else {
+			if sandbox.Project != nil {
+				return fmt.Errorf("sandbox project is not null")
+			}
+			if err := util.CheckFieldEqual("project_name", attrs["project_name"], ""); err != nil {
+				return err
+			}
 		}
-		if err := util.CheckFieldEqualAndSet("project_name", attrs["project_name"], want.Project.Name); err != nil {
-			return err
+		if want.Environment != nil {
+			if sandbox.Environment == nil {
+				return fmt.Errorf("sandbox environment is null")
+			}
+			if err := util.CheckFieldEqualAndSet("EnvironmentId", sandbox.Environment.Id, want.Environment.Id); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("environment_id", attrs["environment_id"], want.Environment.Id); err != nil {
+				return err
+			}
+		} else {
+			if sandbox.Environment != nil {
+				return fmt.Errorf("sandbox environment is not null")
+			}
+			if err := util.CheckFieldEqual("environment_id", attrs["environment_id"], ""); err != nil {
+				return err
+			}
 		}
 		if want.TcpName != "" {
 			endpoint := findEndpointByName(&sandbox.Endpoints, want.TcpName)
@@ -518,6 +661,42 @@ resource "buddy_sandbox" "bar" {
 		wait_for_apps = true
 }
 `, domain, projectName, name, installCommands, runCommand, timeout)
+}
+
+// testAccSandboxConfigScope keeps the workspace, project and both environments fixed and
+// varies only the sandbox's placement, so a step never churns anything but the sandbox.
+// placement is the raw HCL naming project_name and/or environment_id, or "" for a sandbox
+// that sits directly in the workspace.
+func testAccSandboxConfigScope(domain string, projectName string, workspaceEnvIdentifier string, workspaceEnvName string, projectEnvIdentifier string, projectEnvName string, name string, placement string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+		domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+		domain = "${buddy_workspace.foo.domain}"
+		display_name = "%s"
+}
+
+resource "buddy_environment" "wsenv" {
+		domain = "${buddy_workspace.foo.domain}"
+		identifier = "%s"
+		name = "%s"
+}
+
+resource "buddy_environment" "projenv" {
+		domain = "${buddy_workspace.foo.domain}"
+		project_name = "${buddy_project.proj.name}"
+		identifier = "%s"
+		name = "%s"
+}
+
+resource "buddy_sandbox" "bar" {
+		domain = "${buddy_workspace.foo.domain}"
+		name = "%s"
+		%s
+}
+`, domain, projectName, workspaceEnvIdentifier, workspaceEnvName, projectEnvIdentifier, projectEnvName, name, placement)
 }
 
 func testAccSandboxConfigOneEndpoint(domain string, projectName string, identifier string, name string, installCommands string, runCommand string, appDir string, os string, resources string, tag string, tcpName string, tcpEndpoint string, othersAccessLevel string, note string, agentNote string) string {
