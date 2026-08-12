@@ -29,7 +29,6 @@ resource "buddy_target" "ftps_in_project" {
 
 resource "buddy_target" "ssh_password_in_environment" {
   domain         = "myworkspace"
-  project_name   = "myproject"
   environment_id = "myenv"
   name           = "SSH Server"
   identifier     = "ssh-server"
@@ -76,15 +75,14 @@ resource "buddy_target" "ssh_asset" {
 }
 
 resource "buddy_target" "ssh_proxy_in_pipeline" {
-  domain       = "myworkspace"
-  project_name = "myproject"
-  pipeline_id  = 12345
-  name         = "SSH via Proxy"
-  identifier   = "ssh-proxy"
-  type         = "SSH"
-  host         = "internal.example.com"
-  port         = "22"
-  path         = "/var/www"
+  domain      = "myworkspace"
+  pipeline_id = 12345
+  name        = "SSH via Proxy"
+  identifier  = "ssh-proxy"
+  type        = "SSH"
+  host        = "internal.example.com"
+  port        = "22"
+  path        = "/var/www"
   auth {
     method = "PROXY_CREDENTIALS"
   }

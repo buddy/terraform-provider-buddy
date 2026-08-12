@@ -1,3 +1,7 @@
+# Release v1.46.0 (2026-08-12)
+* Add project_name to buddy_integration and buddy_integrations data sources, provide it to reach project scoped integrations - without it only workspace scoped ones are returned
+* [Breaking] project_name, pipeline_id and environment_id are now mutually exclusive in buddy_target and buddy_targets - a target has a single owner and the API rejects more than one filter
+
 # Release v1.45.0 (2026-08-11)
 * Add sandbox in workspace & environment
 

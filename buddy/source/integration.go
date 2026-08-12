@@ -35,10 +35,11 @@ type integrationSourceModel struct {
 	Note          types.String `tfsdk:"note"`
 	AgentNote     types.String `tfsdk:"agent_note"`
 	Type          types.String `tfsdk:"type"`
+	ProjectName   types.String `tfsdk:"project_name"`
 	HtmlUrl       types.String `tfsdk:"html_url"`
 }
 
-func (s *integrationSourceModel) loadAPI(domain string, integration *buddy.Integration) {
+func (s *integrationSourceModel) loadAPI(domain string, integration *buddy.Integration, query *buddy.IntegrationGetListQuery) {
 	s.ID = types.StringValue(util.ComposeDoubleId(domain, integration.HashId))
 	s.Domain = types.StringValue(domain)
 	s.Name = types.StringValue(integration.Name)
@@ -48,6 +49,13 @@ func (s *integrationSourceModel) loadAPI(domain string, integration *buddy.Integ
 	s.AgentNote = types.StringValue(integration.AgentNote)
 	s.Type = types.StringValue(integration.Type)
 	s.HtmlUrl = types.StringValue(integration.HtmlUrl)
+	if integration.ProjectName != "" {
+		s.ProjectName = types.StringValue(integration.ProjectName)
+	} else if query != nil && query.ProjectName != "" {
+		s.ProjectName = types.StringValue(query.ProjectName)
+	} else {
+		s.ProjectName = types.StringNull()
+	}
 }
 
 func (s *integrationSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -109,6 +117,16 @@ func (s *integrationSource) Schema(_ context.Context, _ datasource.SchemaRequest
 				MarkdownDescription: "The integration's identifier",
 				Computed:            true,
 			},
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "The integration's project name. Provide along with `name` to look for a project scoped integration",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("name"),
+					}...),
+				},
+			},
 			"type": schema.StringAttribute{
 				MarkdownDescription: "The integration's type",
 				Computed:            true,
@@ -128,6 +146,7 @@ func (s *integrationSource) Read(ctx context.Context, req datasource.ReadRequest
 		return
 	}
 	var integration *buddy.Integration
+	query := &buddy.IntegrationGetListQuery{}
 	domain := data.Domain.ValueString()
 	if !data.IntegrationId.IsNull() && !data.IntegrationId.IsUnknown() {
 		var httpResp *http.Response
@@ -143,7 +162,10 @@ func (s *integrationSource) Read(ctx context.Context, req datasource.ReadRequest
 		}
 	} else {
 		name := data.Name.ValueString()
-		integrations, _, err := s.client.IntegrationService.GetList(domain)
+		if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+			query.ProjectName = data.ProjectName.ValueString()
+		}
+		integrations, _, err := s.client.IntegrationService.GetList(domain, query)
 		if err != nil {
 			resp.Diagnostics.Append(util.NewDiagnosticApiError("get integrations", err))
 			return
@@ -159,7 +181,7 @@ func (s *integrationSource) Read(ctx context.Context, req datasource.ReadRequest
 			return
 		}
 	}
-	data.loadAPI(domain, integration)
+	data.loadAPI(domain, integration, query)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 
 }

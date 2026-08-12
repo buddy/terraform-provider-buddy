@@ -25,6 +25,7 @@ func TestAccSourceIntegrations(t *testing.T) {
 					testAccSourceIntegrationsAttributes("data.buddy_integrations.all", 2),
 					testAccSourceIntegrationsAttributes("data.buddy_integrations.name", 1),
 					testAccSourceIntegrationsAttributes("data.buddy_integrations.type", 1),
+					testAccSourceIntegrationsAttributes("data.buddy_integrations.project", 1),
 				),
 			},
 		},
@@ -84,21 +85,42 @@ resource "buddy_integration" "b" {
    token = "abcdefghijklmnoprst"
 }
 
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_integration" "c" {
+   domain = "${buddy_workspace.foo.domain}"
+   name = "yyyyy"
+   type = "%s"
+   scope = "%s"
+   project_name = "${buddy_project.proj.name}"
+   shop = "ABC"
+   token = "abcdefghijklmnoprst"
+}
+
 data "buddy_integrations" "all" {
    domain = "${buddy_workspace.foo.domain}"
-   depends_on = [buddy_integration.a, buddy_integration.b]
+   depends_on = [buddy_integration.a, buddy_integration.b, buddy_integration.c]
 }
 
 data "buddy_integrations" "name" {
    domain = "${buddy_workspace.foo.domain}"
-   depends_on = [buddy_integration.a, buddy_integration.b]
+   depends_on = [buddy_integration.a, buddy_integration.b, buddy_integration.c]
    name_regex = "^abc"
 }
 
 data "buddy_integrations" "type" {
    domain = "${buddy_workspace.foo.domain}"
    type = "AMAZON"
-   depends_on = [buddy_integration.a, buddy_integration.b]
+   depends_on = [buddy_integration.a, buddy_integration.b, buddy_integration.c]
 }
-`, util.UniqueString(), buddy.IntegrationTypeAmazon, buddy.IntegrationScopeWorkspace, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeWorkspace)
+
+data "buddy_integrations" "project" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   depends_on = [buddy_integration.a, buddy_integration.b, buddy_integration.c]
+}
+`, util.UniqueString(), buddy.IntegrationTypeAmazon, buddy.IntegrationScopeWorkspace, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationScopeWorkspace, util.RandString(10), buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject)
 }

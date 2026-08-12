@@ -3,9 +3,12 @@ package source
 import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
+	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
+	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/schema/validator"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"regexp"
@@ -63,20 +66,38 @@ func (s *targetsSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				Validators:          util.StringValidatorsDomain(),
 			},
 			"project_name": schema.StringAttribute{
-				MarkdownDescription: "The project's name",
+				MarkdownDescription: "The project's name. Provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("environment_id"),
+					}...),
+				},
 			},
 			"pipeline_id": schema.Int64Attribute{
-				MarkdownDescription: "The pipeline's name",
+				MarkdownDescription: "The pipeline's name. Provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("environment_id"),
+					}...),
+				},
 			},
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The pipeline action's name",
 				Optional:            true,
 			},
 			"environment_id": schema.StringAttribute{
-				MarkdownDescription: "The environment's name",
+				MarkdownDescription: "The environment's name. Provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("pipeline_id"),
+					}...),
+				},
 			},
 			"name_regex": schema.StringAttribute{
 				MarkdownDescription: "The target's name regular expression to match",

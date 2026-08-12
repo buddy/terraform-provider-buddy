@@ -940,7 +940,8 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 					return err
 				}
 			}
-		} else {
+		} else if target.Permissions != nil {
+			// pipeline & environment scoped targets have no permissions
 			if err := util.CheckFieldEqualAndSet("Permissions.Others", target.Permissions.Others, buddy.TargetPermissionUseOnly); err != nil {
 				return err
 			}
@@ -1209,7 +1210,6 @@ resource "buddy_environment" "test" {
 
 resource "buddy_target" "test" {
     domain         = buddy_workspace.test.domain
-    project_name   = buddy_project.test.name
     environment_id = buddy_environment.test.environment_id
     name           = "%s"
     identifier     = "%s"
@@ -1308,7 +1308,6 @@ resource "buddy_project_group" "test" {
 resource "buddy_target" "test" {
     domain       = buddy_workspace.test.domain
     project_name = buddy_project.test.name
-    pipeline_id  = buddy_pipeline.test.pipeline_id
     name         = "%s"
     identifier   = "%s"
     type         = "SSH" 

@@ -7,3 +7,9 @@ data "buddy_integration" "azure" {
   domain = "mydomain"
   name   = "azure"
 }
+
+data "buddy_integration" "shopify" {
+  domain       = "mydomain"
+  name         = "shopify"
+  project_name = "myproject"
+}

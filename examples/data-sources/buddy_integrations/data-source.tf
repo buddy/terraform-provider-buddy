@@ -7,6 +7,7 @@ data "buddy_integrations" "amazon" {
   type   = "AMAZON"
 }
 
-
-
-
+data "buddy_integrations" "project" {
+  domain       = "mydomain"
+  project_name = "myproject"
+}

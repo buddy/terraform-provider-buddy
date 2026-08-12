@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -222,24 +223,42 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"project_name": schema.StringAttribute{
-				MarkdownDescription: "The project's name",
+				MarkdownDescription: "The project's name. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("environment_id"),
+					}...),
+				},
 			},
 			"pipeline_id": schema.Int64Attribute{
-				MarkdownDescription: "The pipeline's id",
+				MarkdownDescription: "The pipeline's id. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
+				Validators: []validator.Int64{
+					int64validator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("environment_id"),
+					}...),
+				},
 			},
 			"environment_id": schema.StringAttribute{
-				MarkdownDescription: "The environment's id",
+				MarkdownDescription: "The environment's id. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("pipeline_id"),
+					}...),
 				},
 			},
 			"html_url": schema.StringAttribute{

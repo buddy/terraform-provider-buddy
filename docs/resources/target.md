@@ -47,7 +47,6 @@ resource "buddy_target" "ftps_in_project" {
 
 resource "buddy_target" "ssh_password_in_environment" {
   domain         = "myworkspace"
-  project_name   = "myproject"
   environment_id = "myenv"
   name           = "SSH Server"
   identifier     = "ssh-server"
@@ -94,15 +93,14 @@ resource "buddy_target" "ssh_asset" {
 }
 
 resource "buddy_target" "ssh_proxy_in_pipeline" {
-  domain       = "myworkspace"
-  project_name = "myproject"
-  pipeline_id  = 12345
-  name         = "SSH via Proxy"
-  identifier   = "ssh-proxy"
-  type         = "SSH"
-  host         = "internal.example.com"
-  port         = "22"
-  path         = "/var/www"
+  domain      = "myworkspace"
+  pipeline_id = 12345
+  name        = "SSH via Proxy"
+  identifier  = "ssh-proxy"
+  type        = "SSH"
+  host        = "internal.example.com"
+  port        = "22"
+  path        = "/var/www"
   auth {
     method = "PROXY_CREDENTIALS"
   }
@@ -228,16 +226,16 @@ resource "buddy_target" "restricted" {
 - `allowed_sandboxes` (Block Set) List of specific sandboxes allowed to use this target (see [below for nested schema](#nestedblock--allowed_sandboxes))
 - `auth` (Block Set) The target's auth. Set for `FTP`, `GIT`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN` (see [below for nested schema](#nestedblock--auth))
 - `disabled` (Boolean) Defines whether or not the target can be run
-- `environment_id` (String) The environment's id
+- `environment_id` (String) The environment's id. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`
 - `host` (String) The target's host. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`
 - `integration` (String) The target's integration. Set for `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`
 - `note` (String) The target's note
 - `path` (String) The target's path
 - `permissions` (Block Set) The target's permissions (see [below for nested schema](#nestedblock--permissions))
-- `pipeline_id` (Number) The pipeline's id
+- `pipeline_id` (Number) The pipeline's id. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`
 - `pipelines_access_level` (String) Indicates if all pipelines are allowed to use this target
 - `port` (String) The target's port. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`
-- `project_name` (String) The project's name
+- `project_name` (String) The project's name. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`
 - `proxy` (Block Set) The target's proxy. Set for `SSH` (see [below for nested schema](#nestedblock--proxy))
 - `repository` (String) The target's repository. Set for `GIT`
 - `sandboxes_access_level` (String) Indicates if all sandboxes are allowed to use this target

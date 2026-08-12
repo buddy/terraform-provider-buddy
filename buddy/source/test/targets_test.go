@@ -77,7 +77,7 @@ func TestAccSourceTargets_pipeline(t *testing.T) {
 			{
 				Config: testAccSourceTargetsPipelineConfig(domain, projectName, name1, identifier1, name2, identifier2),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourceTargetsAttributes("data.buddy_targets.all", 3, ""),
+					testAccSourceTargetsAttributes("data.buddy_targets.all", 2, ""),
 					testAccSourceTargetsAttributes("data.buddy_targets.name", 1, name1),
 				),
 			},
@@ -233,7 +233,6 @@ resource "buddy_pipeline" "foo" {
 
 resource "buddy_target" "a" {
   domain = "${buddy_workspace.foo.domain}"
-  project_name = "${buddy_project.foo.name}"
   pipeline_id = "${buddy_pipeline.foo.pipeline_id}"
   name = "%s"
   identifier = "%s"
@@ -249,7 +248,6 @@ resource "buddy_target" "a" {
 
 resource "buddy_target" "b" {
   domain = "${buddy_workspace.foo.domain}"
-  project_name = "${buddy_project.foo.name}"
   pipeline_id = "${buddy_pipeline.foo.pipeline_id}"
   name = "%s"
   identifier = "%s"
@@ -265,17 +263,15 @@ resource "buddy_target" "b" {
 
 data "buddy_targets" "all" {
   domain = "${buddy_workspace.foo.domain}"
-  project_name = "${buddy_project.foo.name}"
   pipeline_id = "${buddy_pipeline.foo.pipeline_id}"
   depends_on = [buddy_target.a, buddy_target.b]
 }
 
 data "buddy_targets" "name" {
   domain = "${buddy_workspace.foo.domain}"
-  project_name = "${buddy_project.foo.name}"
   pipeline_id = "${buddy_pipeline.foo.pipeline_id}"
   depends_on = [buddy_target.a, buddy_target.b]
-  name_regex = "^aaa" 
+  name_regex = "^aaa"
 }
 `, domain, projectName, name1, identifier1, name2, identifier2)
 }

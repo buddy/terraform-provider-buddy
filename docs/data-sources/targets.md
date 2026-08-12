@@ -29,15 +29,13 @@ data "buddy_targets" "project" {
 
 # Get targets in a specific pipeline
 data "buddy_targets" "pipeline" {
-  domain       = "myworkspace"
-  project_name = "my-project"
-  pipeline_id  = 12345
+  domain      = "myworkspace"
+  pipeline_id = 12345
 }
 
 # Get targets in a specific environment and filter by name
 data "buddy_targets" "environment" {
   domain         = "myworkspace"
-  project_name   = "my-project"
   environment_id = "env123"
   name_regex     = "^myname"
 }
@@ -53,10 +51,10 @@ data "buddy_targets" "environment" {
 ### Optional
 
 - `action_id` (Number) The pipeline action's name
-- `environment_id` (String) The environment's name
+- `environment_id` (String) The environment's name. Provide only one of: `project_name`, `pipeline_id`, `environment_id`
 - `name_regex` (String) The target's name regular expression to match
-- `pipeline_id` (Number) The pipeline's name
-- `project_name` (String) The project's name
+- `pipeline_id` (Number) The pipeline's name. Provide only one of: `project_name`, `pipeline_id`, `environment_id`
+- `project_name` (String) The project's name. Provide only one of: `project_name`, `pipeline_id`, `environment_id`
 
 ### Read-Only
 

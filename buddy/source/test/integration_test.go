@@ -36,6 +36,52 @@ func TestAccSourceIntegration(t *testing.T) {
 	})
 }
 
+func TestAccSourceIntegration_project(t *testing.T) {
+	domain := util.UniqueString()
+	projectDisplayName := util.RandString(10)
+	name := util.RandString(10)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		CheckDestroy:             acc.DummyCheckDestroy,
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSourceIntegrationProjectConfig(domain, projectDisplayName, name),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSourceIntegrationProjectAttributes("data.buddy_integration.id", name),
+					testAccSourceIntegrationProjectAttributes("data.buddy_integration.name", name),
+				),
+			},
+		},
+	})
+}
+
+func testAccSourceIntegrationProjectAttributes(n string, name string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		attrs := rs.Primary.Attributes
+		projectName := s.RootModule().Resources["buddy_project.proj"].Primary.Attributes["name"]
+		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("type", attrs["type"], buddy.IntegrationTypeShopify); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("project_name", attrs["project_name"], projectName); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("integration_id", attrs["integration_id"]); err != nil {
+			return err
+		}
+		return nil
+	}
+}
+
 func testAccSourceIntegrationAttributes(n string, name string, typ string, identifier string, note string, agentNote string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
@@ -96,4 +142,38 @@ data "buddy_integration" "name" {
    name = "${buddy_integration.int.name}"
 }
 `, domain, name, typ, scope, identifier, note, agentNote)
+}
+
+func testAccSourceIntegrationProjectConfig(domain string, projectDisplayName string, name string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_integration" "int" {
+   domain = "${buddy_workspace.foo.domain}"
+   name = "%s"
+   type = "%s"
+   scope = "%s"
+   project_name = "${buddy_project.proj.name}"
+   shop = "ABC"
+   token = "abcdefghijklmnoprst"
+}
+
+data "buddy_integration" "id" {
+   domain = "${buddy_workspace.foo.domain}"
+   integration_id = "${buddy_integration.int.integration_id}"
+}
+
+data "buddy_integration" "name" {
+   domain = "${buddy_workspace.foo.domain}"
+   name = "${buddy_integration.int.name}"
+   project_name = "${buddy_project.proj.name}"
+}
+`, domain, projectDisplayName, name, buddy.IntegrationTypeShopify, buddy.IntegrationScopeProject)
 }

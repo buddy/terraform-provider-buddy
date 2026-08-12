@@ -11,15 +11,13 @@ data "buddy_targets" "project" {
 
 # Get targets in a specific pipeline
 data "buddy_targets" "pipeline" {
-  domain       = "myworkspace"
-  project_name = "my-project"
-  pipeline_id  = 12345
+  domain      = "myworkspace"
+  pipeline_id = 12345
 }
 
 # Get targets in a specific environment and filter by name
 data "buddy_targets" "environment" {
   domain         = "myworkspace"
-  project_name   = "my-project"
   environment_id = "env123"
   name_regex     = "^myname"
 }

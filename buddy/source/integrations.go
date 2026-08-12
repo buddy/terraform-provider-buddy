@@ -29,6 +29,7 @@ type integrationsSource struct {
 type integrationsSourceModel struct {
 	Id           types.String `tfsdk:"id"`
 	Domain       types.String `tfsdk:"domain"`
+	ProjectName  types.String `tfsdk:"project_name"`
 	NameRegex    types.String `tfsdk:"name_regex"`
 	Type         types.String `tfsdk:"type"`
 	Integrations types.Set    `tfsdk:"integrations"`
@@ -56,6 +57,7 @@ func (s *integrationsSource) Configure(_ context.Context, req datasource.Configu
 func (s *integrationsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List integrations and optionally filter them by name or type\n\n" +
+			"Without `project_name` only workspace scoped integrations are returned\n\n" +
 			"Token scope required: `INTEGRATION_INFO`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -66,6 +68,10 @@ func (s *integrationsSource) Schema(_ context.Context, _ datasource.SchemaReques
 				MarkdownDescription: "The workspace's URL handle",
 				Required:            true,
 				Validators:          util.StringValidatorsDomain(),
+			},
+			"project_name": schema.StringAttribute{
+				MarkdownDescription: "The project's name. Provide to list the project's scoped integrations",
+				Optional:            true,
 			},
 			"name_regex": schema.StringAttribute{
 				MarkdownDescription: "The integration's name regular expression to match",
@@ -125,6 +131,10 @@ func (s *integrationsSource) Read(ctx context.Context, req datasource.ReadReques
 	var nameRegexp *regexp.Regexp
 	var typ *string
 	domain := data.Domain.ValueString()
+	query := &buddy.IntegrationGetListQuery{}
+	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
+		query.ProjectName = data.ProjectName.ValueString()
+	}
 	if !data.NameRegex.IsNull() && !data.NameRegex.IsUnknown() {
 		nameRegexp = regexp.MustCompile(data.NameRegex.ValueString())
 	}
@@ -132,7 +142,7 @@ func (s *integrationsSource) Read(ctx context.Context, req datasource.ReadReques
 		typ = data.Type.ValueStringPointer()
 	}
 	var result []*buddy.Integration
-	integrations, _, err := s.client.IntegrationService.GetList(domain)
+	integrations, _, err := s.client.IntegrationService.GetList(domain, query)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get integrations", err))
 		return
