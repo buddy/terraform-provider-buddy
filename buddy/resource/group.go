@@ -74,7 +74,7 @@ func (r *groupResource) Schema(_ context.Context, _ resource.SchemaRequest, resp
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a user's group\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scopes required: `GROUP_READ`, `GROUP_WRITE`, `GROUP_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

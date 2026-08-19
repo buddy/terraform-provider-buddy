@@ -107,7 +107,7 @@ func (r *integrationResource) Metadata(_ context.Context, req resource.MetadataR
 func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage an integration\n\n" +
-			"Token scopes required: `INTEGRATION_ADD`, `INTEGRATION_MANAGE`, `INTEGRATION_INFO`",
+			"Token scopes required: `INTEGRATION_READ`, `INTEGRATION_WRITE`, `INTEGRATION_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

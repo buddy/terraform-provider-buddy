@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create and manage a workspace group member
   Workspace administrator rights are required
-  Token scope required: WORKSPACE
+  Token scopes required: GROUP_READ, GROUP_WRITE, GROUP_MANAGE
 ---
 
 # buddy_group_member (Resource)
@@ -14,7 +14,7 @@ Create and manage a workspace group member
 
 Workspace administrator rights are required
 
-Token scope required: `WORKSPACE`
+Token scopes required: `GROUP_READ`, `GROUP_WRITE`, `GROUP_MANAGE`
 
 ## Example Usage
 

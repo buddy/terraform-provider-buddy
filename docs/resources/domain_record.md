@@ -4,14 +4,14 @@ page_title: "buddy_domain_record Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage a domain record
-  Token scope required: ZONE_READ, ZONE_WRITE
+  Token scopes required: DOMAIN_READ, DOMAIN_WRITE
 ---
 
 # buddy_domain_record (Resource)
 
 Create and manage a domain record
 
-Token scope required: `ZONE_READ, ZONE_WRITE`
+Token scopes required: `DOMAIN_READ`, `DOMAIN_WRITE`
 
 ## Example Usage
 

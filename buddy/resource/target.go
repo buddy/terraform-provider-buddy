@@ -205,7 +205,7 @@ func (r *targetResource) Metadata(_ context.Context, req resource.MetadataReques
 func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a target\n\n" +
-			"Token scope required: `WORKSPACE`, `TARGET_MANAGE`, `TARGET_INFO`",
+			"Token scopes required: `TARGET_READ`, `TARGET_WRITE`, `TARGET_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

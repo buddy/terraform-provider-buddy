@@ -58,7 +58,7 @@ func (s *variablesSshKeysSource) Configure(_ context.Context, req datasource.Con
 func (s *variablesSshKeysSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List variables of SSH key type and optionally filter them by key, project name, pipeline or action\n\n" +
-			"Token scope required: `WORKSPACE`, `VARIABLE_INFO`",
+			"Token scope required: `VARIABLE_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

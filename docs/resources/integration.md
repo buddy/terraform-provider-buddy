@@ -4,14 +4,14 @@ page_title: "buddy_integration Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage an integration
-  Token scopes required: INTEGRATION_ADD, INTEGRATION_MANAGE, INTEGRATION_INFO
+  Token scopes required: INTEGRATION_READ, INTEGRATION_WRITE, INTEGRATION_MANAGE
 ---
 
 # buddy_integration (Resource)
 
 Create and manage an integration
 
-Token scopes required: `INTEGRATION_ADD`, `INTEGRATION_MANAGE`, `INTEGRATION_INFO`
+Token scopes required: `INTEGRATION_READ`, `INTEGRATION_WRITE`, `INTEGRATION_MANAGE`
 
 ## Example Usage
 

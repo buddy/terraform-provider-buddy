@@ -4,14 +4,14 @@ page_title: "buddy_project_groups Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List project groups and optionally filter them by name
-  Token scope required: WORKSPACE
+  Token scope required: PROJECT_READ
 ---
 
 # buddy_project_groups (Data Source)
 
 List project groups and optionally filter them by name
 
-Token scope required: `WORKSPACE`
+Token scope required: `PROJECT_READ`
 
 ## Example Usage
 

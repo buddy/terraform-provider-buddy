@@ -56,7 +56,7 @@ func (s *environmentsSource) Configure(_ context.Context, req datasource.Configu
 func (s *environmentsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List environments and optionally filter them by name\n\n" +
-			"Token scope required: `WORKSPACE`, `ENVIRONMENT_INFO`",
+			"Token scope required: `ENVIRONMENT_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

@@ -4,14 +4,14 @@ page_title: "buddy_profile_email Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage a user's email
-  Token scopes required: MANAGE_EMAILS, USER_EMAIL
+  Token scopes required: USER_EMAIL_READ, USER_EMAIL_WRITE, USER_EMAIL_MANAGE
 ---
 
 # buddy_profile_email (Resource)
 
 Create and manage a user's email
 
-Token scopes required: `MANAGE_EMAILS`, `USER_EMAIL`
+Token scopes required: `USER_EMAIL_READ`, `USER_EMAIL_WRITE`, `USER_EMAIL_MANAGE`
 
 ## Example Usage
 

@@ -66,7 +66,7 @@ func (s *memberSource) Configure(_ context.Context, req datasource.ConfigureRequ
 func (s *memberSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get member by name, email or member ID\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `MEMBER_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

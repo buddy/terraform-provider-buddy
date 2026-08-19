@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manage a member's permission (role) in a project
   Workspace administrator rights are required
-  Token scope required: WORKSPACE
+  Token scopes required: PROJECT_READ, PROJECT_WRITE
 ---
 
 # buddy_project_member (Resource)
@@ -14,7 +14,7 @@ Manage a member's permission (role) in a project
 
 Workspace administrator rights are required
 
-Token scope required: `WORKSPACE`
+Token scopes required: `PROJECT_READ`, `PROJECT_WRITE`
 
 ## Example Usage
 

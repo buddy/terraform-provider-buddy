@@ -4,14 +4,14 @@ page_title: "buddy_groups Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List groups and optionally filter them by name
-  Token scope required: WORKSPACE
+  Token scope required: GROUP_READ
 ---
 
 # buddy_groups (Data Source)
 
 List groups and optionally filter them by name
 
-Token scope required: `WORKSPACE`
+Token scope required: `GROUP_READ`
 
 ## Example Usage
 

@@ -96,7 +96,7 @@ func (r *projectResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a workspace project\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scopes required: `WORKSPACE`, `PROJECT_DELETE`",
+			"Token scopes required: `PROJECT_READ`, `PROJECT_WRITE`, `PROJECT_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

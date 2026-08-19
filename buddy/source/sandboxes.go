@@ -56,7 +56,7 @@ func (s *sandboxesSource) Configure(_ context.Context, req datasource.ConfigureR
 func (s *sandboxesSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List sandboxes and optionally filter them by name\n\n" +
-			"Token scopes required: `WORKSPACE`, `SANDBOX_INFO`",
+			"Token scope required: `SANDBOX_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

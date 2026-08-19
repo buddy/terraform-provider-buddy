@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   List integrations and optionally filter them by name or type
   Without project_name only workspace scoped integrations are returned
-  Token scope required: INTEGRATION_INFO
+  Token scope required: INTEGRATION_READ
 ---
 
 # buddy_integrations (Data Source)
@@ -14,7 +14,7 @@ List integrations and optionally filter them by name or type
 
 Without `project_name` only workspace scoped integrations are returned
 
-Token scope required: `INTEGRATION_INFO`
+Token scope required: `INTEGRATION_READ`
 
 ## Example Usage
 

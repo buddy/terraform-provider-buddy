@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manage SSO in workspace
   Workspace administrator rights are required
-  Token scopes required: WORKSPACE
+  Token scope required: WORKSPACE_MANAGE
 ---
 
 # buddy_sso (Resource)
@@ -14,7 +14,7 @@ Manage SSO in workspace
 
 Workspace administrator rights are required
 
-Token scopes required: `WORKSPACE`
+Token scope required: `WORKSPACE_MANAGE`
 
 ## Example Usage
 

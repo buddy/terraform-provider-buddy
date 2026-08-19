@@ -103,7 +103,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a variable\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scopes required: `WORKSPACE`, `VARIABLE_ADD`, `VARIABLE_MANAGE`, `VARIABLE_INFO`",
+			"Token scopes required: `VARIABLE_READ`, `VARIABLE_WRITE`, `VARIABLE_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

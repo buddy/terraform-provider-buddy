@@ -53,7 +53,7 @@ func (s *workspacesSource) Configure(_ context.Context, req datasource.Configure
 func (s *workspacesSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List workspaces and optionally filter them by name or URL handle\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `WORKSPACE_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

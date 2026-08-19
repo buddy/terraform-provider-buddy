@@ -4,14 +4,14 @@ page_title: "buddy_integration Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get integration by name or integration ID
-  Token scope required: INTEGRATION_INFO
+  Token scope required: INTEGRATION_READ
 ---
 
 # buddy_integration (Data Source)
 
 Get integration by name or integration ID
 
-Token scope required: `INTEGRATION_INFO`
+Token scope required: `INTEGRATION_READ`
 
 ## Example Usage
 

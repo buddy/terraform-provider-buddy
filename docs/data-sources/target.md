@@ -4,14 +4,14 @@ page_title: "buddy_target Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get target by name or target ID
-  Token scope required: WORKSPACE, TARGET_INFO
+  Token scope required: TARGET_READ
 ---
 
 # buddy_target (Data Source)
 
 Get target by name or target ID
 
-Token scope required: `WORKSPACE`, TARGET_INFO
+Token scope required: `TARGET_READ`
 
 ## Example Usage
 

@@ -48,7 +48,7 @@ func (r *profilePublicKeyResource) Metadata(_ context.Context, req resource.Meta
 func (r *profilePublicKeyResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a user's public key\n\n" +
-			"Token scope required: `USER_KEY`",
+			"Token scopes required: `USER_SSH_KEY_READ`, `USER_SSH_KEY_WRITE`, `USER_SSH_KEY_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

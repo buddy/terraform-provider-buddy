@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create a domain
   Invite-only token is required. Contact support@buddy.works for more details
-  Token scope required: ZONE_MANAGE
+  Token scopes required: DOMAIN_READ, DOMAIN_MANAGE
 ---
 
 # buddy_domain (Resource)
@@ -14,7 +14,7 @@ Create a domain
 
 Invite-only token is required. Contact support@buddy.works for more details
 
-Token scope required: `ZONE_MANAGE`
+Token scopes required: `DOMAIN_READ`, `DOMAIN_MANAGE`
 
 ## Example Usage
 

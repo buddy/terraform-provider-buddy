@@ -4,14 +4,14 @@ page_title: "buddy_permission Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get permission (role) by name or permission ID
-  Token scope required: WORKSPACE
+  Token scope required: PERMISSION_READ
 ---
 
 # buddy_permission (Data Source)
 
 Get permission (role) by name or permission ID
 
-Token scope required: `WORKSPACE`
+Token scope required: `PERMISSION_READ`
 
 ## Example Usage
 

@@ -79,7 +79,7 @@ func (r *memberResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a workspace member\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scopes required: `MEMBER_READ`, `MEMBER_WRITE`, `MEMBER_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

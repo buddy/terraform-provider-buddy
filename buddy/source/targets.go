@@ -54,7 +54,7 @@ func (s *targetsSource) Metadata(_ context.Context, req datasource.MetadataReque
 func (s *targetsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List targets\n\n" +
-			"Token scope required: `WORKSPACE`, `TARGET_INFO`",
+			"Token scope required: `TARGET_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

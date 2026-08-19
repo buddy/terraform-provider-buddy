@@ -77,7 +77,7 @@ func (r *webhookResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a workspace webhook\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scopes required: `WORKSPACE`, `WEBHOOK_ADD`, `WEBHOOK_MANAGE`, `WEBHOOK_INFO`",
+			"Token scopes required: `WEBHOOK_READ`, `WEBHOOK_WRITE`, `WEBHOOK_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

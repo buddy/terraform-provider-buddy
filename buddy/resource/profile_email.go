@@ -45,7 +45,7 @@ func (r *profileEmailResource) Metadata(_ context.Context, req resource.Metadata
 func (r *profileEmailResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a user's email\n\n" +
-			"Token scopes required: `MANAGE_EMAILS`, `USER_EMAIL`",
+			"Token scopes required: `USER_EMAIL_READ`, `USER_EMAIL_WRITE`, `USER_EMAIL_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

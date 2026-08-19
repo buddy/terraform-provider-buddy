@@ -4,14 +4,14 @@ page_title: "buddy_group Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get group by name or group ID
-  Token scope required: WORKSPACE
+  Token scope required: GROUP_READ
 ---
 
 # buddy_group (Data Source)
 
 Get group by name or group ID
 
-Token scope required: `WORKSPACE`
+Token scope required: `GROUP_READ`
 
 ## Example Usage
 

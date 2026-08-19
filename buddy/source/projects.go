@@ -58,7 +58,7 @@ func (s *projectsSource) Configure(_ context.Context, req datasource.ConfigureRe
 func (s *projectsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List projects and optionally filter them by membership, status, name or display name\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `PROJECT_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

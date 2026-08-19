@@ -53,7 +53,7 @@ func (s *profileSource) Configure(_ context.Context, req datasource.ConfigureReq
 func (s *profileSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get details of a Buddy's user profile\n\n" +
-			"Token scope required: `USER_INFO`",
+			"Token scope required: `USER_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

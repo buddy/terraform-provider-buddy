@@ -52,7 +52,7 @@ func (r *profileResource) Metadata(_ context.Context, req resource.MetadataReque
 func (r *profileResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manage a user profile\n\n" +
-			"Token scope required: `USER_INFO`",
+			"Token scopes required: `USER_READ`, `USER_WRITE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

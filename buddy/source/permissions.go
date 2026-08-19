@@ -56,7 +56,7 @@ func (s *permissionsSource) Configure(_ context.Context, req datasource.Configur
 func (s *permissionsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List permissions (roles) and optionally filter them by name or type\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `PERMISSION_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",
