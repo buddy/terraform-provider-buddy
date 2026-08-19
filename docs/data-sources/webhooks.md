@@ -4,14 +4,14 @@ page_title: "buddy_webhooks Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List webhooks and optionally filter them by target URL
-  Token scope required: WORKSPACE, WEBHOOK_INFO
+  Token scope required: WEBHOOK_READ
 ---
 
 # buddy_webhooks (Data Source)
 
 List webhooks and optionally filter them by target URL
 
-Token scope required: `WORKSPACE`, `WEBHOOK_INFO`
+Token scope required: `WEBHOOK_READ`
 
 ## Example Usage
 

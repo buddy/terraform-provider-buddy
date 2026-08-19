@@ -4,14 +4,14 @@ page_title: "buddy_profile Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get details of a Buddy's user profile
-  Token scope required: USER_INFO
+  Token scope required: USER_READ
 ---
 
 # buddy_profile (Data Source)
 
 Get details of a Buddy's user profile
 
-Token scope required: `USER_INFO`
+Token scope required: `USER_READ`
 
 ## Example Usage
 

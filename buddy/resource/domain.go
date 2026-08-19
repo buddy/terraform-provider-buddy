@@ -61,7 +61,7 @@ func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a domain\n\n" +
 			"Invite-only token is required. Contact support@buddy.works for more details\n\n" +
-			"Token scope required: `ZONE_MANAGE`",
+			"Token scopes required: `DOMAIN_READ`, `DOMAIN_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

@@ -168,7 +168,7 @@ func (r *pipelineResource) Metadata(_ context.Context, req resource.MetadataRequ
 func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a pipeline\n\n" +
-			"Token scopes required: `WORKSPACE`, `EXECUTION_MANAGE`, `EXECUTION_INFO`",
+			"Token scopes required: `PIPELINE_READ`, `PIPELINE_WRITE`, `PIPELINE_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

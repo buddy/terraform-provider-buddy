@@ -179,7 +179,7 @@ func (r *sandboxStatusResource) ImportState(ctx context.Context, req resource.Im
 func (r *sandboxStatusResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manage sandbox status\n\n" +
-			"Token scopes required: `WORKSPACE`, `SANDBOX_MANAGE`, `SANDBOX_INFO`",
+			"Token scopes required: `SANDBOX_READ`, `SANDBOX_WRITE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

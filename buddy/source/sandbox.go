@@ -60,7 +60,7 @@ func (s *sandboxSource) Configure(_ context.Context, req datasource.ConfigureReq
 func (s *sandboxSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get sandbox by sandbox ID\n\n" +
-			"Token scopes required: `WORKSPACE`, `SANDBOX_INFO`",
+			"Token scope required: `SANDBOX_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

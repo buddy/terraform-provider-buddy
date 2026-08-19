@@ -4,14 +4,14 @@ page_title: "buddy_profile Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Manage a user profile
-  Token scope required: USER_INFO
+  Token scopes required: USER_READ, USER_WRITE
 ---
 
 # buddy_profile (Resource)
 
 Manage a user profile
 
-Token scope required: `USER_INFO`
+Token scopes required: `USER_READ`, `USER_WRITE`
 
 ## Example Usage
 

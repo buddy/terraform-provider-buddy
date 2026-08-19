@@ -4,14 +4,14 @@ page_title: "buddy_variables Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List variables and optionally filter them by key, project, pipeline or action
-  Token scope required: WORKSPACE, VARIABLE_INFO
+  Token scope required: VARIABLE_READ
 ---
 
 # buddy_variables (Data Source)
 
 List variables and optionally filter them by key, project, pipeline or action
 
-Token scope required: `WORKSPACE`, `VARIABLE_INFO`
+Token scope required: `VARIABLE_READ`
 
 ## Example Usage
 

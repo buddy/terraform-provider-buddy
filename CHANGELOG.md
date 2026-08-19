@@ -1,3 +1,7 @@
+# Release v1.47.0 (2026-08-19)
+* Bump api-go-sdk to v1.47.0
+* Documentation of the token scopes required by every resource and data source updated to the new `READ`/`WRITE`/`MANAGE` scope taxonomy - the old names are still accepted by the API but tokens now report the new ones
+
 # Release v1.46.0 (2026-08-12)
 * Add project_name to buddy_integration and buddy_integrations data sources, provide it to reach project scoped integrations - without it only workspace scoped ones are returned
 * [Breaking] project_name, pipeline_id and environment_id are now mutually exclusive in buddy_target and buddy_targets - a target has a single owner and the API rejects more than one filter

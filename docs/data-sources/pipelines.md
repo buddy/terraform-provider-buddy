@@ -4,14 +4,14 @@ page_title: "buddy_pipelines Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List pipelines and optionally filter them by name
-  Token scopes required: WORKSPACE, EXECUTION_INFO
+  Token scope required: PIPELINE_READ
 ---
 
 # buddy_pipelines (Data Source)
 
 List pipelines and optionally filter them by name
 
-Token scopes required: `WORKSPACE`, `EXECUTION_INFO`
+Token scope required: `PIPELINE_READ`
 
 ## Example Usage
 

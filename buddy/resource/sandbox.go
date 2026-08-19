@@ -127,7 +127,7 @@ func (r *sandboxResource) Metadata(_ context.Context, req resource.MetadataReque
 func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a sandbox\n\n" +
-			"Token scopes required: `WORKSPACE`, `SANDBOX_MANAGE`, `SANDBOX_INFO`",
+			"Token scopes required: `SANDBOX_READ`, `SANDBOX_WRITE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

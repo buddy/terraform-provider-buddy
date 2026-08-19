@@ -65,7 +65,7 @@ func (r *workspaceResource) Schema(_ context.Context, _ resource.SchemaRequest, 
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a workspace\n\n" +
 			"Invite-only token is required. Contact support@buddy.works for more details\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scopes required: `WORKSPACE_PROVISIONING`, `WORKSPACE_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

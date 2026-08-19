@@ -4,14 +4,14 @@ page_title: "buddy_variable Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get variable by key or variable ID
-  Token scope required: WORKSPACE, VARIABLE_INFO
+  Token scope required: VARIABLE_READ
 ---
 
 # buddy_variable (Data Source)
 
 Get variable by key or variable ID
 
-Token scope required: `WORKSPACE`, `VARIABLE_INFO`
+Token scope required: `VARIABLE_READ`
 
 ## Example Usage
 

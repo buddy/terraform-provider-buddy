@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create and manage a workspace project
   Workspace administrator rights are required
-  Token scopes required: WORKSPACE, PROJECT_DELETE
+  Token scopes required: PROJECT_READ, PROJECT_WRITE, PROJECT_MANAGE
 ---
 
 # buddy_project (Resource)
@@ -14,7 +14,7 @@ Create and manage a workspace project
 
 Workspace administrator rights are required
 
-Token scopes required: `WORKSPACE`, `PROJECT_DELETE`
+Token scopes required: `PROJECT_READ`, `PROJECT_WRITE`, `PROJECT_MANAGE`
 
 ## Example Usage
 

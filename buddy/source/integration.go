@@ -72,7 +72,7 @@ func (s *integrationSource) Configure(_ context.Context, req datasource.Configur
 func (s *integrationSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get integration by name or integration ID\n\n" +
-			"Token scope required: `INTEGRATION_INFO`",
+			"Token scope required: `INTEGRATION_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

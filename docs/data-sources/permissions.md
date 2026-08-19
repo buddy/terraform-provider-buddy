@@ -4,14 +4,14 @@ page_title: "buddy_permissions Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List permissions (roles) and optionally filter them by name or type
-  Token scope required: WORKSPACE
+  Token scope required: PERMISSION_READ
 ---
 
 # buddy_permissions (Data Source)
 
 List permissions (roles) and optionally filter them by name or type
 
-Token scope required: `WORKSPACE`
+Token scope required: `PERMISSION_READ`
 
 ## Example Usage
 

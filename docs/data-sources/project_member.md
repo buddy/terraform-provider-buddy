@@ -4,14 +4,14 @@ page_title: "buddy_project_member Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get project member
-  Token scope required: WORKSPACE
+  Token scope required: PROJECT_READ
 ---
 
 # buddy_project_member (Data Source)
 
 Get project member
 
-Token scope required: `WORKSPACE`
+Token scope required: `PROJECT_READ`
 
 ## Example Usage
 

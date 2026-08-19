@@ -4,14 +4,14 @@ page_title: "buddy_sandbox Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get sandbox by sandbox ID
-  Token scopes required: WORKSPACE, SANDBOX_INFO
+  Token scope required: SANDBOX_READ
 ---
 
 # buddy_sandbox (Data Source)
 
 Get sandbox by sandbox ID
 
-Token scopes required: `WORKSPACE`, `SANDBOX_INFO`
+Token scope required: `SANDBOX_READ`
 
 
 

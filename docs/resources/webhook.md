@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create and manage a workspace webhook
   Workspace administrator rights are required
-  Token scopes required: WORKSPACE, WEBHOOK_ADD, WEBHOOK_MANAGE, WEBHOOK_INFO
+  Token scopes required: WEBHOOK_READ, WEBHOOK_WRITE, WEBHOOK_MANAGE
 ---
 
 # buddy_webhook (Resource)
@@ -14,7 +14,7 @@ Create and manage a workspace webhook
 
 Workspace administrator rights are required
 
-Token scopes required: `WORKSPACE`, `WEBHOOK_ADD`, `WEBHOOK_MANAGE`, `WEBHOOK_INFO`
+Token scopes required: `WEBHOOK_READ`, `WEBHOOK_WRITE`, `WEBHOOK_MANAGE`
 
 ## Example Usage
 

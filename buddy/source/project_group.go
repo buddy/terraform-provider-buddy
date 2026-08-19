@@ -61,7 +61,7 @@ func (s *projectGroupSource) Configure(_ context.Context, req datasource.Configu
 func (s *projectGroupSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Get project group\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `PROJECT_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Manage a workspace project group permission
   Workspace administrator rights are required
-  Token scope required: WORKSPACE
+  Token scopes required: PROJECT_READ, PROJECT_WRITE
 ---
 
 # buddy_project_group (Resource)
@@ -14,7 +14,7 @@ Manage a workspace project group permission
 
 Workspace administrator rights are required
 
-Token scope required: `WORKSPACE`
+Token scopes required: `PROJECT_READ`, `PROJECT_WRITE`
 
 ## Example Usage
 

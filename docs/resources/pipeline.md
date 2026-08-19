@@ -4,14 +4,14 @@ page_title: "buddy_pipeline Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage a pipeline
-  Token scopes required: WORKSPACE, EXECUTION_MANAGE, EXECUTION_INFO
+  Token scopes required: PIPELINE_READ, PIPELINE_WRITE, PIPELINE_MANAGE
 ---
 
 # buddy_pipeline (Resource)
 
 Create and manage a pipeline
 
-Token scopes required: `WORKSPACE`, `EXECUTION_MANAGE`, `EXECUTION_INFO`
+Token scopes required: `PIPELINE_READ`, `PIPELINE_WRITE`, `PIPELINE_MANAGE`
 
 ## Example Usage
 

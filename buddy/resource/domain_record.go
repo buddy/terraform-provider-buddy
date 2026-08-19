@@ -84,7 +84,7 @@ func (r *domainRecordResource) Metadata(_ context.Context, req resource.Metadata
 func (r *domainRecordResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a domain record\n\n" +
-			"Token scope required: `ZONE_READ, ZONE_WRITE`",
+			"Token scopes required: `DOMAIN_READ`, `DOMAIN_WRITE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

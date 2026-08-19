@@ -54,7 +54,7 @@ func (s *membersSource) Configure(_ context.Context, req datasource.ConfigureReq
 func (s *membersSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List members and optionally filter them by name\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `MEMBER_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

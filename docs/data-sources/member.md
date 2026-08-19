@@ -4,14 +4,14 @@ page_title: "buddy_member Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get member by name, email or member ID
-  Token scope required: WORKSPACE
+  Token scope required: MEMBER_READ
 ---
 
 # buddy_member (Data Source)
 
 Get member by name, email or member ID
 
-Token scope required: `WORKSPACE`
+Token scope required: `MEMBER_READ`
 
 ## Example Usage
 

@@ -4,14 +4,14 @@ page_title: "buddy_environments Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List environments and optionally filter them by name
-  Token scope required: WORKSPACE, ENVIRONMENT_INFO
+  Token scope required: ENVIRONMENT_READ
 ---
 
 # buddy_environments (Data Source)
 
 List environments and optionally filter them by name
 
-Token scope required: `WORKSPACE`, `ENVIRONMENT_INFO`
+Token scope required: `ENVIRONMENT_READ`
 
 ## Example Usage
 

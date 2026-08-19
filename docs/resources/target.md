@@ -4,14 +4,14 @@ page_title: "buddy_target Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage a target
-  Token scope required: WORKSPACE, TARGET_MANAGE, TARGET_INFO
+  Token scopes required: TARGET_READ, TARGET_WRITE, TARGET_MANAGE
 ---
 
 # buddy_target (Resource)
 
 Create and manage a target
 
-Token scope required: `WORKSPACE`, `TARGET_MANAGE`, `TARGET_INFO`
+Token scopes required: `TARGET_READ`, `TARGET_WRITE`, `TARGET_MANAGE`
 
 ## Example Usage
 

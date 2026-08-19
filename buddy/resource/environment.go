@@ -122,7 +122,7 @@ func (e *environmentResource) Metadata(_ context.Context, req resource.MetadataR
 func (e *environmentResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage an environment\n\n" +
-			"Token scopes required: `WORKSPACE`, `ENVIRONMENT_MANAGE`, `ENVIRONMENT_INFO`",
+			"Token scopes required: `ENVIRONMENT_READ`, `ENVIRONMENT_WRITE`, `ENVIRONMENT_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

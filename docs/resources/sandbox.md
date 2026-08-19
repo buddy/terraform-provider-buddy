@@ -4,14 +4,14 @@ page_title: "buddy_sandbox Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage a sandbox
-  Token scopes required: WORKSPACE, SANDBOX_MANAGE, SANDBOX_INFO
+  Token scopes required: SANDBOX_READ, SANDBOX_WRITE
 ---
 
 # buddy_sandbox (Resource)
 
 Create and manage a sandbox
 
-Token scopes required: `WORKSPACE`, `SANDBOX_MANAGE`, `SANDBOX_INFO`
+Token scopes required: `SANDBOX_READ`, `SANDBOX_WRITE`
 
 ## Example Usage
 

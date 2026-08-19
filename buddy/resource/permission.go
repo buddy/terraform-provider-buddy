@@ -85,7 +85,7 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create and manage a workspace permission (role)\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scopes required: `PERMISSION_READ`, `PERMISSION_WRITE`, `PERMISSION_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

@@ -4,14 +4,14 @@ page_title: "buddy_environment Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Create and manage an environment
-  Token scopes required: WORKSPACE, ENVIRONMENT_MANAGE, ENVIRONMENT_INFO
+  Token scopes required: ENVIRONMENT_READ, ENVIRONMENT_WRITE, ENVIRONMENT_MANAGE
 ---
 
 # buddy_environment (Resource)
 
 Create and manage an environment
 
-Token scopes required: `WORKSPACE`, `ENVIRONMENT_MANAGE`, `ENVIRONMENT_INFO`
+Token scopes required: `ENVIRONMENT_READ`, `ENVIRONMENT_WRITE`, `ENVIRONMENT_MANAGE`
 
 ## Example Usage
 

@@ -4,14 +4,14 @@ page_title: "buddy_variables_ssh_keys Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List variables of SSH key type and optionally filter them by key, project name, pipeline or action
-  Token scope required: WORKSPACE, VARIABLE_INFO
+  Token scope required: VARIABLE_READ
 ---
 
 # buddy_variables_ssh_keys (Data Source)
 
 List variables of SSH key type and optionally filter them by key, project name, pipeline or action
 
-Token scope required: `WORKSPACE`, `VARIABLE_INFO`
+Token scope required: `VARIABLE_READ`
 
 ## Example Usage
 

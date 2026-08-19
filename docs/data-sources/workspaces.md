@@ -4,14 +4,14 @@ page_title: "buddy_workspaces Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   List workspaces and optionally filter them by name or URL handle
-  Token scope required: WORKSPACE
+  Token scope required: WORKSPACE_READ
 ---
 
 # buddy_workspaces (Data Source)
 
 List workspaces and optionally filter them by name or URL handle
 
-Token scope required: `WORKSPACE`
+Token scope required: `WORKSPACE_READ`
 
 ## Example Usage
 

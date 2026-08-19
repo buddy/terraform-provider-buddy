@@ -4,14 +4,14 @@ page_title: "buddy_variable_ssh_key Data Source - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Get variables of SSH key type by key or variable ID
-  Token scope required: WORKSPACE, VARIABLE_INFO
+  Token scope required: VARIABLE_READ
 ---
 
 # buddy_variable_ssh_key (Data Source)
 
 Get variables of SSH key type by key or variable ID
 
-Token scope required: `WORKSPACE`, `VARIABLE_INFO`
+Token scope required: `VARIABLE_READ`
 
 ## Example Usage
 

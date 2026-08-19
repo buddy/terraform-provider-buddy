@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create and manage a variable
   Workspace administrator rights are required
-  Token scopes required: WORKSPACE, VARIABLE_ADD, VARIABLE_MANAGE, VARIABLE_INFO
+  Token scopes required: VARIABLE_READ, VARIABLE_WRITE, VARIABLE_MANAGE
 ---
 
 # buddy_variable (Resource)
@@ -14,7 +14,7 @@ Create and manage a variable
 
 Workspace administrator rights are required
 
-Token scopes required: `WORKSPACE`, `VARIABLE_ADD`, `VARIABLE_MANAGE`, `VARIABLE_INFO`
+Token scopes required: `VARIABLE_READ`, `VARIABLE_WRITE`, `VARIABLE_MANAGE`
 
 ## Example Usage
 

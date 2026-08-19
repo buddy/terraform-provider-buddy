@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create and manage a workspace permission (role)
   Workspace administrator rights are required
-  Token scope required: WORKSPACE
+  Token scopes required: PERMISSION_READ, PERMISSION_WRITE, PERMISSION_MANAGE
 ---
 
 # buddy_permission (Resource)
@@ -14,7 +14,7 @@ Create and manage a workspace permission (role)
 
 Workspace administrator rights are required
 
-Token scope required: `WORKSPACE`
+Token scopes required: `PERMISSION_READ`, `PERMISSION_WRITE`, `PERMISSION_MANAGE`
 
 ## Example Usage
 

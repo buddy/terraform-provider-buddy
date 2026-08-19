@@ -5,7 +5,7 @@ subcategory: ""
 description: |-
   Create and manage a workspace
   Invite-only token is required. Contact support@buddy.works for more details
-  Token scope required: WORKSPACE
+  Token scopes required: WORKSPACE_PROVISIONING, WORKSPACE_READ
 ---
 
 # buddy_workspace (Resource)
@@ -14,7 +14,7 @@ Create and manage a workspace
 
 Invite-only token is required. Contact support@buddy.works for more details
 
-Token scope required: `WORKSPACE`
+Token scopes required: `WORKSPACE_PROVISIONING`, `WORKSPACE_READ`
 
 ## Example Usage
 

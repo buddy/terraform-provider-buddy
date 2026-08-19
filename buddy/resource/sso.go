@@ -66,7 +66,7 @@ func (r *ssoResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Manage SSO in workspace\n\n" +
 			"Workspace administrator rights are required\n\n" +
-			"Token scopes required: `WORKSPACE`",
+			"Token scope required: `WORKSPACE_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

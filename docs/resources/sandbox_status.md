@@ -4,14 +4,14 @@ page_title: "buddy_sandbox_status Resource - terraform-provider-buddy"
 subcategory: ""
 description: |-
   Manage sandbox status
-  Token scopes required: WORKSPACE, SANDBOX_MANAGE, SANDBOX_INFO
+  Token scopes required: SANDBOX_READ, SANDBOX_WRITE
 ---
 
 # buddy_sandbox_status (Resource)
 
 Manage sandbox status
 
-Token scopes required: `WORKSPACE`, `SANDBOX_MANAGE`, `SANDBOX_INFO`
+Token scopes required: `SANDBOX_READ`, `SANDBOX_WRITE`
 
 ## Example Usage
 

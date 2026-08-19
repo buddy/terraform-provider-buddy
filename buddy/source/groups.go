@@ -54,7 +54,7 @@ func (s *groupsSource) Configure(_ context.Context, req datasource.ConfigureRequ
 func (s *groupsSource) Schema(_ context.Context, _ datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List groups and optionally filter them by name\n\n" +
-			"Token scope required: `WORKSPACE`",
+			"Token scope required: `GROUP_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",

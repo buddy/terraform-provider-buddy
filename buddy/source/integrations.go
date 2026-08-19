@@ -58,7 +58,7 @@ func (s *integrationsSource) Schema(_ context.Context, _ datasource.SchemaReques
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "List integrations and optionally filter them by name or type\n\n" +
 			"Without `project_name` only workspace scoped integrations are returned\n\n" +
-			"Token scope required: `INTEGRATION_INFO`",
+			"Token scope required: `INTEGRATION_READ`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
 				MarkdownDescription: "The Terraform resource identifier for this item",
