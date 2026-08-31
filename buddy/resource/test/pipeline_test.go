@@ -27,7 +27,8 @@ type testAccPipelineExpectedAttributes struct {
 	FailOnPrepareEnvWarning   bool
 	FetchAllRefs              bool
 	AutoClearCache            bool
-	NoSkipToMostRecent        bool
+	SkipQueuedRuns            string
+	CancelInprogressRuns      string
 	DoNotCreateCommitStatus   bool
 	CloneDepth                int
 	Paused                    bool
@@ -105,7 +106,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Name:                      name,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
-						NoSkipToMostRecent:        false,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeNever,
 						DoNotCreateCommitStatus:   false,
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
@@ -132,7 +134,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Name:                      name,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
-						NoSkipToMostRecent:        false,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeNever,
 						DoNotCreateCommitStatus:   false,
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
@@ -169,7 +172,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Name:                      name,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
-						NoSkipToMostRecent:        false,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeNever,
 						DoNotCreateCommitStatus:   false,
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
@@ -211,7 +215,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Name:                      name,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
-						NoSkipToMostRecent:        false,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeNever,
 						DoNotCreateCommitStatus:   false,
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
@@ -245,7 +250,8 @@ func TestAccPipeline_permissions(t *testing.T) {
 						Name:                      name,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            false,
-						NoSkipToMostRecent:        false,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeNever,
 						DoNotCreateCommitStatus:   false,
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
@@ -557,10 +563,12 @@ func TestAccPipeline_schedule(t *testing.T) {
 					testAccProjectGet("buddy_project.proj", &project),
 					testAccProfileGet(&profile),
 					testAccPipelineAttributes("buddy_pipeline.bar", &pipeline, &testAccPipelineExpectedAttributes{
-						Name:     name,
-						Project:  &project,
-						Creator:  &profile,
-						Priority: priority,
+						Name:                 name,
+						Project:              &project,
+						Creator:              &profile,
+						Priority:             priority,
+						SkipQueuedRuns:       buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns: buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type:      eventType,
 							StartDate: startDate,
@@ -594,6 +602,8 @@ func TestAccPipeline_schedule(t *testing.T) {
 							Delay:     newDelay,
 						},
 						Priority:                newPriority,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						GitChangesetBase:        newGitChangeSet,
 						FilesystemChangesetBase: newFilesystemChangeSet,
 						FailOnPrepareEnvWarning: true,
@@ -652,6 +662,8 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 							Cron: cron,
 						},
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  true,
@@ -676,6 +688,8 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 							Timezone: newTimezone,
 						},
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
@@ -699,6 +713,8 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 							Cron: newCron,
 						},
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
@@ -723,6 +739,8 @@ func TestAccPipeline_schedule_cron(t *testing.T) {
 							Cron: newCron,
 						},
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						FailOnPrepareEnvWarning: true,
 						FetchAllRefs:            true,
 						Paused:                  false,
@@ -1031,6 +1049,8 @@ func TestAccPipeline_event_email(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type:   eventType,
 							Prefix: prefix,
@@ -1055,6 +1075,8 @@ func TestAccPipeline_event_email(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type:   eventType,
 							Prefix: newPrefix,
@@ -1106,6 +1128,8 @@ func TestAccPipeline_event_webhook(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type: eventType,
 							Totp: true,
@@ -1127,6 +1151,8 @@ func TestAccPipeline_event_webhook(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type: eventType,
 							Totp: false,
@@ -1179,6 +1205,8 @@ func TestAccPipeline_event_pull_request(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type:     eventType,
 							Branches: []string{branch},
@@ -1201,6 +1229,8 @@ func TestAccPipeline_event_pull_request(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type:     eventType,
 							Branches: []string{newBranch},
@@ -1272,6 +1302,8 @@ func TestAccPipeline_event(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type: eventType,
 							Refs: []string{ref},
@@ -1345,6 +1377,8 @@ func TestAccPipeline_event(t *testing.T) {
 						FailOnPrepareEnvWarning: false,
 						FetchAllRefs:            false,
 						Priority:                buddy.PipelinePriorityNormal,
+						SkipQueuedRuns:          buddy.PipelineRunsScopeSameRef,
+						CancelInprogressRuns:    buddy.PipelineRunsScopeNever,
 						Event: &buddy.PipelineEvent{
 							Type: newEventType,
 							Refs: []string{newRef},
@@ -1445,7 +1479,7 @@ func TestAccPipeline_click(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create pipeline
 			{
-				Config: testAccPipelineConfigClick(domain, projectName, name, true, false, true, false, true, false, true, msgTemplate, targetUrl, ref, cloneDepth, cpu, true, false, note, agentNote),
+				Config: testAccPipelineConfigClick(domain, projectName, name, true, false, true, false, buddy.PipelineRunsScopeNever, buddy.PipelineRunsScopeSameRef, false, true, msgTemplate, targetUrl, ref, cloneDepth, cpu, true, false, note, agentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -1457,7 +1491,8 @@ func TestAccPipeline_click(t *testing.T) {
 						Cpu:                       cpu,
 						AlwaysFromScratch:         true,
 						AutoClearCache:            false,
-						NoSkipToMostRecent:        true,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeNever,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeSameRef,
 						DoNotCreateCommitStatus:   false,
 						IgnoreFailOnProjectStatus: true,
 						FetchAllRefs:              true,
@@ -1476,7 +1511,7 @@ func TestAccPipeline_click(t *testing.T) {
 			},
 			// update pipeline
 			{
-				Config: testAccPipelineConfigClick(domain, projectName, newName, false, true, false, true, false, true, false, newMsgTemplate, newTargetUrl, newRef, newCloneDepth, newCpu, false, true, newNote, newAgentNote),
+				Config: testAccPipelineConfigClick(domain, projectName, newName, false, true, false, true, buddy.PipelineRunsScopeAlways, buddy.PipelineRunsScopeSameEnvironment, true, false, newMsgTemplate, newTargetUrl, newRef, newCloneDepth, newCpu, false, true, newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPipelineGet("buddy_pipeline.bar", &pipeline),
 					testAccProjectGet("buddy_project.proj", &project),
@@ -1488,7 +1523,8 @@ func TestAccPipeline_click(t *testing.T) {
 						Cpu:                       newCpu,
 						AlwaysFromScratch:         false,
 						AutoClearCache:            true,
-						NoSkipToMostRecent:        false,
+						SkipQueuedRuns:            buddy.PipelineRunsScopeAlways,
+						CancelInprogressRuns:      buddy.PipelineRunsScopeSameEnvironment,
 						DoNotCreateCommitStatus:   true,
 						IgnoreFailOnProjectStatus: false,
 						FetchAllRefs:              false,
@@ -1737,7 +1773,6 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		attrsFailOnPrepareEnvWarning, _ := strconv.ParseBool(attrs["fail_on_prepare_env_warning"])
 		attrsFetchAllRefs, _ := strconv.ParseBool(attrs["fetch_all_refs"])
 		attrsAutoClearCache, _ := strconv.ParseBool(attrs["auto_clear_cache"])
-		attrsNoSkipToMostRecent, _ := strconv.ParseBool(attrs["no_skip_to_most_recent"])
 		attrsDoNotCreateCommitStatus, _ := strconv.ParseBool(attrs["do_not_create_commit_status"])
 		attrsIgnoreFailOnProjectStatus, _ := strconv.ParseBool(attrs["ignore_fail_on_project_status"])
 		attrsPausedFailures, _ := strconv.Atoi(attrs["pause_on_repeated_failures"])
@@ -1831,10 +1866,16 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 		if err := util.CheckBoolFieldEqual("auto_clear_cache", attrsAutoClearCache, want.AutoClearCache); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("NoSkipToMostRecent", pipeline.NoSkipToMostRecent, want.NoSkipToMostRecent); err != nil {
+		if err := util.CheckFieldEqualAndSet("SkipQueuedRuns", pipeline.SkipQueuedRuns, want.SkipQueuedRuns); err != nil {
 			return err
 		}
-		if err := util.CheckBoolFieldEqual("no_skip_to_most_recent", attrsNoSkipToMostRecent, want.NoSkipToMostRecent); err != nil {
+		if err := util.CheckFieldEqualAndSet("skip_queued_runs", attrs["skip_queued_runs"], want.SkipQueuedRuns); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("CancelInprogressRuns", pipeline.CancelInprogressRuns, want.CancelInprogressRuns); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("cancel_inprogress_runs", attrs["cancel_inprogress_runs"], want.CancelInprogressRuns); err != nil {
 			return err
 		}
 		if err := util.CheckBoolFieldEqual("DoNotCreateCommitStatus", pipeline.DoNotCreateCommitStatus, want.DoNotCreateCommitStatus); err != nil {
@@ -2684,7 +2725,7 @@ resource "buddy_pipeline" "bar" {
 `, domain, email, groupName, projectName, name, ref)
 }
 
-func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, noSkipToMostRecent bool, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int, cpu string, managePermissionsByYaml bool, manageVariablesByYaml bool, note string, agentNote string) string {
+func testAccPipelineConfigClick(domain string, projectName string, name string, alwaysFromScratch bool, failOnPrepareEnvWarning bool, fetchAllRefs bool, autoClearCache bool, skipQueuedRuns string, cancelInprogressRuns string, doNotCreateCommitStatus bool, ignoreFailOnProjectStatus bool, executionMessageTemplate string, targetSiteUrl string, ref string, cloneDepth int, cpu string, managePermissionsByYaml bool, manageVariablesByYaml bool, note string, agentNote string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
     domain = "%s"
@@ -2703,7 +2744,8 @@ resource "buddy_pipeline" "bar" {
 	  fail_on_prepare_env_warning = %t
 	  fetch_all_refs = %t
     auto_clear_cache = %t
-    no_skip_to_most_recent = %t
+    skip_queued_runs = "%s"
+    cancel_inprogress_runs = "%s"
     do_not_create_commit_status = %t
     ignore_fail_on_project_status = %t
     execution_message_template = "%s"
@@ -2716,7 +2758,7 @@ resource "buddy_pipeline" "bar" {
     note = "%s"
     agent_note = "%s"
 }
-`, domain, projectName, name, alwaysFromScratch, failOnPrepareEnvWarning, fetchAllRefs, autoClearCache, noSkipToMostRecent, doNotCreateCommitStatus, ignoreFailOnProjectStatus, executionMessageTemplate, targetSiteUrl, ref, cloneDepth, cpu, manageVariablesByYaml, managePermissionsByYaml, note, agentNote)
+`, domain, projectName, name, alwaysFromScratch, failOnPrepareEnvWarning, fetchAllRefs, autoClearCache, skipQueuedRuns, cancelInprogressRuns, doNotCreateCommitStatus, ignoreFailOnProjectStatus, executionMessageTemplate, targetSiteUrl, ref, cloneDepth, cpu, manageVariablesByYaml, managePermissionsByYaml, note, agentNote)
 }
 
 func testAccPipelineCheckDestroy(s *terraform.State) error {

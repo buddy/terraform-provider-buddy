@@ -190,6 +190,7 @@ resource "buddy_pipeline" "conditions" {
 - `agent_note` (String) The pipeline's agent note
 - `always_from_scratch` (Boolean) Defines whether or not to upload everything from scratch on every run
 - `auto_clear_cache` (Boolean) Defines whether or not to automatically clear cache before running the pipeline
+- `cancel_inprogress_runs` (String) Defines the scope of the in-progress runs canceled when a new run starts. Allowed: `NEVER`, `ALWAYS`, `SAME_REF`, `SAME_ENVIRONMENT`, `SAME_ARTIFACT`
 - `clone_depth` (Number) The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits
 - `concurrent_pipeline_runs` (Boolean) Defines whether or not pipeline can be run concurrently
 - `cpu` (String) The pipeline's cpu. Allowed: `X64`, `ARM`
@@ -211,7 +212,6 @@ resource "buddy_pipeline" "conditions" {
 - `loop` (Set of String) Specify multiple variables to create a multi-dimensional matrix. A pipeline will run for each possible combination of the variables
 - `manage_permissions_by_yaml` (Boolean) If set to true pipeline permissions will be managed by yaml
 - `manage_variables_by_yaml` (Boolean) If set to true pipeline variables will be managed by yaml
-- `no_skip_to_most_recent` (Boolean) Defines whether or not to skip run to the most recent run
 - `note` (String) The pipeline's note
 - `pause_on_repeated_failures` (Number) The pipeline's max failed executions before it is paused. Restricted to schedule
 - `paused` (Boolean) Is the pipeline's run paused. Restricted schedule
@@ -223,6 +223,7 @@ resource "buddy_pipeline" "conditions" {
 - `remote_path` (String) The pipeline's remote definition path. Set it if `definition_source: REMOTE`
 - `remote_project_name` (String) The pipeline's remote definition project name. Set it if `definition_source: REMOTE`
 - `remote_ref` (String) The pipeline's remote definition ref name. Set it if `definition_source: REMOTE`
+- `skip_queued_runs` (String) Defines the scope of the queued runs skipped when a new run starts. Allowed: `NEVER`, `ALWAYS`, `SAME_REF`, `SAME_ENVIRONMENT`, `SAME_ARTIFACT`
 - `tags` (Set of String) The pipeline's list of tags. Only for `Buddy Enterprise`
 - `target_site_url` (String) The pipeline's website target URL
 - `trigger_condition` (Block Set) The pipeline's list of trigger conditions (see [below for nested schema](#nestedblock--trigger_condition))
