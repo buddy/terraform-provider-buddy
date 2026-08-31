@@ -63,7 +63,8 @@ type pipelineResourceModel struct {
 	DisablingReason           types.String `tfsdk:"disabling_reason"`
 	FailOnPrepareEnvWarning   types.Bool   `tfsdk:"fail_on_prepare_env_warning"`
 	AutoClearCache            types.Bool   `tfsdk:"auto_clear_cache"`
-	NoSkipToMostRecent        types.Bool   `tfsdk:"no_skip_to_most_recent"`
+	SkipQueuedRuns            types.String `tfsdk:"skip_queued_runs"`
+	CancelInprogressRuns      types.String `tfsdk:"cancel_inprogress_runs"`
 	DoNotCreateCommitStatus   types.Bool   `tfsdk:"do_not_create_commit_status"`
 	CloneDepth                types.Int64  `tfsdk:"clone_depth"`
 	Paused                    types.Bool   `tfsdk:"paused"`
@@ -124,7 +125,8 @@ func (r *pipelineResourceModel) loadAPI(ctx context.Context, domain string, proj
 	r.FilesystemChangesetBase = types.StringValue(pipeline.FilesystemChangesetBase)
 	r.ConcurrentPipelineRuns = types.BoolValue(pipeline.ConcurrentPipelineRuns)
 	r.IgnoreFailOnProjectStatus = types.BoolValue(pipeline.IgnoreFailOnProjectStatus)
-	r.NoSkipToMostRecent = types.BoolValue(pipeline.NoSkipToMostRecent)
+	r.SkipQueuedRuns = types.StringValue(pipeline.SkipQueuedRuns)
+	r.CancelInprogressRuns = types.StringValue(pipeline.CancelInprogressRuns)
 	r.AutoClearCache = types.BoolValue(pipeline.AutoClearCache)
 	r.FetchAllRefs = types.BoolValue(pipeline.FetchAllRefs)
 	r.FailOnPrepareEnvWarning = types.BoolValue(pipeline.FailOnPrepareEnvWarning)
@@ -370,10 +372,33 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Optional:            true,
 				Computed:            true,
 			},
-			"no_skip_to_most_recent": schema.BoolAttribute{
-				MarkdownDescription: "Defines whether or not to skip run to the most recent run",
+			"skip_queued_runs": schema.StringAttribute{
+				MarkdownDescription: "Defines the scope of the queued runs skipped when a new run starts. Allowed: `NEVER`, `ALWAYS`, `SAME_REF`, `SAME_ENVIRONMENT`, `SAME_ARTIFACT`",
 				Optional:            true,
 				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.PipelineRunsScopeNever,
+						buddy.PipelineRunsScopeAlways,
+						buddy.PipelineRunsScopeSameRef,
+						buddy.PipelineRunsScopeSameEnvironment,
+						buddy.PipelineRunsScopeSameArtifact,
+					),
+				},
+			},
+			"cancel_inprogress_runs": schema.StringAttribute{
+				MarkdownDescription: "Defines the scope of the in-progress runs canceled when a new run starts. Allowed: `NEVER`, `ALWAYS`, `SAME_REF`, `SAME_ENVIRONMENT`, `SAME_ARTIFACT`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.PipelineRunsScopeNever,
+						buddy.PipelineRunsScopeAlways,
+						buddy.PipelineRunsScopeSameRef,
+						buddy.PipelineRunsScopeSameEnvironment,
+						buddy.PipelineRunsScopeSameArtifact,
+					),
+				},
 			},
 			"do_not_create_commit_status": schema.BoolAttribute{
 				MarkdownDescription: "Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution",
@@ -703,8 +728,11 @@ func (r *pipelineResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.AutoClearCache.IsNull() && !data.AutoClearCache.IsUnknown() {
 		ops.AutoClearCache = data.AutoClearCache.ValueBoolPointer()
 	}
-	if !data.NoSkipToMostRecent.IsNull() && !data.NoSkipToMostRecent.IsUnknown() {
-		ops.NoSkipToMostRecent = data.NoSkipToMostRecent.ValueBoolPointer()
+	if !data.SkipQueuedRuns.IsNull() && !data.SkipQueuedRuns.IsUnknown() {
+		ops.SkipQueuedRuns = data.SkipQueuedRuns.ValueStringPointer()
+	}
+	if !data.CancelInprogressRuns.IsNull() && !data.CancelInprogressRuns.IsUnknown() {
+		ops.CancelInprogressRuns = data.CancelInprogressRuns.ValueStringPointer()
 	}
 	if !data.DoNotCreateCommitStatus.IsNull() && !data.DoNotCreateCommitStatus.IsUnknown() {
 		ops.DoNotCreateCommitStatus = data.DoNotCreateCommitStatus.ValueBoolPointer()
@@ -924,8 +952,11 @@ func (r *pipelineResource) Update(ctx context.Context, req resource.UpdateReques
 	if !data.AutoClearCache.IsNull() && !data.AutoClearCache.IsUnknown() {
 		ops.AutoClearCache = data.AutoClearCache.ValueBoolPointer()
 	}
-	if !data.NoSkipToMostRecent.IsNull() && !data.NoSkipToMostRecent.IsUnknown() {
-		ops.NoSkipToMostRecent = data.NoSkipToMostRecent.ValueBoolPointer()
+	if !data.SkipQueuedRuns.IsNull() && !data.SkipQueuedRuns.IsUnknown() {
+		ops.SkipQueuedRuns = data.SkipQueuedRuns.ValueStringPointer()
+	}
+	if !data.CancelInprogressRuns.IsNull() && !data.CancelInprogressRuns.IsUnknown() {
+		ops.CancelInprogressRuns = data.CancelInprogressRuns.ValueStringPointer()
 	}
 	if !data.DoNotCreateCommitStatus.IsNull() && !data.DoNotCreateCommitStatus.IsUnknown() {
 		ops.DoNotCreateCommitStatus = data.DoNotCreateCommitStatus.ValueBoolPointer()

@@ -1,3 +1,7 @@
+# Release v1.48.0 (2026-08-31)
+* Bump api-go-sdk to v1.48.0
+* [Breaking] `buddy_pipeline`: `no_skip_to_most_recent` (Boolean) removed, replaced by `skip_queued_runs` and `cancel_inprogress_runs` (String, one of `NEVER`, `ALWAYS`, `SAME_REF`, `SAME_ENVIRONMENT`, `SAME_ARTIFACT`) - `no_skip_to_most_recent = true` maps to `skip_queued_runs = "NEVER"`, `false` to `skip_queued_runs = "SAME_REF"`
+
 # Release v1.47.0 (2026-08-19)
 * Bump api-go-sdk to v1.47.0
 * Documentation of the token scopes required by every resource and data source updated to the new `READ`/`WRITE`/`MANAGE` scope taxonomy - the old names are still accepted by the API but tokens now report the new ones
