@@ -50,6 +50,7 @@ data "buddy_variables_ssh_keys" "pipeline" {
 - `key_regex` (String) The variable's key regular expression to match
 - `pipeline_id` (Number) Get only from provided pipeline
 - `project_name` (String) Get only from provided project
+- `sandbox_id` (String) Get only from provided sandbox
 
 ### Read-Only
 
@@ -64,6 +65,7 @@ Read-Only:
 - `agent_note` (String)
 - `checksum` (String)
 - `description` (String, Deprecated)
+- `disabled` (Boolean)
 - `encrypted` (Boolean)
 - `file_chmod` (String)
 - `file_path` (String)

@@ -46,6 +46,7 @@ resource "buddy_project_member" "john_in_test" {
 - `id` (String) The Terraform resource identifier for this item
 - `name` (String) The member's name
 - `permission` (Attributes Set) The member's permission in the project (see [below for nested schema](#nestedatt--permission))
+- `username` (String) The member's username
 - `workspace_owner` (Boolean) Is the member the workspace owner
 
 <a id="nestedatt--permission"></a>

@@ -44,14 +44,17 @@ data "buddy_variable_ssh_key" "by_key_in_project" {
 - `key` (String) The variable's name
 - `pipeline_id` (Number) The variable's pipeline ID
 - `project_name` (String) The variable's project name
+- `sandbox_id` (String) The variable's sandbox ID
 - `variable_id` (Number) The variable's ID
 
 ### Read-Only
 
 - `agent_note` (String) The variable's agent note
 - `description` (String, Deprecated) The variable's description
+- `disabled` (Boolean) Defines whether or not the variable is passed to a pipeline
 - `encrypted` (Boolean) Is the variable's value encrypted
 - `id` (String) The Terraform resource identifier for this item
 - `note` (String) The variable's note
+- `run_only_settable` (Boolean) Can the variable's value be changed only by a running pipeline
 - `settable` (Boolean) Is the variable's value changeable
 - `value` (String, Sensitive) The variable's value. Encrypted if **encrypted** == true

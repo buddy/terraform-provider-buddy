@@ -49,4 +49,5 @@ Read-Only:
 - `member_id` (Number)
 - `name` (String)
 - `status` (String)
+- `username` (String)
 - `workspace_owner` (Boolean)

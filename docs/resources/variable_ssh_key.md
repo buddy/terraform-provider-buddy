@@ -49,11 +49,17 @@ EOT
 
 - `action_id` (Number) The variable's action ID
 - `agent_note` (String) The variable's agent note
+- `allowed_pipeline` (Block Set) List of exceptions from **pipelines_access_level**. Every rule must carry the opposite access level and only one form - whole pipeline or single **action** - may be used per pipeline. Only for workspace and project scope (see [below for nested schema](#nestedblock--allowed_pipeline))
+- `allowed_sandboxes` (Block Set) List of exceptions from **sandboxes_access_level**. Every rule must carry the opposite access level. Only for workspace and project scope (see [below for nested schema](#nestedblock--allowed_sandboxes))
 - `description` (String, Deprecated) The variable's description
+- `disabled` (Boolean) Defines whether or not the variable is passed to a pipeline
 - `environment_id` (String) The variable's environmental ID. Set for envrionment scope
 - `note` (String) The variable's note
 - `pipeline_id` (Number) The variable's pipeline ID
+- `pipelines_access_level` (String) The default access level for pipelines. Only for workspace and project scope
 - `project_name` (String) The variable's project name
+- `sandbox_id` (String) The variable's sandbox ID. Set for sandbox scope
+- `sandboxes_access_level` (String) The default access level for sandboxes. Only for workspace and project scope
 
 ### Read-Only
 
@@ -65,6 +71,29 @@ EOT
 - `settable` (Boolean) Is the variable's value changeable, always false for buddy_variable_ssh_key
 - `value_processed` (String, Sensitive) The variable's value, always encrypted for buddy_variable_ssh_key
 - `variable_id` (Number) The variable's ID
+
+<a id="nestedblock--allowed_pipeline"></a>
+### Nested Schema for `allowed_pipeline`
+
+Required:
+
+- `access_level` (String) The pipeline's access level
+- `pipeline` (String) The pipeline's name or identifier
+- `project` (String) The pipeline's project name
+
+Optional:
+
+- `action` (String) The action's identifier. Set to limit the rule to a single action
+
+
+<a id="nestedblock--allowed_sandboxes"></a>
+### Nested Schema for `allowed_sandboxes`
+
+Required:
+
+- `access_level` (String) The sandbox's access level
+- `project` (String) The sandbox's project name
+- `sandbox` (String) The sandbox's name or identifier
 
 ## Import
 

@@ -6,6 +6,7 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -44,6 +45,7 @@ type variableSshKeyResourceModel struct {
 	PipelineId     types.Int64  `tfsdk:"pipeline_id"`
 	ActionId       types.Int64  `tfsdk:"action_id"`
 	EnvironmentId  types.String `tfsdk:"environment_id"`
+	SandboxId      types.String `tfsdk:"sandbox_id"`
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
 	Note           types.String `tfsdk:"note"`
@@ -54,6 +56,12 @@ type variableSshKeyResourceModel struct {
 	Checksum       types.String `tfsdk:"checksum"`
 	KeyFingerprint types.String `tfsdk:"key_fingerprint"`
 	PublicValue    types.String `tfsdk:"public_value"`
+
+	Disabled             types.Bool   `tfsdk:"disabled"`
+	PipelinesAccessLevel types.String `tfsdk:"pipelines_access_level"`
+	SandboxesAccessLevel types.String `tfsdk:"sandboxes_access_level"`
+	AllowedPipeline      types.Set    `tfsdk:"allowed_pipeline"`
+	AllowedSandboxes     types.Set    `tfsdk:"allowed_sandboxes"`
 }
 
 func (r *variableSshKeyResourceModel) loadAPI(domain string, variable *buddy.Variable) {
@@ -73,6 +81,9 @@ func (r *variableSshKeyResourceModel) loadAPI(domain string, variable *buddy.Var
 	r.Checksum = types.StringValue(variable.Checksum)
 	r.KeyFingerprint = types.StringValue(variable.KeyFingerprint)
 	r.PublicValue = types.StringValue(variable.PublicValue)
+	r.Disabled = types.BoolValue(variable.Disabled)
+	r.PipelinesAccessLevel = types.StringValue(variable.PipelinesAccessLevel)
+	r.SandboxesAccessLevel = types.StringValue(variable.SandboxesAccessLevel)
 	if variable.Project != nil {
 		r.ProjectName = types.StringValue(variable.Project.Name)
 	} else {
@@ -93,6 +104,11 @@ func (r *variableSshKeyResourceModel) loadAPI(domain string, variable *buddy.Var
 	} else {
 		r.EnvironmentId = types.StringNull()
 	}
+	if variable.Sandbox != nil {
+		r.SandboxId = types.StringValue(variable.Sandbox.Id)
+	} else {
+		r.SandboxId = types.StringNull()
+	}
 }
 
 func (r *variableSshKeyResourceModel) decomposeId() (string, int, error) {
@@ -105,6 +121,40 @@ func (r *variableSshKeyResourceModel) decomposeId() (string, int, error) {
 		return "", 0, err
 	}
 	return domain, variableId, nil
+}
+
+// applyCommonOps fills in the fields that behave the same on create and update. The scope
+// fields are left out on purpose - the API rejects any attempt to change them on update.
+func (r *variableSshKeyResourceModel) applyCommonOps(ctx context.Context, ops *buddy.VariableOps) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if !r.Note.IsNull() && !r.Note.IsUnknown() {
+		ops.Note = r.Note.ValueStringPointer()
+	} else if !r.Description.IsNull() && !r.Description.IsUnknown() {
+		ops.Note = r.Description.ValueStringPointer()
+	}
+	if !r.AgentNote.IsNull() && !r.AgentNote.IsUnknown() {
+		ops.AgentNote = r.AgentNote.ValueStringPointer()
+	}
+	if !r.Disabled.IsNull() && !r.Disabled.IsUnknown() {
+		ops.Disabled = r.Disabled.ValueBoolPointer()
+	}
+	if !r.PipelinesAccessLevel.IsNull() && !r.PipelinesAccessLevel.IsUnknown() {
+		ops.PipelinesAccessLevel = r.PipelinesAccessLevel.ValueStringPointer()
+	}
+	if !r.SandboxesAccessLevel.IsNull() && !r.SandboxesAccessLevel.IsUnknown() {
+		ops.SandboxesAccessLevel = r.SandboxesAccessLevel.ValueStringPointer()
+	}
+	if !r.AllowedPipeline.IsNull() && !r.AllowedPipeline.IsUnknown() {
+		pips, d := util.VariableAllowedPipelinesModelToApi(ctx, &r.AllowedPipeline)
+		diags.Append(d...)
+		ops.AllowedPipelines = pips
+	}
+	if !r.AllowedSandboxes.IsNull() && !r.AllowedSandboxes.IsUnknown() {
+		sbs, d := util.VariableAllowedSandboxesModelToApi(ctx, &r.AllowedSandboxes)
+		diags.Append(d...)
+		ops.AllowedSandboxes = sbs
+	}
+	return diags
 }
 
 func (r *variableSshKeyResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -174,6 +224,7 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 						path.MatchRoot("pipeline_id"),
 						path.MatchRoot("action_id"),
 						path.MatchRoot("environment_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
 			},
@@ -189,6 +240,7 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 						path.MatchRoot("project_name"),
 						path.MatchRoot("action_id"),
 						path.MatchRoot("environment_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
 			},
@@ -204,6 +256,7 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 						path.MatchRoot("project_name"),
 						path.MatchRoot("pipeline_id"),
 						path.MatchRoot("environment_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
 			},
@@ -219,8 +272,46 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 						path.MatchRoot("project_name"),
 						path.MatchRoot("pipeline_id"),
 						path.MatchRoot("action_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
+			},
+			"sandbox_id": schema.StringAttribute{
+				MarkdownDescription: "The variable's sandbox ID. Set for sandbox scope",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("action_id"),
+						path.MatchRoot("environment_id"),
+					}...),
+				},
+			},
+			"disabled": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not the variable is passed to a pipeline",
+				Optional:            true,
+				Computed:            true,
+			},
+			"pipelines_access_level": schema.StringAttribute{
+				MarkdownDescription: "The default access level for pipelines. Only for workspace and project scope",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+				},
+				Optional: true,
+				Computed: true,
+			},
+			"sandboxes_access_level": schema.StringAttribute{
+				MarkdownDescription: "The default access level for sandboxes. Only for workspace and project scope",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"settable": schema.BoolAttribute{
 				MarkdownDescription: "Is the variable's value changeable, always false for buddy_variable_ssh_key",
@@ -275,6 +366,56 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 				Computed:            true,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"allowed_pipeline": schema.SetNestedBlock{
+				MarkdownDescription: "List of exceptions from **pipelines_access_level**. Every rule must carry the opposite access level and only one form - whole pipeline or single **action** - may be used per pipeline. Only for workspace and project scope",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's project name",
+							Required:            true,
+						},
+						"pipeline": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's name or identifier",
+							Required:            true,
+						},
+						"action": schema.StringAttribute{
+							MarkdownDescription: "The action's identifier. Set to limit the rule to a single action",
+							Optional:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+							},
+							Required: true,
+						},
+					},
+				},
+			},
+			"allowed_sandboxes": schema.SetNestedBlock{
+				MarkdownDescription: "List of exceptions from **sandboxes_access_level**. Every rule must carry the opposite access level. Only for workspace and project scope",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's project name",
+							Required:            true,
+						},
+						"sandbox": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's name or identifier",
+							Required:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+							},
+							Required: true,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -305,13 +446,9 @@ func (r *variableSshKeyResource) Create(ctx context.Context, req resource.Create
 		FilePath:  data.FilePath.ValueStringPointer(),
 		FileChmod: data.FileChmod.ValueStringPointer(),
 	}
-	if !data.Note.IsNull() && !data.Note.IsUnknown() {
-		ops.Note = data.Note.ValueStringPointer()
-	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Note = data.Description.ValueStringPointer()
-	}
-	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
-		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	resp.Diagnostics.Append(data.applyCommonOps(ctx, &ops)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.Project = &buddy.VariableProject{
@@ -331,6 +468,11 @@ func (r *variableSshKeyResource) Create(ctx context.Context, req resource.Create
 	if !data.EnvironmentId.IsNull() && !data.EnvironmentId.IsUnknown() {
 		ops.Environment = &buddy.VariableEnvironment{
 			Id: data.EnvironmentId.ValueString(),
+		}
+	}
+	if !data.SandboxId.IsNull() && !data.SandboxId.IsUnknown() {
+		ops.Sandbox = &buddy.VariableSandbox{
+			Id: data.SandboxId.ValueString(),
 		}
 	}
 	variable, _, err := r.client.VariableService.Create(domain, &ops)
@@ -381,25 +523,20 @@ func (r *variableSshKeyResource) Update(ctx context.Context, req resource.Update
 		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("variable ssh key", err))
 		return
 	}
-	typ := buddy.VariableTypeSshKey
 	encrypted := true
 	settable := false
+	// type is immutable on update - sending it back would only risk a 400
 	ops := buddy.VariableOps{
 		Value:     data.Value.ValueStringPointer(),
-		Type:      &typ,
 		Encrypted: &encrypted,
 		Settable:  &settable,
 		FilePlace: data.FilePlace.ValueStringPointer(),
 		FilePath:  data.FilePath.ValueStringPointer(),
 		FileChmod: data.FileChmod.ValueStringPointer(),
 	}
-	if !data.Note.IsNull() && !data.Note.IsUnknown() {
-		ops.Note = data.Note.ValueStringPointer()
-	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Note = data.Description.ValueStringPointer()
-	}
-	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
-		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	resp.Diagnostics.Append(data.applyCommonOps(ctx, &ops)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	variable, _, err := r.client.VariableService.Update(domain, variableId, &ops)
 	if err != nil {

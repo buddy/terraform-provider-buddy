@@ -32,6 +32,7 @@ type memberSourceModel struct {
 	ID             types.String `tfsdk:"id"`
 	Domain         types.String `tfsdk:"domain"`
 	Email          types.String `tfsdk:"email"`
+	Username       types.String `tfsdk:"username"`
 	Name           types.String `tfsdk:"name"`
 	MemberId       types.Int64  `tfsdk:"member_id"`
 	Admin          types.Bool   `tfsdk:"admin"`
@@ -44,6 +45,7 @@ func (s *memberSourceModel) loadAPI(domain string, member *buddy.Member) {
 	s.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(member.Id)))
 	s.Domain = types.StringValue(domain)
 	s.Email = types.StringValue(member.Email)
+	s.Username = types.StringValue(member.Username)
 	s.Name = types.StringValue(member.Name)
 	s.MemberId = types.Int64Value(int64(member.Id))
 	s.Admin = types.BoolValue(member.Admin)
@@ -88,6 +90,10 @@ func (s *memberSource) Schema(_ context.Context, _ datasource.SchemaRequest, res
 						path.MatchRoot("member_id"),
 					}...),
 				},
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The member's username",
+				Computed:            true,
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The member's name",

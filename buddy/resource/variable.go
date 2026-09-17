@@ -6,6 +6,7 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework-validators/int64validator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
@@ -42,12 +43,20 @@ type variableResourceModel struct {
 	PipelineId     types.Int64  `tfsdk:"pipeline_id"`
 	ActionId       types.Int64  `tfsdk:"action_id"`
 	EnvironmentId  types.String `tfsdk:"environment_id"`
+	SandboxId      types.String `tfsdk:"sandbox_id"`
 	Settable       types.Bool   `tfsdk:"settable"`
 	Description    types.String `tfsdk:"description"`
 	Note           types.String `tfsdk:"note"`
 	AgentNote      types.String `tfsdk:"agent_note"`
 	ValueProcessed types.String `tfsdk:"value_processed"`
 	VariableId     types.Int64  `tfsdk:"variable_id"`
+
+	RunOnlySettable      types.Bool   `tfsdk:"run_only_settable"`
+	Disabled             types.Bool   `tfsdk:"disabled"`
+	PipelinesAccessLevel types.String `tfsdk:"pipelines_access_level"`
+	SandboxesAccessLevel types.String `tfsdk:"sandboxes_access_level"`
+	AllowedPipeline      types.Set    `tfsdk:"allowed_pipeline"`
+	AllowedSandboxes     types.Set    `tfsdk:"allowed_sandboxes"`
 }
 
 func (r *variableResourceModel) decomposeId() (string, int, error) {
@@ -73,6 +82,10 @@ func (r *variableResourceModel) loadAPI(domain string, variable *buddy.Variable)
 	r.AgentNote = types.StringValue(variable.AgentNote)
 	r.ValueProcessed = types.StringValue(variable.Value)
 	r.VariableId = types.Int64Value(int64(variable.Id))
+	r.RunOnlySettable = types.BoolValue(variable.RunOnlySettable)
+	r.Disabled = types.BoolValue(variable.Disabled)
+	r.PipelinesAccessLevel = types.StringValue(variable.PipelinesAccessLevel)
+	r.SandboxesAccessLevel = types.StringValue(variable.SandboxesAccessLevel)
 	if variable.Project != nil {
 		r.ProjectName = types.StringValue(variable.Project.Name)
 	} else {
@@ -93,6 +106,54 @@ func (r *variableResourceModel) loadAPI(domain string, variable *buddy.Variable)
 	} else {
 		r.EnvironmentId = types.StringNull()
 	}
+	if variable.Sandbox != nil {
+		r.SandboxId = types.StringValue(variable.Sandbox.Id)
+	} else {
+		r.SandboxId = types.StringNull()
+	}
+}
+
+// applyCommonOps fills in the fields that behave the same on create and update. The scope
+// fields are left out on purpose - the API rejects any attempt to change them on update.
+func (r *variableResourceModel) applyCommonOps(ctx context.Context, ops *buddy.VariableOps) diag.Diagnostics {
+	var diags diag.Diagnostics
+	if !r.Encrypted.IsNull() && !r.Encrypted.IsUnknown() {
+		ops.Encrypted = r.Encrypted.ValueBoolPointer()
+	}
+	if !r.Settable.IsNull() && !r.Settable.IsUnknown() {
+		ops.Settable = r.Settable.ValueBoolPointer()
+	}
+	if !r.RunOnlySettable.IsNull() && !r.RunOnlySettable.IsUnknown() {
+		ops.RunOnlySettable = r.RunOnlySettable.ValueBoolPointer()
+	}
+	if !r.Disabled.IsNull() && !r.Disabled.IsUnknown() {
+		ops.Disabled = r.Disabled.ValueBoolPointer()
+	}
+	if !r.Note.IsNull() && !r.Note.IsUnknown() {
+		ops.Note = r.Note.ValueStringPointer()
+	} else if !r.Description.IsNull() && !r.Description.IsUnknown() {
+		ops.Note = r.Description.ValueStringPointer()
+	}
+	if !r.AgentNote.IsNull() && !r.AgentNote.IsUnknown() {
+		ops.AgentNote = r.AgentNote.ValueStringPointer()
+	}
+	if !r.PipelinesAccessLevel.IsNull() && !r.PipelinesAccessLevel.IsUnknown() {
+		ops.PipelinesAccessLevel = r.PipelinesAccessLevel.ValueStringPointer()
+	}
+	if !r.SandboxesAccessLevel.IsNull() && !r.SandboxesAccessLevel.IsUnknown() {
+		ops.SandboxesAccessLevel = r.SandboxesAccessLevel.ValueStringPointer()
+	}
+	if !r.AllowedPipeline.IsNull() && !r.AllowedPipeline.IsUnknown() {
+		pips, d := util.VariableAllowedPipelinesModelToApi(ctx, &r.AllowedPipeline)
+		diags.Append(d...)
+		ops.AllowedPipelines = pips
+	}
+	if !r.AllowedSandboxes.IsNull() && !r.AllowedSandboxes.IsUnknown() {
+		sbs, d := util.VariableAllowedSandboxesModelToApi(ctx, &r.AllowedSandboxes)
+		diags.Append(d...)
+		ops.AllowedSandboxes = sbs
+	}
+	return diags
 }
 
 func (r *variableResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -149,6 +210,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						path.MatchRoot("pipeline_id"),
 						path.MatchRoot("action_id"),
 						path.MatchRoot("environment_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
 			},
@@ -164,6 +226,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						path.MatchRoot("project_name"),
 						path.MatchRoot("action_id"),
 						path.MatchRoot("environment_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
 			},
@@ -179,6 +242,7 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						path.MatchRoot("project_name"),
 						path.MatchRoot("pipeline_id"),
 						path.MatchRoot("environment_id"),
+						path.MatchRoot("sandbox_id"),
 					}...),
 				},
 			},
@@ -194,6 +258,23 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 						path.MatchRoot("project_name"),
 						path.MatchRoot("pipeline_id"),
 						path.MatchRoot("action_id"),
+						path.MatchRoot("sandbox_id"),
+					}...),
+				},
+			},
+			"sandbox_id": schema.StringAttribute{
+				MarkdownDescription: "The variable's sandbox ID. Set for sandbox scope",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.RequiresReplace(),
+				},
+				Validators: []validator.String{
+					stringvalidator.ConflictsWith(path.Expressions{
+						path.MatchRoot("project_name"),
+						path.MatchRoot("pipeline_id"),
+						path.MatchRoot("action_id"),
+						path.MatchRoot("environment_id"),
 					}...),
 				},
 			},
@@ -201,6 +282,32 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				MarkdownDescription: "Is the variable's value changeable",
 				Optional:            true,
 				Computed:            true,
+			},
+			"run_only_settable": schema.BoolAttribute{
+				MarkdownDescription: "Can the variable's value be changed only by a running pipeline. Requires **settable** == true",
+				Optional:            true,
+				Computed:            true,
+			},
+			"disabled": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not the variable is passed to a pipeline",
+				Optional:            true,
+				Computed:            true,
+			},
+			"pipelines_access_level": schema.StringAttribute{
+				MarkdownDescription: "The default access level for pipelines. Only for workspace and project scope",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+				},
+				Optional: true,
+				Computed: true,
+			},
+			"sandboxes_access_level": schema.StringAttribute{
+				MarkdownDescription: "The default access level for sandboxes. Only for workspace and project scope",
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+				},
+				Optional: true,
+				Computed: true,
 			},
 			"description": schema.StringAttribute{
 				MarkdownDescription: "The variable's description",
@@ -235,6 +342,56 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				Computed:            true,
 			},
 		},
+		Blocks: map[string]schema.Block{
+			"allowed_pipeline": schema.SetNestedBlock{
+				MarkdownDescription: "List of exceptions from **pipelines_access_level**. Every rule must carry the opposite access level and only one form - whole pipeline or single **action** - may be used per pipeline. Only for workspace and project scope",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's project name",
+							Required:            true,
+						},
+						"pipeline": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's name or identifier",
+							Required:            true,
+						},
+						"action": schema.StringAttribute{
+							MarkdownDescription: "The action's identifier. Set to limit the rule to a single action",
+							Optional:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The pipeline's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+							},
+							Required: true,
+						},
+					},
+				},
+			},
+			"allowed_sandboxes": schema.SetNestedBlock{
+				MarkdownDescription: "List of exceptions from **sandboxes_access_level**. Every rule must carry the opposite access level. Only for workspace and project scope",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: map[string]schema.Attribute{
+						"project": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's project name",
+							Required:            true,
+						},
+						"sandbox": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's name or identifier",
+							Required:            true,
+						},
+						"access_level": schema.StringAttribute{
+							MarkdownDescription: "The sandbox's access level",
+							Validators: []validator.String{
+								stringvalidator.OneOf(buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied),
+							},
+							Required: true,
+						},
+					},
+				},
+			},
+		},
 	}
 }
 
@@ -258,19 +415,9 @@ func (r *variableResource) Create(ctx context.Context, req resource.CreateReques
 		Value: data.Value.ValueStringPointer(),
 		Type:  &typ,
 	}
-	if !data.Settable.IsNull() && !data.Settable.IsUnknown() {
-		ops.Settable = data.Settable.ValueBoolPointer()
-	}
-	if !data.Encrypted.IsNull() && !data.Encrypted.IsUnknown() {
-		ops.Encrypted = data.Encrypted.ValueBoolPointer()
-	}
-	if !data.Note.IsNull() && !data.Note.IsUnknown() {
-		ops.Note = data.Note.ValueStringPointer()
-	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Note = data.Description.ValueStringPointer()
-	}
-	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
-		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	resp.Diagnostics.Append(data.applyCommonOps(ctx, &ops)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	if !data.ProjectName.IsNull() && !data.ProjectName.IsUnknown() {
 		ops.Project = &buddy.VariableProject{
@@ -290,6 +437,11 @@ func (r *variableResource) Create(ctx context.Context, req resource.CreateReques
 	if !data.EnvironmentId.IsNull() && !data.EnvironmentId.IsUnknown() {
 		ops.Environment = &buddy.VariableEnvironment{
 			Id: data.EnvironmentId.ValueString(),
+		}
+	}
+	if !data.SandboxId.IsNull() && !data.SandboxId.IsUnknown() {
+		ops.Sandbox = &buddy.VariableSandbox{
+			Id: data.SandboxId.ValueString(),
 		}
 	}
 	variable, _, err := r.client.VariableService.Create(domain, &ops)
@@ -343,19 +495,9 @@ func (r *variableResource) Update(ctx context.Context, req resource.UpdateReques
 	ops := buddy.VariableOps{
 		Value: data.Value.ValueStringPointer(),
 	}
-	if !data.Encrypted.IsNull() && !data.Encrypted.IsUnknown() {
-		ops.Encrypted = data.Encrypted.ValueBoolPointer()
-	}
-	if !data.Settable.IsNull() && !data.Settable.IsUnknown() {
-		ops.Settable = data.Settable.ValueBoolPointer()
-	}
-	if !data.Note.IsNull() && !data.Note.IsUnknown() {
-		ops.Note = data.Note.ValueStringPointer()
-	} else if !data.Description.IsNull() && !data.Description.IsUnknown() {
-		ops.Note = data.Description.ValueStringPointer()
-	}
-	if !data.AgentNote.IsNull() && !data.AgentNote.IsUnknown() {
-		ops.AgentNote = data.AgentNote.ValueStringPointer()
+	resp.Diagnostics.Append(data.applyCommonOps(ctx, &ops)...)
+	if resp.Diagnostics.HasError() {
+		return
 	}
 	variable, _, err := r.client.VariableService.Update(domain, variableId, &ops)
 	if err != nil {

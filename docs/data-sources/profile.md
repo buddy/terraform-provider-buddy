@@ -26,7 +26,9 @@ data "buddy_profile" "me" {
 ### Read-Only
 
 - `avatar_url` (String) The user's avatar URL
+- `email` (String) The user's email
 - `html_url` (String) The user's profile URL
 - `id` (String) The Terraform resource identifier for this item
 - `member_id` (Number) The user's ID
 - `name` (String) The user's name
+- `username` (String) The user's username

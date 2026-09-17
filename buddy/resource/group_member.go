@@ -39,6 +39,7 @@ type groupMemberResourceModel struct {
 	HtmlUrl        types.String `tfsdk:"html_url"`
 	Name           types.String `tfsdk:"name"`
 	Email          types.String `tfsdk:"email"`
+	Username       types.String `tfsdk:"username"`
 	AvatarUrl      types.String `tfsdk:"avatar_url"`
 	Admin          types.Bool   `tfsdk:"admin"`
 	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
@@ -69,6 +70,7 @@ func (r *groupMemberResourceModel) loadAPI(domain string, groupId int, member *b
 	r.HtmlUrl = types.StringValue(member.HtmlUrl)
 	r.Name = types.StringValue(member.Name)
 	r.Email = types.StringValue(member.Email)
+	r.Username = types.StringValue(member.Username)
 	r.AvatarUrl = types.StringValue(member.AvatarUrl)
 	r.Admin = types.BoolValue(member.Admin)
 	r.WorkspaceOwner = types.BoolValue(member.WorkspaceOwner)
@@ -132,6 +134,10 @@ func (r *groupMemberResource) Schema(_ context.Context, _ resource.SchemaRequest
 			},
 			"email": schema.StringAttribute{
 				MarkdownDescription: "The member's email",
+				Computed:            true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The member's username",
 				Computed:            true,
 			},
 			"avatar_url": schema.StringAttribute{

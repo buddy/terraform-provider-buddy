@@ -54,6 +54,7 @@ resource "buddy_group_member" "sylvia_manager_in_devs" {
 - `html_url` (String) The member's URL
 - `id` (String) The Terraform resource identifier for this item
 - `name` (String) The member's name
+- `username` (String) The member's username
 - `workspace_owner` (Boolean) Is the member the workspace owner
 
 ## Import

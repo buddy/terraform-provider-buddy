@@ -11,26 +11,30 @@ import (
 )
 
 type variableModel struct {
-	Key         types.String `tfsdk:"key"`
-	Encrypted   types.Bool   `tfsdk:"encrypted"`
-	Settable    types.Bool   `tfsdk:"settable"`
-	Description types.String `tfsdk:"description"`
-	Note        types.String `tfsdk:"note"`
-	AgentNote   types.String `tfsdk:"agent_note"`
-	Value       types.String `tfsdk:"value"`
-	VariableId  types.Int64  `tfsdk:"variable_id"`
+	Key             types.String `tfsdk:"key"`
+	Encrypted       types.Bool   `tfsdk:"encrypted"`
+	Settable        types.Bool   `tfsdk:"settable"`
+	RunOnlySettable types.Bool   `tfsdk:"run_only_settable"`
+	Disabled        types.Bool   `tfsdk:"disabled"`
+	Description     types.String `tfsdk:"description"`
+	Note            types.String `tfsdk:"note"`
+	AgentNote       types.String `tfsdk:"agent_note"`
+	Value           types.String `tfsdk:"value"`
+	VariableId      types.Int64  `tfsdk:"variable_id"`
 }
 
 func variableModelAttrs() map[string]attr.Type {
 	return map[string]attr.Type{
-		"key":         types.StringType,
-		"encrypted":   types.BoolType,
-		"settable":    types.BoolType,
-		"description": types.StringType,
-		"note":        types.StringType,
-		"agent_note":  types.StringType,
-		"value":       types.StringType,
-		"variable_id": types.Int64Type,
+		"key":               types.StringType,
+		"encrypted":         types.BoolType,
+		"settable":          types.BoolType,
+		"run_only_settable": types.BoolType,
+		"disabled":          types.BoolType,
+		"description":       types.StringType,
+		"note":              types.StringType,
+		"agent_note":        types.StringType,
+		"value":             types.StringType,
+		"variable_id":       types.Int64Type,
 	}
 }
 
@@ -38,6 +42,8 @@ func (v *variableModel) loadAPI(variable *buddy.Variable) {
 	v.Key = types.StringValue(variable.Key)
 	v.Encrypted = types.BoolValue(variable.Encrypted)
 	v.Settable = types.BoolValue(variable.Settable)
+	v.RunOnlySettable = types.BoolValue(variable.RunOnlySettable)
+	v.Disabled = types.BoolValue(variable.Disabled)
 	v.Description = types.StringValue(variable.Note)
 	v.Note = types.StringValue(variable.Note)
 	v.AgentNote = types.StringValue(variable.AgentNote)
@@ -54,6 +60,12 @@ func SourceVariableModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"settable": schema.BoolAttribute{
+			Computed: true,
+		},
+		"run_only_settable": schema.BoolAttribute{
+			Computed: true,
+		},
+		"disabled": schema.BoolAttribute{
 			Computed: true,
 		},
 		"description": schema.StringAttribute{

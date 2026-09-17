@@ -1,3 +1,14 @@
+# Release v1.49.0 (2026-09-17)
+* Bump api-go-sdk to v1.49.0
+* `buddy_variable` and `buddy_variable_ssh_key`: new `sandbox_id` scope, mutually exclusive with `project_name`, `pipeline_id`, `action_id` and `environment_id`
+* `buddy_variable`: new `run_only_settable` attribute, requires `settable = true`
+* `buddy_variable` and `buddy_variable_ssh_key`: new `disabled` attribute
+* `buddy_variable` and `buddy_variable_ssh_key`: new access rules for workspace and project scoped variables - `pipelines_access_level` and `sandboxes_access_level` (one of `USE_ONLY`, `DENIED`) plus `allowed_pipeline` and `allowed_sandboxes` blocks. Every rule must carry the access level opposite to its default, one pipeline cannot mix whole pipeline and per `action` rules, and the default cannot be changed while rules exist
+* `buddy_variable`, `buddy_variables`, `buddy_variable_ssh_key` and `buddy_variables_ssh_keys` data sources: `sandbox_id` filter, plus `disabled` and `run_only_settable` attributes
+* `buddy_member`, `buddy_project_member`, `buddy_group_member` and their data sources: new `username` attribute
+* `buddy_profile` resource and data source: new `username` and `email` attributes
+* `buddy_pipeline`: `trigger_user` in `trigger_condition` now also takes a username, the API stores it as the username no matter whether an email or a username was given
+
 # Release v1.48.0 (2026-08-31)
 * Bump api-go-sdk to v1.48.0
 * [Breaking] `buddy_pipeline`: `no_skip_to_most_recent` (Boolean) removed, replaced by `skip_queued_runs` and `cancel_inprogress_runs` (String, one of `NEVER`, `ALWAYS`, `SAME_REF`, `SAME_ENVIRONMENT`, `SAME_ARTIFACT`) - `no_skip_to_most_recent = true` maps to `skip_queued_runs = "NEVER"`, `false` to `skip_queued_runs = "SAME_REF"`

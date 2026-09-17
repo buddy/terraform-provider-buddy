@@ -29,20 +29,23 @@ type variableSource struct {
 }
 
 type variableSourceModel struct {
-	ID            types.String `tfsdk:"id"`
-	Domain        types.String `tfsdk:"domain"`
-	Key           types.String `tfsdk:"key"`
-	VariableId    types.Int64  `tfsdk:"variable_id"`
-	ProjectName   types.String `tfsdk:"project_name"`
-	PipelineId    types.Int64  `tfsdk:"pipeline_id"`
-	ActionId      types.Int64  `tfsdk:"action_id"`
-	EnvironmentId types.String `tfsdk:"environment_id"`
-	Encrypted     types.Bool   `tfsdk:"encrypted"`
-	Settable      types.Bool   `tfsdk:"settable"`
-	Description   types.String `tfsdk:"description"`
-	Note          types.String `tfsdk:"note"`
-	AgentNote     types.String `tfsdk:"agent_note"`
-	Value         types.String `tfsdk:"value"`
+	ID              types.String `tfsdk:"id"`
+	Domain          types.String `tfsdk:"domain"`
+	Key             types.String `tfsdk:"key"`
+	VariableId      types.Int64  `tfsdk:"variable_id"`
+	ProjectName     types.String `tfsdk:"project_name"`
+	PipelineId      types.Int64  `tfsdk:"pipeline_id"`
+	ActionId        types.Int64  `tfsdk:"action_id"`
+	EnvironmentId   types.String `tfsdk:"environment_id"`
+	SandboxId       types.String `tfsdk:"sandbox_id"`
+	Encrypted       types.Bool   `tfsdk:"encrypted"`
+	Settable        types.Bool   `tfsdk:"settable"`
+	RunOnlySettable types.Bool   `tfsdk:"run_only_settable"`
+	Disabled        types.Bool   `tfsdk:"disabled"`
+	Description     types.String `tfsdk:"description"`
+	Note            types.String `tfsdk:"note"`
+	AgentNote       types.String `tfsdk:"agent_note"`
+	Value           types.String `tfsdk:"value"`
 }
 
 func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable, variableOps *buddy.VariableGetListQuery) {
@@ -52,6 +55,8 @@ func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable, v
 	s.VariableId = types.Int64Value(int64(variable.Id))
 	s.Encrypted = types.BoolValue(variable.Encrypted)
 	s.Settable = types.BoolValue(variable.Settable)
+	s.RunOnlySettable = types.BoolValue(variable.RunOnlySettable)
+	s.Disabled = types.BoolValue(variable.Disabled)
 	s.Description = types.StringValue(variable.Note)
 	s.Note = types.StringValue(variable.Note)
 	s.AgentNote = types.StringValue(variable.AgentNote)
@@ -83,6 +88,13 @@ func (s *variableSourceModel) loadAPI(domain string, variable *buddy.Variable, v
 		s.EnvironmentId = types.StringValue(variableOps.EnvironmentId)
 	} else {
 		s.EnvironmentId = types.StringNull()
+	}
+	if variable.Sandbox != nil {
+		s.SandboxId = types.StringValue(variable.Sandbox.Id)
+	} else if variableOps != nil && variableOps.SandboxId != "" {
+		s.SandboxId = types.StringValue(variableOps.SandboxId)
+	} else {
+		s.SandboxId = types.StringNull()
 	}
 }
 
@@ -173,12 +185,30 @@ func (s *variableSource) Schema(_ context.Context, _ datasource.SchemaRequest, r
 					}...),
 				},
 			},
+			"sandbox_id": schema.StringAttribute{
+				MarkdownDescription: "The variable's sandbox ID",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.AlsoRequires(path.Expressions{
+						path.MatchRoot("key"),
+					}...),
+				},
+			},
 			"encrypted": schema.BoolAttribute{
 				MarkdownDescription: "Is the variable's value encrypted",
 				Computed:            true,
 			},
 			"settable": schema.BoolAttribute{
 				MarkdownDescription: "Is the variable's value changeable",
+				Computed:            true,
+			},
+			"run_only_settable": schema.BoolAttribute{
+				MarkdownDescription: "Can the variable's value be changed only by a running pipeline",
+				Computed:            true,
+			},
+			"disabled": schema.BoolAttribute{
+				MarkdownDescription: "Defines whether or not the variable is passed to a pipeline",
 				Computed:            true,
 			},
 			"description": schema.StringAttribute{
@@ -242,6 +272,9 @@ func (s *variableSource) Read(ctx context.Context, req datasource.ReadRequest, r
 		}
 		if !data.EnvironmentId.IsNull() && !data.EnvironmentId.IsUnknown() {
 			ops.EnvironmentId = data.EnvironmentId.ValueString()
+		}
+		if !data.SandboxId.IsNull() && !data.SandboxId.IsUnknown() {
+			ops.SandboxId = data.SandboxId.ValueString()
 		}
 		var variables *buddy.Variables
 		variables, _, err = s.client.VariableService.GetList(domain, &ops)

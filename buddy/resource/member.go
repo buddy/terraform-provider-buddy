@@ -31,6 +31,7 @@ type memberResourceModel struct {
 	ID                        types.String `tfsdk:"id"`
 	Domain                    types.String `tfsdk:"domain"`
 	Email                     types.String `tfsdk:"email"`
+	Username                  types.String `tfsdk:"username"`
 	Admin                     types.Bool   `tfsdk:"admin"`
 	AutoAssignToNewProjects   types.Bool   `tfsdk:"auto_assign_to_new_projects"`
 	AutoAssignPermissionSetId types.Int64  `tfsdk:"auto_assign_permission_set_id"`
@@ -59,6 +60,7 @@ func (r *memberResourceModel) loadAPI(domain string, member *buddy.Member) {
 	r.ID = types.StringValue(util.ComposeDoubleId(domain, strconv.Itoa(member.Id)))
 	r.Domain = types.StringValue(domain)
 	r.Email = types.StringValue(member.Email)
+	r.Username = types.StringValue(member.Username)
 	r.Note = types.StringValue(member.Note)
 	r.AgentNote = types.StringValue(member.AgentNote)
 	r.Admin = types.BoolValue(member.Admin)
@@ -117,6 +119,10 @@ func (r *memberResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 			"auto_assign_permission_set_id": schema.Int64Attribute{
 				MarkdownDescription: "The permission's ID with which the member will be assigned to new projects",
 				Optional:            true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The member's username",
+				Computed:            true,
 			},
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The member's name",
