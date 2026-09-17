@@ -2213,7 +2213,9 @@ func testAccPipelineAttributes(n string, pipeline *buddy.Pipeline, want *testAcc
 					}
 				}
 				if triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionTriggeringUserIs || triggerCondition.TriggerCondition == buddy.PipelineTriggerConditionTriggeringUserIsNot {
-					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerUser", i), pipeline.TriggerConditions[i].TriggerUser, triggerCondition.TriggerUser); err != nil {
+					// The API canonicalizes trigger_user to the username, so compare against what
+					// the state holds instead of the value the test fed in
+					if err := util.CheckFieldEqualAndSet(fmt.Sprintf("TriggerConditions[%d].TriggerUser", i), pipeline.TriggerConditions[i].TriggerUser, attrs[fmt.Sprintf("trigger_condition.%d.trigger_user", i)]); err != nil {
 						return err
 					}
 				}
@@ -2462,11 +2464,11 @@ resource "buddy_pipeline" "bar" {
     }
 		trigger_condition {
 				condition = "TRIGGERING_USER_IS"
-				trigger_user = "${buddy_member.user.email}"
+				trigger_user = "${buddy_member.user.username}"
 		}
 		trigger_condition {
 				condition = "TRIGGERING_USER_IS_NOT"
-				trigger_user = "${buddy_member.user.email}"
+				trigger_user = "${buddy_member.user.username}"
 		}
 		trigger_condition {
 				condition = "TRIGGERING_USER_IS_IN_GROUP"

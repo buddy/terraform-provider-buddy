@@ -33,6 +33,7 @@ type variablesSshKeysSourceModel struct {
 	PipelineId    types.Int64  `tfsdk:"pipeline_id"`
 	ActionId      types.Int64  `tfsdk:"action_id"`
 	EnvironmentId types.String `tfsdk:"environment_id"`
+	SandboxId     types.String `tfsdk:"sandbox_id"`
 	Variables     types.Set    `tfsdk:"variables"`
 }
 
@@ -92,6 +93,10 @@ func (s *variablesSshKeysSource) Schema(_ context.Context, _ datasource.SchemaRe
 				MarkdownDescription: "Get only from provided environment",
 				Optional:            true,
 			},
+			"sandbox_id": schema.StringAttribute{
+				MarkdownDescription: "Get only from provided sandbox",
+				Optional:            true,
+			},
 			"variables": schema.SetNestedAttribute{
 				MarkdownDescription: "List of variables",
 				Computed:            true,
@@ -126,6 +131,9 @@ func (s *variablesSshKeysSource) Read(ctx context.Context, req datasource.ReadRe
 	}
 	if !data.EnvironmentId.IsNull() && !data.EnvironmentId.IsUnknown() {
 		ops.EnvironmentId = data.EnvironmentId.ValueString()
+	}
+	if !data.SandboxId.IsNull() && !data.SandboxId.IsUnknown() {
+		ops.SandboxId = data.SandboxId.ValueString()
 	}
 	variables, _, err := s.client.VariableService.GetList(domain, &ops)
 	if err != nil {

@@ -50,6 +50,7 @@ data "buddy_variables" "pipeline" {
 - `key_regex` (String) The variable's key regular expression to match
 - `pipeline_id` (Number) Get only from provided pipeline
 - `project_name` (String) Get only from provided project
+- `sandbox_id` (String) Get only from provided sandbox
 
 ### Read-Only
 
@@ -63,9 +64,11 @@ Read-Only:
 
 - `agent_note` (String)
 - `description` (String, Deprecated)
+- `disabled` (Boolean)
 - `encrypted` (Boolean)
 - `key` (String)
 - `note` (String)
+- `run_only_settable` (Boolean)
 - `settable` (Boolean)
 - `value` (String, Sensitive)
 - `variable_id` (Number)

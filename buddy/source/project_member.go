@@ -32,6 +32,7 @@ type projectMemberSourceModel struct {
 	HtmlUrl        types.String `tfsdk:"html_url"`
 	Name           types.String `tfsdk:"name"`
 	Email          types.String `tfsdk:"email"`
+	Username       types.String `tfsdk:"username"`
 	AvatarUrl      types.String `tfsdk:"avatar_url"`
 	Admin          types.Bool   `tfsdk:"admin"`
 	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
@@ -46,6 +47,7 @@ func (s *projectMemberSourceModel) loadAPI(ctx context.Context, domain string, p
 	s.HtmlUrl = types.StringValue(projectMember.HtmlUrl)
 	s.Name = types.StringValue(projectMember.Name)
 	s.Email = types.StringValue(projectMember.Email)
+	s.Username = types.StringValue(projectMember.Username)
 	s.AvatarUrl = types.StringValue(projectMember.AvatarUrl)
 	s.Admin = types.BoolValue(projectMember.Admin)
 	s.WorkspaceOwner = types.BoolValue(projectMember.WorkspaceOwner)
@@ -98,6 +100,10 @@ func (s *projectMemberSource) Schema(_ context.Context, _ datasource.SchemaReque
 			},
 			"email": schema.StringAttribute{
 				MarkdownDescription: "The member's email",
+				Computed:            true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The member's username",
 				Computed:            true,
 			},
 			"avatar_url": schema.StringAttribute{

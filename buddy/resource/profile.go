@@ -32,6 +32,8 @@ type profileResource struct {
 type profileResourceModel struct {
 	ID        types.String `tfsdk:"id"`
 	Name      types.String `tfsdk:"name"`
+	Username  types.String `tfsdk:"username"`
+	Email     types.String `tfsdk:"email"`
 	MemberId  types.Int64  `tfsdk:"member_id"`
 	AvatarUrl types.String `tfsdk:"avatar_url"`
 	HtmlUrl   types.String `tfsdk:"html_url"`
@@ -40,6 +42,8 @@ type profileResourceModel struct {
 func (r *profileResourceModel) loadAPI(profile *buddy.Profile) {
 	r.ID = types.StringValue(strconv.Itoa(profile.Id))
 	r.Name = types.StringValue(profile.Name)
+	r.Username = types.StringValue(profile.Username)
+	r.Email = types.StringValue(profile.Email)
 	r.MemberId = types.Int64Value(int64(profile.Id))
 	r.AvatarUrl = types.StringValue(profile.AvatarUrl)
 	r.HtmlUrl = types.StringValue(profile.HtmlUrl)
@@ -64,6 +68,14 @@ func (r *profileResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"name": schema.StringAttribute{
 				MarkdownDescription: "The user's name",
 				Required:            true,
+			},
+			"username": schema.StringAttribute{
+				MarkdownDescription: "The user's username",
+				Computed:            true,
+			},
+			"email": schema.StringAttribute{
+				MarkdownDescription: "The user's email",
+				Computed:            true,
 			},
 			"member_id": schema.Int64Attribute{
 				MarkdownDescription: "The user's ID",

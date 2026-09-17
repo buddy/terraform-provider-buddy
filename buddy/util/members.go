@@ -16,6 +16,7 @@ type memberModel struct {
 	MemberId       types.Int64  `tfsdk:"member_id"`
 	Name           types.String `tfsdk:"name"`
 	Email          types.String `tfsdk:"email"`
+	Username       types.String `tfsdk:"username"`
 	Admin          types.Bool   `tfsdk:"admin"`
 	WorkspaceOwner types.Bool   `tfsdk:"workspace_owner"`
 	AvatarUrl      types.String `tfsdk:"avatar_url"`
@@ -28,6 +29,7 @@ func memberModelAttrs() map[string]attr.Type {
 		"member_id":       types.Int64Type,
 		"name":            types.StringType,
 		"email":           types.StringType,
+		"username":        types.StringType,
 		"admin":           types.BoolType,
 		"workspace_owner": types.BoolType,
 		"avatar_url":      types.StringType,
@@ -40,6 +42,7 @@ func (r *memberModel) loadAPI(member *buddy.Member) {
 	r.MemberId = types.Int64Value(int64(member.Id))
 	r.Name = types.StringValue(member.Name)
 	r.Email = types.StringValue(member.Email)
+	r.Username = types.StringValue(member.Username)
 	r.Admin = types.BoolValue(member.Admin)
 	r.WorkspaceOwner = types.BoolValue(member.WorkspaceOwner)
 	r.AvatarUrl = types.StringValue(member.AvatarUrl)
@@ -58,6 +61,9 @@ func SourceMemberModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"email": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"username": sourceschema.StringAttribute{
 			Computed: true,
 		},
 		"admin": sourceschema.BoolAttribute{
@@ -87,6 +93,9 @@ func ResourceMemberModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"email": schema.StringAttribute{
+			Computed: true,
+		},
+		"username": schema.StringAttribute{
 			Computed: true,
 		},
 		"admin": schema.BoolAttribute{

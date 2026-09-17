@@ -394,3 +394,144 @@ func testAccVariableCheckDestroy(s *terraform.State) error {
 	}
 	return nil
 }
+
+func testAccVariableAccessRulesAttributes(name string, variable *buddy.Variable, runOnlySettable bool, disabled bool, pipelinesAccessLevel string, sandboxesAccessLevel string, allowedPipelines int, allowedAction string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[name]
+		if !ok {
+			return fmt.Errorf("not found: %s", name)
+		}
+		attrs := rs.Primary.Attributes
+		attrsRunOnlySettable, _ := strconv.ParseBool(attrs["run_only_settable"])
+		attrsDisabled, _ := strconv.ParseBool(attrs["disabled"])
+		if err := util.CheckBoolFieldEqual("RunOnlySettable", variable.RunOnlySettable, runOnlySettable); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("run_only_settable", attrsRunOnlySettable, runOnlySettable); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("Disabled", variable.Disabled, disabled); err != nil {
+			return err
+		}
+		if err := util.CheckBoolFieldEqual("disabled", attrsDisabled, disabled); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("PipelinesAccessLevel", variable.PipelinesAccessLevel, pipelinesAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("pipelines_access_level", attrs["pipelines_access_level"], pipelinesAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("SandboxesAccessLevel", variable.SandboxesAccessLevel, sandboxesAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("sandboxes_access_level", attrs["sandboxes_access_level"], sandboxesAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldEqual("len(AllowedPipelines)", len(variable.AllowedPipelines), allowedPipelines); err != nil {
+			return err
+		}
+		if allowedPipelines > 0 {
+			if err := util.CheckFieldEqualAndSet("AllowedPipelines[0].AccessLevel", variable.AllowedPipelines[0].AccessLevel, buddy.VariableAccessLevelDenied); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqual("AllowedPipelines[0].Action", variable.AllowedPipelines[0].Action, allowedAction); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func testAccVariableAccessRulesConfig(domain string, projectName string, pipelineName string, key string, val string, accessLevel string, action string) string {
+	actionAttr := ""
+	if action != "" {
+		actionAttr = fmt.Sprintf("action = \"%s\"", action)
+	}
+	allowed := ""
+	if accessLevel != "" {
+		allowed = fmt.Sprintf(`
+   allowed_pipeline {
+      project = "${buddy_project.proj.name}"
+      pipeline = "${buddy_pipeline.pipe.name}"
+      access_level = "%s"
+      %s
+   }
+`, accessLevel, actionAttr)
+	}
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_pipeline" "pipe" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "%s"
+   event {
+      type = "PUSH"
+      refs = ["refs/heads/master"]
+   }
+}
+
+resource "buddy_variable" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   value = "%s"
+   settable = true
+   run_only_settable = true
+   disabled = true
+   pipelines_access_level = "USE_ONLY"
+   sandboxes_access_level = "DENIED"
+%s
+}
+`, domain, projectName, pipelineName, key, val, allowed)
+}
+
+func TestAccVariable_accessRules(t *testing.T) {
+	var variable buddy.Variable
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	pipelineName := util.UniqueString()
+	key := util.UniqueString()
+	val := util.RandString(10)
+	action := util.RandString(10)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableCheckDestroy,
+		Steps: []resource.TestStep{
+			// whole pipeline rule
+			{
+				Config: testAccVariableAccessRulesConfig(domain, projectName, pipelineName, key, val, buddy.VariableAccessLevelDenied, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableAccessRulesAttributes("buddy_variable.bar", &variable, true, true, buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied, 1, ""),
+				),
+			},
+			// swap it for a single action rule
+			{
+				Config: testAccVariableAccessRulesConfig(domain, projectName, pipelineName, key, val, buddy.VariableAccessLevelDenied, action),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableAccessRulesAttributes("buddy_variable.bar", &variable, true, true, buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied, 1, action),
+				),
+			},
+			// drop every rule
+			{
+				Config: testAccVariableAccessRulesConfig(domain, projectName, pipelineName, key, val, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableAccessRulesAttributes("buddy_variable.bar", &variable, true, true, buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied, 0, ""),
+				),
+			},
+		},
+	})
+}

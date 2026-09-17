@@ -49,6 +49,7 @@ resource "buddy_member" "john" {
 - `id` (String) The Terraform resource identifier for this item
 - `member_id` (Number) The member's ID
 - `name` (String) The member's name
+- `username` (String) The member's username
 - `workspace_owner` (Boolean) Is the member the workspace owner
 
 ## Import

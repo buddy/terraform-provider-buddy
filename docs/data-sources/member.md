@@ -51,4 +51,5 @@ data "buddy_member" "by_id" {
 - `avatar_url` (String) The member's avatar URL
 - `html_url` (String) The member's URL
 - `id` (String) The Terraform resource identifier for this item
+- `username` (String) The member's username
 - `workspace_owner` (Boolean) Is the member the workspace owner

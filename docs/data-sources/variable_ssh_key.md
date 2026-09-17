@@ -44,6 +44,7 @@ data "buddy_variable" "by_key_in_project" {
 - `key` (String) The variable's name
 - `pipeline_id` (Number) The variable's pipeline ID
 - `project_name` (String) The variable's project name
+- `sandbox_id` (String) The variable's sandbox ID
 - `variable_id` (Number) The variable's ID
 
 ### Read-Only
@@ -51,6 +52,7 @@ data "buddy_variable" "by_key_in_project" {
 - `agent_note` (String) The variable's agent note
 - `checksum` (String) The variable's checksum
 - `description` (String, Deprecated) The variable's description
+- `disabled` (Boolean) Defines whether or not the variable is passed to a pipeline
 - `encrypted` (Boolean) Is the variable's value encrypted, always true for buddy_variable_ssh_key
 - `file_chmod` (String) The variable's file permission in an action's container
 - `file_path` (String) The variable's path in the action's container
