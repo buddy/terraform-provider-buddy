@@ -1,3 +1,9 @@
+# Release v1.50.0 (2026-09-18)
+* Bump api-go-sdk to v1.50.0
+* `buddy_permission`: new `artifact_access_level` (one of `DENIED`, `READ_ONLY`, `READ_WRITE`, `MANAGE`), `routing_access_level` (one of `DENIED`, `READ_ONLY`, `MANAGE`) and `tunnel_agent_access_level` (one of `DENIED`, `READ_ONLY`, `USE_ONLY`, `MANAGE`) attributes
+* `buddy_permission`: `project_team_access_level = "MANAGE"` now requires full access on every other resource - `READ_WRITE` on pipelines and sandboxes, `MANAGE` on repository, environments, targets, artifacts, routing and tunnel agents - the API rejects other combinations
+* `buddy_permission`, `buddy_permissions`, `buddy_project_group`, `buddy_project_member` and their data sources: new `artifact_access_level`, `routing_access_level` and `tunnel_agent_access_level` attributes on the permission set
+
 # Release v1.49.0 (2026-09-17)
 * Bump api-go-sdk to v1.49.0
 * `buddy_variable` and `buddy_variable_ssh_key`: new `sandbox_id` scope, mutually exclusive with `project_name`, `pipeline_id`, `action_id` and `environment_id`

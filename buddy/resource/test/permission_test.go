@@ -20,6 +20,9 @@ func TestAccPermission(t *testing.T) {
 	sandboxAccessLevel := buddy.PermissionAccessLevelReadOnly
 	targetAccessLevel := buddy.PermissionAccessLevelReadOnly
 	environmentAccessLevel := buddy.PermissionAccessLevelUseOnly
+	artifactAccessLevel := buddy.PermissionAccessLevelReadWrite
+	routingAccessLevel := buddy.PermissionAccessLevelReadOnly
+	tunnelAgentAccessLevel := buddy.PermissionAccessLevelDenied
 	newName := util.RandString(5)
 	newPipelineAccessLevel := buddy.PermissionAccessLevelReadWrite
 	newRepositoryAccessLevel := buddy.PermissionAccessLevelManage
@@ -30,6 +33,10 @@ func TestAccPermission(t *testing.T) {
 	newProjectTeamAccessLevel := buddy.PermissionAccessLevelManage
 	newTargetAccessLevel := buddy.PermissionAccessLevelManage
 	newEnvironmentAccessLevel := buddy.PermissionAccessLevelManage
+	// project_team_access_level = MANAGE requires full access on every other resource
+	newArtifactAccessLevel := buddy.PermissionAccessLevelManage
+	newRoutingAccessLevel := buddy.PermissionAccessLevelManage
+	newTunnelAgentAccessLevel := buddy.PermissionAccessLevelManage
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { acc.PreCheck(t) },
 		ProtoV6ProviderFactories: acc.ProviderFactories,
@@ -37,7 +44,7 @@ func TestAccPermission(t *testing.T) {
 		Steps: []resource.TestStep{
 			// create a permission
 			{
-				Config: testAccPermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, targetAccessLevel, environmentAccessLevel),
+				Config: testAccPermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, targetAccessLevel, environmentAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPermissionGet("buddy_permission.bar", &permission),
 					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
@@ -47,6 +54,9 @@ func TestAccPermission(t *testing.T) {
 						SandboxAccessLevel:     sandboxAccessLevel,
 						TargetAccessLevel:      targetAccessLevel,
 						EnvironmentAccessLevel: environmentAccessLevel,
+						ArtifactAccessLevel:    artifactAccessLevel,
+						RoutingAccessLevel:     routingAccessLevel,
+						TunnelAgentAccessLevel: tunnelAgentAccessLevel,
 						Type:                   "CUSTOM",
 						Note:                   "",
 						AgentNote:              "",
@@ -55,7 +65,7 @@ func TestAccPermission(t *testing.T) {
 			},
 			// update permission
 			{
-				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, "note", newNote, newAgentNote),
+				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, newArtifactAccessLevel, newRoutingAccessLevel, newTunnelAgentAccessLevel, "note", newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPermissionGet("buddy_permission.bar", &permission),
 					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
@@ -66,6 +76,9 @@ func TestAccPermission(t *testing.T) {
 						ProjectTeamAccessLevel: newProjectTeamAccessLevel,
 						TargetAccessLevel:      newTargetAccessLevel,
 						EnvironmentAccessLevel: newEnvironmentAccessLevel,
+						ArtifactAccessLevel:    newArtifactAccessLevel,
+						RoutingAccessLevel:     newRoutingAccessLevel,
+						TunnelAgentAccessLevel: newTunnelAgentAccessLevel,
 						Type:                   "CUSTOM",
 						Note:                   newNote,
 						AgentNote:              newAgentNote,
@@ -74,7 +87,7 @@ func TestAccPermission(t *testing.T) {
 			},
 			// deprecated description feeds note
 			{
-				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, "description", legacyDescription, newAgentNote),
+				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, newArtifactAccessLevel, newRoutingAccessLevel, newTunnelAgentAccessLevel, "description", legacyDescription, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPermissionGet("buddy_permission.bar", &permission),
 					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
@@ -85,6 +98,9 @@ func TestAccPermission(t *testing.T) {
 						ProjectTeamAccessLevel: newProjectTeamAccessLevel,
 						TargetAccessLevel:      newTargetAccessLevel,
 						EnvironmentAccessLevel: newEnvironmentAccessLevel,
+						ArtifactAccessLevel:    newArtifactAccessLevel,
+						RoutingAccessLevel:     newRoutingAccessLevel,
+						TunnelAgentAccessLevel: newTunnelAgentAccessLevel,
 						Type:                   "CUSTOM",
 						Note:                   legacyDescription,
 						AgentNote:              newAgentNote,
@@ -93,7 +109,7 @@ func TestAccPermission(t *testing.T) {
 			},
 			// migrate from deprecated description to note
 			{
-				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, "note", newNote, newAgentNote),
+				Config: testAccPermissionUpdateConfig(domain, newName, newPipelineAccessLevel, newRepositoryAccessLevel, newProjectTeamAccessLevel, newSandboxAccessLevel, newTargetAccessLevel, newEnvironmentAccessLevel, newArtifactAccessLevel, newRoutingAccessLevel, newTunnelAgentAccessLevel, "note", newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccPermissionGet("buddy_permission.bar", &permission),
 					testAccPermissionAttributes("buddy_permission.bar", &permission, &testAccPermissionExpectedAttributes{
@@ -104,6 +120,9 @@ func TestAccPermission(t *testing.T) {
 						ProjectTeamAccessLevel: newProjectTeamAccessLevel,
 						TargetAccessLevel:      newTargetAccessLevel,
 						EnvironmentAccessLevel: newEnvironmentAccessLevel,
+						ArtifactAccessLevel:    newArtifactAccessLevel,
+						RoutingAccessLevel:     newRoutingAccessLevel,
+						TunnelAgentAccessLevel: newTunnelAgentAccessLevel,
 						Type:                   "CUSTOM",
 						Note:                   newNote,
 						AgentNote:              newAgentNote,
@@ -128,6 +147,9 @@ type testAccPermissionExpectedAttributes struct {
 	ProjectTeamAccessLevel string
 	TargetAccessLevel      string
 	EnvironmentAccessLevel string
+	ArtifactAccessLevel    string
+	RoutingAccessLevel     string
+	TunnelAgentAccessLevel string
 	Type                   string
 	Note                   string
 	AgentNote              string
@@ -190,6 +212,24 @@ func testAccPermissionAttributes(n string, permission *buddy.Permission, want *t
 		if err := util.CheckFieldEqualAndSet("environment_access_level", attrs["environment_access_level"], want.EnvironmentAccessLevel); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqualAndSet("ArtifactAccessLevel", permission.ArtifactAccessLevel, want.ArtifactAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("RoutingAccessLevel", permission.RoutingAccessLevel, want.RoutingAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("TunnelAgentAccessLevel", permission.TunnelAgentAccessLevel, want.TunnelAgentAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("artifact_access_level", attrs["artifact_access_level"], want.ArtifactAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("routing_access_level", attrs["routing_access_level"], want.RoutingAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("tunnel_agent_access_level", attrs["tunnel_agent_access_level"], want.TunnelAgentAccessLevel); err != nil {
+			return err
+		}
 		if err := util.CheckIntFieldEqualAndSet("permission_id", attrsPermissionId, permission.Id); err != nil {
 			return err
 		}
@@ -236,7 +276,7 @@ func testAccPermissionGet(n string, permission *buddy.Permission) resource.TestC
 	}
 }
 
-func testAccPermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, targetAccessLevel string, environmentAccessLevel string) string {
+func testAccPermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, targetAccessLevel string, environmentAccessLevel string, artifactAccessLevel string, routingAccessLevel string, tunnelAgentAccessLevel string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -250,11 +290,14 @@ resource "buddy_permission" "bar" {
    sandbox_access_level = "%s"
 	 target_access_level = "%s"
 	 environment_access_level = "%s"
+	 artifact_access_level = "%s"
+	 routing_access_level = "%s"
+	 tunnel_agent_access_level = "%s"
 }
-`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, targetAccessLevel, environmentAccessLevel)
+`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, targetAccessLevel, environmentAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel)
 }
 
-func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, projectTeamAccessLevel string, sandboxAccessLevel string, targetAccessLevel string, environmentAccessLevel string, noteField string, note string, agentNote string) string {
+func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, projectTeamAccessLevel string, sandboxAccessLevel string, targetAccessLevel string, environmentAccessLevel string, artifactAccessLevel string, routingAccessLevel string, tunnelAgentAccessLevel string, noteField string, note string, agentNote string) string {
 	return fmt.Sprintf(`
 
 	resource "buddy_workspace" "foo" {
@@ -270,11 +313,14 @@ func testAccPermissionUpdateConfig(domain string, name string, pipelineAccessLev
 		 project_team_access_level = "%s"
 	 	 target_access_level = "%s"
 	 	 environment_access_level = "%s"
+	 	 artifact_access_level = "%s"
+	 	 routing_access_level = "%s"
+	 	 tunnel_agent_access_level = "%s"
 	   %s = "%s"
 	   agent_note = "%s"
 	}
 
-`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, targetAccessLevel, environmentAccessLevel, noteField, note, agentNote)
+`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, targetAccessLevel, environmentAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel, noteField, note, agentNote)
 }
 
 func testAccPermissionCheckDestroy(s *terraform.State) error {

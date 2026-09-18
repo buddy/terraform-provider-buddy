@@ -18,6 +18,9 @@ func TestAccSourcePermission(t *testing.T) {
 	repositoryAccessLevel := buddy.PermissionAccessLevelReadOnly
 	sandboxAccessLevel := buddy.PermissionAccessLevelDenied
 	projectTeamAccessLevel := buddy.PermissionAccessLevelReadOnly
+	artifactAccessLevel := buddy.PermissionAccessLevelReadOnly
+	routingAccessLevel := buddy.PermissionAccessLevelDenied
+	tunnelAgentAccessLevel := buddy.PermissionAccessLevelUseOnly
 	note := util.RandString(10)
 	resource.Test(t, resource.TestCase{
 		PreCheck: func() {
@@ -27,17 +30,17 @@ func TestAccSourcePermission(t *testing.T) {
 		ProtoV6ProviderFactories: acc.ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccSourcePermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, note),
+				Config: testAccSourcePermissionConfig(domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel, note),
 				Check: resource.ComposeTestCheckFunc(
-					testAccSourcePermissionAttributes("data.buddy_permission.id", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
-					testAccSourcePermissionAttributes("data.buddy_permission.name", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel),
+					testAccSourcePermissionAttributes("data.buddy_permission.id", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel),
+					testAccSourcePermissionAttributes("data.buddy_permission.name", name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel),
 				),
 			},
 		},
 	})
 }
 
-func testAccSourcePermissionAttributes(n string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, projectTeamAccessLevel string) resource.TestCheckFunc {
+func testAccSourcePermissionAttributes(n string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, projectTeamAccessLevel string, artifactAccessLevel string, routingAccessLevel string, tunnelAgentAccessLevel string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[n]
 		if !ok {
@@ -60,6 +63,15 @@ func testAccSourcePermissionAttributes(n string, name string, pipelineAccessLeve
 		if err := util.CheckFieldEqualAndSet("project_team_access_level", attrs["project_team_access_level"], projectTeamAccessLevel); err != nil {
 			return err
 		}
+		if err := util.CheckFieldEqualAndSet("artifact_access_level", attrs["artifact_access_level"], artifactAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("routing_access_level", attrs["routing_access_level"], routingAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("tunnel_agent_access_level", attrs["tunnel_agent_access_level"], tunnelAgentAccessLevel); err != nil {
+			return err
+		}
 		if err := util.CheckIntFieldSet("permission_id", attrsPermissionId); err != nil {
 			return err
 		}
@@ -73,7 +85,7 @@ func testAccSourcePermissionAttributes(n string, name string, pipelineAccessLeve
 	}
 }
 
-func testAccSourcePermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, projectTeamAccessLevel string, note string) string {
+func testAccSourcePermissionConfig(domain string, name string, pipelineAccessLevel string, repositoryAccessLevel string, sandboxAccessLevel string, projectTeamAccessLevel string, artifactAccessLevel string, routingAccessLevel string, tunnelAgentAccessLevel string, note string) string {
 	return fmt.Sprintf(`
 resource "buddy_workspace" "foo" {
    domain = "%s"
@@ -86,6 +98,9 @@ resource "buddy_permission" "perm" {
    repository_access_level = "%s"
 	sandbox_access_level = "%s"
 	project_team_access_level = "%s"
+	artifact_access_level = "%s"
+	routing_access_level = "%s"
+	tunnel_agent_access_level = "%s"
 	note = "%s"
 }
 
@@ -98,5 +113,5 @@ data "buddy_permission" "name" {
    domain = "${buddy_workspace.foo.domain}"
    name = "${buddy_permission.perm.name}"
 }
-`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, note)
+`, domain, name, pipelineAccessLevel, repositoryAccessLevel, sandboxAccessLevel, projectTeamAccessLevel, artifactAccessLevel, routingAccessLevel, tunnelAgentAccessLevel, note)
 }

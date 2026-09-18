@@ -39,6 +39,9 @@ type permissionSourceModel struct {
 	SandboxAccessLevel     types.String `tfsdk:"sandbox_access_level"`
 	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
 	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
+	ArtifactAccessLevel    types.String `tfsdk:"artifact_access_level"`
+	RoutingAccessLevel     types.String `tfsdk:"routing_access_level"`
+	TunnelAgentAccessLevel types.String `tfsdk:"tunnel_agent_access_level"`
 	HtmlUrl                types.String `tfsdk:"html_url"`
 	Type                   types.String `tfsdk:"type"`
 }
@@ -54,6 +57,9 @@ func (s *permissionSourceModel) loadAPI(domain string, permission *buddy.Permiss
 	s.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
 	s.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
 	s.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
+	s.ArtifactAccessLevel = types.StringValue(permission.ArtifactAccessLevel)
+	s.RoutingAccessLevel = types.StringValue(permission.RoutingAccessLevel)
+	s.TunnelAgentAccessLevel = types.StringValue(permission.TunnelAgentAccessLevel)
 	s.HtmlUrl = types.StringValue(permission.HtmlUrl)
 	s.Type = types.StringValue(permission.Type)
 }
@@ -127,6 +133,18 @@ func (s *permissionSource) Schema(_ context.Context, _ datasource.SchemaRequest,
 			},
 			"target_access_level": schema.StringAttribute{
 				MarkdownDescription: "The permission's access level to targets",
+				Computed:            true,
+			},
+			"artifact_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to artifacts",
+				Computed:            true,
+			},
+			"routing_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to routing",
+				Computed:            true,
+			},
+			"tunnel_agent_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to tunnel agents",
 				Computed:            true,
 			},
 			"html_url": schema.StringAttribute{
