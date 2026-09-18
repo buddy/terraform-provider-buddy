@@ -22,6 +22,9 @@ type permissionModel struct {
 	SandboxAccessLevel     types.String `tfsdk:"sandbox_access_level"`
 	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
 	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
+	ArtifactAccessLevel    types.String `tfsdk:"artifact_access_level"`
+	RoutingAccessLevel     types.String `tfsdk:"routing_access_level"`
+	TunnelAgentAccessLevel types.String `tfsdk:"tunnel_agent_access_level"`
 }
 
 func permissionModelAttrs() map[string]attr.Type {
@@ -36,6 +39,9 @@ func permissionModelAttrs() map[string]attr.Type {
 		"sandbox_access_level":      types.StringType,
 		"target_access_level":       types.StringType,
 		"environment_access_level":  types.StringType,
+		"artifact_access_level":     types.StringType,
+		"routing_access_level":      types.StringType,
+		"tunnel_agent_access_level": types.StringType,
 	}
 }
 
@@ -50,6 +56,9 @@ func (r *permissionModel) loadAPI(permission *buddy.Permission) {
 	r.SandboxAccessLevel = types.StringValue(permission.SandboxAccessLevel)
 	r.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
 	r.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
+	r.ArtifactAccessLevel = types.StringValue(permission.ArtifactAccessLevel)
+	r.RoutingAccessLevel = types.StringValue(permission.RoutingAccessLevel)
+	r.TunnelAgentAccessLevel = types.StringValue(permission.TunnelAgentAccessLevel)
 }
 
 func SourcePermissionModelAttributes() map[string]sourceschema.Attribute {
@@ -82,6 +91,15 @@ func SourcePermissionModelAttributes() map[string]sourceschema.Attribute {
 			Computed: true,
 		},
 		"environment_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"artifact_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"routing_access_level": sourceschema.StringAttribute{
+			Computed: true,
+		},
+		"tunnel_agent_access_level": sourceschema.StringAttribute{
 			Computed: true,
 		},
 	}
@@ -117,6 +135,15 @@ func PermissionModelAttributes() map[string]schema.Attribute {
 			Computed: true,
 		},
 		"environment_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"artifact_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"routing_access_level": schema.StringAttribute{
+			Computed: true,
+		},
+		"tunnel_agent_access_level": schema.StringAttribute{
 			Computed: true,
 		},
 	}

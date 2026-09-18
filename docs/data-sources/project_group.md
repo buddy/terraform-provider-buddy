@@ -44,6 +44,7 @@ data "buddy_project_group" "pg" {
 
 Read-Only:
 
+- `artifact_access_level` (String)
 - `environment_access_level` (String)
 - `html_url` (String)
 - `name` (String)
@@ -51,6 +52,8 @@ Read-Only:
 - `pipeline_access_level` (String)
 - `project_team_access_level` (String)
 - `repository_access_level` (String)
+- `routing_access_level` (String)
 - `sandbox_access_level` (String)
 - `target_access_level` (String)
+- `tunnel_agent_access_level` (String)
 - `type` (String)

@@ -42,11 +42,14 @@ resource "buddy_permission" "testers" {
 ### Optional
 
 - `agent_note` (String) The permission's agent note
+- `artifact_access_level` (String) The permission's access level to artifacts. Allowed: `DENIED`, `READ_ONLY`, `READ_WRITE`, `MANAGE`
 - `description` (String, Deprecated) The permission's description
 - `environment_access_level` (String) The permission's access level to environments. Allowed: `DENIED`, `MANAGE`, `USE_ONLY`
 - `note` (String) The permission's note
-- `project_team_access_level` (String) The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`
-- `target_access_level` (String) The permission's access level to environments. Allowed: `DENIED`, 'READ_ONLY`, `MANAGE`, `USE_ONLY`
+- `project_team_access_level` (String) The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`. `MANAGE` requires full access on every other resource: `pipeline_access_level = "READ_WRITE"`, `sandbox_access_level = "READ_WRITE"` and `MANAGE` on repository, environments, targets, artifacts, routing and tunnel agents
+- `routing_access_level` (String) The permission's access level to routing. Allowed: `DENIED`, `READ_ONLY`, `MANAGE`
+- `target_access_level` (String) The permission's access level to targets. Allowed: `DENIED`, `READ_ONLY`, `MANAGE`, `USE_ONLY`
+- `tunnel_agent_access_level` (String) The permission's access level to tunnel agents. Allowed: `DENIED`, `READ_ONLY`, `USE_ONLY`, `MANAGE`
 
 ### Read-Only
 

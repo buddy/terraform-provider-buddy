@@ -39,6 +39,9 @@ type permissionResourceModel struct {
 	ProjectTeamAccessLevel types.String `tfsdk:"project_team_access_level"`
 	TargetAccessLevel      types.String `tfsdk:"target_access_level"`
 	EnvironmentAccessLevel types.String `tfsdk:"environment_access_level"`
+	ArtifactAccessLevel    types.String `tfsdk:"artifact_access_level"`
+	RoutingAccessLevel     types.String `tfsdk:"routing_access_level"`
+	TunnelAgentAccessLevel types.String `tfsdk:"tunnel_agent_access_level"`
 	PermissionId           types.Int64  `tfsdk:"permission_id"`
 	Description            types.String `tfsdk:"description"`
 	Note                   types.String `tfsdk:"note"`
@@ -69,6 +72,9 @@ func (r *permissionResourceModel) loadAPI(domain string, permission *buddy.Permi
 	r.ProjectTeamAccessLevel = types.StringValue(permission.ProjectTeamAccessLevel)
 	r.TargetAccessLevel = types.StringValue(permission.TargetAccessLevel)
 	r.EnvironmentAccessLevel = types.StringValue(permission.EnvironmentAccessLevel)
+	r.ArtifactAccessLevel = types.StringValue(permission.ArtifactAccessLevel)
+	r.RoutingAccessLevel = types.StringValue(permission.RoutingAccessLevel)
+	r.TunnelAgentAccessLevel = types.StringValue(permission.TunnelAgentAccessLevel)
 	r.PermissionId = types.Int64Value(int64(permission.Id))
 	r.HtmlUrl = types.StringValue(permission.HtmlUrl)
 	r.Type = types.StringValue(permission.Type)
@@ -148,7 +154,7 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				)},
 			},
 			"project_team_access_level": schema.StringAttribute{
-				MarkdownDescription: "The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`",
+				MarkdownDescription: "The permission's access level to team. Allowed: `READ_ONLY`, `MANAGE`. `MANAGE` requires full access on every other resource: `pipeline_access_level = \"READ_WRITE\"`, `sandbox_access_level = \"READ_WRITE\"` and `MANAGE` on repository, environments, targets, artifacts, routing and tunnel agents",
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.String{stringvalidator.OneOf(
@@ -167,7 +173,7 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 				)},
 			},
 			"target_access_level": schema.StringAttribute{
-				MarkdownDescription: "The permission's access level to environments. Allowed: `DENIED`, 'READ_ONLY`, `MANAGE`, `USE_ONLY`",
+				MarkdownDescription: "The permission's access level to targets. Allowed: `DENIED`, `READ_ONLY`, `MANAGE`, `USE_ONLY`",
 				Optional:            true,
 				Computed:            true,
 				Validators: []validator.String{stringvalidator.OneOf(
@@ -175,6 +181,38 @@ func (r *permissionResource) Schema(_ context.Context, _ resource.SchemaRequest,
 					buddy.PermissionAccessLevelManage,
 					buddy.PermissionAccessLevelUseOnly,
 					buddy.PermissionAccessLevelReadOnly,
+				)},
+			},
+			"artifact_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to artifacts. Allowed: `DENIED`, `READ_ONLY`, `READ_WRITE`, `MANAGE`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelReadWrite,
+					buddy.PermissionAccessLevelManage,
+				)},
+			},
+			"routing_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to routing. Allowed: `DENIED`, `READ_ONLY`, `MANAGE`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelManage,
+				)},
+			},
+			"tunnel_agent_access_level": schema.StringAttribute{
+				MarkdownDescription: "The permission's access level to tunnel agents. Allowed: `DENIED`, `READ_ONLY`, `USE_ONLY`, `MANAGE`",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.PermissionAccessLevelDenied,
+					buddy.PermissionAccessLevelReadOnly,
+					buddy.PermissionAccessLevelUseOnly,
+					buddy.PermissionAccessLevelManage,
 				)},
 			},
 			"permission_id": schema.Int64Attribute{
@@ -231,6 +269,15 @@ func (r *permissionResource) Create(ctx context.Context, req resource.CreateRequ
 	}
 	if !data.EnvironmentAccessLevel.IsNull() && !data.EnvironmentAccessLevel.IsUnknown() {
 		ops.EnvironmentAccessLevel = data.EnvironmentAccessLevel.ValueStringPointer()
+	}
+	if !data.ArtifactAccessLevel.IsNull() && !data.ArtifactAccessLevel.IsUnknown() {
+		ops.ArtifactAccessLevel = data.ArtifactAccessLevel.ValueStringPointer()
+	}
+	if !data.RoutingAccessLevel.IsNull() && !data.RoutingAccessLevel.IsUnknown() {
+		ops.RoutingAccessLevel = data.RoutingAccessLevel.ValueStringPointer()
+	}
+	if !data.TunnelAgentAccessLevel.IsNull() && !data.TunnelAgentAccessLevel.IsUnknown() {
+		ops.TunnelAgentAccessLevel = data.TunnelAgentAccessLevel.ValueStringPointer()
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()
@@ -305,6 +352,15 @@ func (r *permissionResource) Update(ctx context.Context, req resource.UpdateRequ
 	}
 	if !data.EnvironmentAccessLevel.IsNull() && !data.EnvironmentAccessLevel.IsUnknown() {
 		ops.EnvironmentAccessLevel = data.EnvironmentAccessLevel.ValueStringPointer()
+	}
+	if !data.ArtifactAccessLevel.IsNull() && !data.ArtifactAccessLevel.IsUnknown() {
+		ops.ArtifactAccessLevel = data.ArtifactAccessLevel.ValueStringPointer()
+	}
+	if !data.RoutingAccessLevel.IsNull() && !data.RoutingAccessLevel.IsUnknown() {
+		ops.RoutingAccessLevel = data.RoutingAccessLevel.ValueStringPointer()
+	}
+	if !data.TunnelAgentAccessLevel.IsNull() && !data.TunnelAgentAccessLevel.IsUnknown() {
+		ops.TunnelAgentAccessLevel = data.TunnelAgentAccessLevel.ValueStringPointer()
 	}
 	if !data.Note.IsNull() && !data.Note.IsUnknown() {
 		ops.Note = data.Note.ValueStringPointer()

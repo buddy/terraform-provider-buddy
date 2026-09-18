@@ -56,6 +56,15 @@ func testAccSourcePermissionsAttributes(n string, count int) resource.TestCheckF
 		if err := util.CheckFieldSet("permissions.0.repository_access_level", attrs["permissions.0.repository_access_level"]); err != nil {
 			return err
 		}
+		if err := util.CheckFieldSet("permissions.0.artifact_access_level", attrs["permissions.0.artifact_access_level"]); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("permissions.0.routing_access_level", attrs["permissions.0.routing_access_level"]); err != nil {
+			return err
+		}
+		if err := util.CheckFieldSet("permissions.0.tunnel_agent_access_level", attrs["permissions.0.tunnel_agent_access_level"]); err != nil {
+			return err
+		}
 		if err := util.CheckFieldSet("permissions.0.html_url", attrs["permissions.0.html_url"]); err != nil {
 			return err
 		}
@@ -82,6 +91,11 @@ resource "buddy_permission" "perm" {
    repository_access_level = "%s"
 	sandbox_access_level = "%s"
 	project_team_access_level = "%s"
+	environment_access_level = "%s"
+	target_access_level = "%s"
+	artifact_access_level = "%s"
+	routing_access_level = "%s"
+	tunnel_agent_access_level = "%s"
 }
 
 data "buddy_permissions" "all" {
@@ -100,5 +114,5 @@ data "buddy_permissions" "type" {
    depends_on = [buddy_permission.perm]
    type = "DEVELOPER"
 }
-`, domain, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage)
+`, domain, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelReadWrite, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelManage, buddy.PermissionAccessLevelManage)
 }
