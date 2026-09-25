@@ -1,3 +1,7 @@
+# Release v1.51.0 (2026-09-25)
+* Bump api-go-sdk to v1.51.0
+* [Breaking] `buddy_pipeline`: `event.events` for `PULL_REQUEST` must be one of `OPENED`, `REOPENED`, `SYNCHRONIZED`, `CLOSED`, `MERGED`, `READY_FOR_REVIEW`, `LABELED`, `ASSIGNED`, `REVIEW_REQUESTED`, `EDITED`, the lowercase GitHub values (e.g. `opened`, `synchronize`) are no longer accepted
+
 # Release v1.50.0 (2026-09-18)
 * Bump api-go-sdk to v1.50.0
 * `buddy_permission`: new `artifact_access_level` (one of `DENIED`, `READ_ONLY`, `READ_WRITE`, `MANAGE`), `routing_access_level` (one of `DENIED`, `READ_ONLY`, `MANAGE`) and `tunnel_agent_access_level` (one of `DENIED`, `READ_ONLY`, `USE_ONLY`, `MANAGE`) attributes
