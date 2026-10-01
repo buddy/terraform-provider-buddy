@@ -7,6 +7,7 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/path"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/resource/schema/boolplanmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/planmodifier"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringdefault"
 	"github.com/hashicorp/terraform-plugin-framework/resource/schema/stringplanmodifier"
@@ -16,9 +17,10 @@ import (
 )
 
 var (
-	_ resource.Resource                = &domainResource{}
-	_ resource.ResourceWithConfigure   = &domainResource{}
-	_ resource.ResourceWithImportState = &domainResource{}
+	_ resource.Resource                   = &domainResource{}
+	_ resource.ResourceWithConfigure      = &domainResource{}
+	_ resource.ResourceWithImportState    = &domainResource{}
+	_ resource.ResourceWithValidateConfig = &domainResource{}
 )
 
 func NewDomainResource() resource.Resource {
@@ -35,6 +37,9 @@ type domainResourceModel struct {
 	Domain          types.String `tfsdk:"domain"`
 	Type            types.String `tfsdk:"type"`
 	DomainId        types.String `tfsdk:"domain_id"`
+	HtmlUrl         types.String `tfsdk:"html_url"`
+	AutoRenew       types.Bool   `tfsdk:"auto_renew"`
+	OnOwnerBehalf   types.Bool   `tfsdk:"on_owner_behalf"`
 }
 
 func (r *domainResourceModel) decomposeId() (string, string, error) {
@@ -45,12 +50,15 @@ func (r *domainResourceModel) decomposeId() (string, string, error) {
 	return workspaceDomain, domainId, nil
 }
 
-func (r *domainResourceModel) loadAPI(workspaceDomain string, domain string, domainId string, typ string) {
-	r.ID = types.StringValue(util.ComposeDoubleId(workspaceDomain, domainId))
+func (r *domainResourceModel) loadAPI(workspaceDomain string, domain *buddy.Domain) {
+	r.ID = types.StringValue(util.ComposeDoubleId(workspaceDomain, domain.Id))
 	r.WorkspaceDomain = types.StringValue(workspaceDomain)
-	r.Domain = types.StringValue(domain)
-	r.DomainId = types.StringValue(domainId)
-	r.Type = types.StringValue(typ)
+	r.Domain = types.StringValue(domain.Name)
+	r.DomainId = types.StringValue(domain.Id)
+	r.Type = types.StringValue(domain.Type)
+	r.HtmlUrl = types.StringValue(domain.HtmlUrl)
+	r.AutoRenew = types.BoolValue(domain.AutoRenew)
+	// on_owner_behalf is not returned by the API, it stays as configured
 }
 
 func (r *domainResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -61,6 +69,7 @@ func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 	resp.Schema = schema.Schema{
 		MarkdownDescription: "Create a domain\n\n" +
 			"Invite-only token is required. Contact support@buddy.works for more details\n\n" +
+			"Destroying the resource deletes the domain with all its records from the workspace\n\n" +
 			"Token scopes required: `DOMAIN_READ`, `DOMAIN_MANAGE`",
 		Attributes: map[string]schema.Attribute{
 			"id": schema.StringAttribute{
@@ -86,7 +95,7 @@ func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "The domain's type. Allowed values: POINTED (default), PRIVATE",
+				MarkdownDescription: "The domain's type. Allowed values: POINTED (default), PRIVATE, REGISTERED, CLAIMED. PRIVATE requires a plan with private zones",
 				Optional:            true,
 				Computed:            true,
 				Default:             stringdefault.StaticString(buddy.DomainTypePointed),
@@ -97,14 +106,57 @@ func (r *domainResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					stringvalidator.OneOf(
 						buddy.DomainTypePointed,
 						buddy.DomainTypePrivate,
+						buddy.DomainTypeRegistered,
+						buddy.DomainTypeClaimed,
 					),
+				},
+			},
+			"auto_renew": schema.BoolAttribute{
+				MarkdownDescription: "Renew the domain automatically, allowed only for REGISTERED type",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.UseStateForUnknown(),
+					boolplanmodifier.RequiresReplace(),
+				},
+			},
+			"on_owner_behalf": schema.BoolAttribute{
+				MarkdownDescription: "Register or claim the domain on the workspace owner's behalf, allowed only for REGISTERED and CLAIMED types. Not returned by the API, used only on create",
+				Optional:            true,
+				PlanModifiers: []planmodifier.Bool{
+					boolplanmodifier.RequiresReplace(),
 				},
 			},
 			"domain_id": schema.StringAttribute{
 				MarkdownDescription: "The domain's id",
 				Computed:            true,
 			},
+			"html_url": schema.StringAttribute{
+				MarkdownDescription: "The domain's URL",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
+			},
 		},
+	}
+}
+
+func (r *domainResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data *domainResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() || data.Type.IsUnknown() {
+		return
+	}
+	typ := buddy.DomainTypePointed
+	if !data.Type.IsNull() {
+		typ = data.Type.ValueString()
+	}
+	if !data.AutoRenew.IsNull() && typ != buddy.DomainTypeRegistered {
+		resp.Diagnostics.AddAttributeError(path.Root("auto_renew"), "Invalid attribute combination", "auto_renew is allowed only for type REGISTERED")
+	}
+	if !data.OnOwnerBehalf.IsNull() && typ != buddy.DomainTypeRegistered && typ != buddy.DomainTypeClaimed {
+		resp.Diagnostics.AddAttributeError(path.Root("on_owner_behalf"), "Invalid attribute combination", "on_owner_behalf is allowed only for types REGISTERED and CLAIMED")
 	}
 }
 
@@ -131,12 +183,18 @@ func (r *domainResource) Create(ctx context.Context, req resource.CreateRequest,
 		Name: &domain,
 		Type: &typ,
 	}
+	if !data.AutoRenew.IsNull() && !data.AutoRenew.IsUnknown() {
+		ops.AutoRenew = data.AutoRenew.ValueBoolPointer()
+	}
+	if !data.OnOwnerBehalf.IsNull() && !data.OnOwnerBehalf.IsUnknown() {
+		ops.OnOwnerBehalf = data.OnOwnerBehalf.ValueBoolPointer()
+	}
 	d, _, err := r.client.DomainService.Create(workspaceDomain, &ops)
 	if err != nil {
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("create domain", err))
 		return
 	}
-	data.loadAPI(workspaceDomain, d.Name, d.Id, d.Type)
+	data.loadAPI(workspaceDomain, d)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -160,7 +218,7 @@ func (r *domainResource) Read(ctx context.Context, req resource.ReadRequest, res
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get domain", err))
 		return
 	}
-	data.loadAPI(workspaceDomain, d.Name, domainId, d.Type)
+	data.loadAPI(workspaceDomain, d)
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }
 
@@ -168,8 +226,21 @@ func (r *domainResource) Update(_ context.Context, _ resource.UpdateRequest, _ *
 	// do nothing
 }
 
-func (r *domainResource) Delete(_ context.Context, _ resource.DeleteRequest, _ *resource.DeleteResponse) {
-	// do nothing
+func (r *domainResource) Delete(ctx context.Context, req resource.DeleteRequest, resp *resource.DeleteResponse) {
+	var data *domainResourceModel
+	resp.Diagnostics.Append(req.State.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
+	workspaceDomain, domainId, err := data.decomposeId()
+	if err != nil {
+		resp.Diagnostics.Append(util.NewDiagnosticDecomposeError("domain", err))
+		return
+	}
+	httpResp, err := r.client.DomainService.Delete(workspaceDomain, domainId)
+	if err != nil && !util.IsResourceNotFound(httpResp, err) {
+		resp.Diagnostics.Append(util.NewDiagnosticApiError("delete domain", err))
+	}
 }
 
 func (r *domainResource) ImportState(ctx context.Context, req resource.ImportStateRequest, resp *resource.ImportStateResponse) {
