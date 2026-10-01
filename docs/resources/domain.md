@@ -5,6 +5,7 @@ subcategory: ""
 description: |-
   Create a domain
   Invite-only token is required. Contact support@buddy.works for more details
+  Destroying the resource deletes the domain with all its records from the workspace
   Token scopes required: DOMAIN_READ, DOMAIN_MANAGE
 ---
 
@@ -14,6 +15,8 @@ Create a domain
 
 Invite-only token is required. Contact support@buddy.works for more details
 
+Destroying the resource deletes the domain with all its records from the workspace
+
 Token scopes required: `DOMAIN_READ`, `DOMAIN_MANAGE`
 
 ## Example Usage
@@ -22,6 +25,12 @@ Token scopes required: `DOMAIN_READ`, `DOMAIN_MANAGE`
 resource "buddy_domain" "dev" {
   workspace_domain = "myworkspace"
   domain           = "test.com"
+}
+
+resource "buddy_domain" "internal" {
+  workspace_domain = "myworkspace"
+  domain           = "internal.lan"
+  type             = "PRIVATE"
 }
 ```
 
@@ -35,11 +44,14 @@ resource "buddy_domain" "dev" {
 
 ### Optional
 
-- `type` (String) The domain's type. Allowed values: POINTED (default), PRIVATE
+- `auto_renew` (Boolean) Renew the domain automatically, allowed only for REGISTERED type
+- `on_owner_behalf` (Boolean) Register or claim the domain on the workspace owner's behalf, allowed only for REGISTERED and CLAIMED types. Not returned by the API, used only on create
+- `type` (String) The domain's type. Allowed values: POINTED (default), PRIVATE, REGISTERED, CLAIMED. PRIVATE requires a plan with private zones
 
 ### Read-Only
 
 - `domain_id` (String) The domain's id
+- `html_url` (String) The domain's URL
 - `id` (String) The Terraform resource identifier for this item
 
 ## Import

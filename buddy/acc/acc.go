@@ -1,6 +1,7 @@
 package acc
 
 import (
+	"fmt"
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
 	"github.com/hashicorp/terraform-plugin-go/tfprotov6"
@@ -31,4 +32,22 @@ func PreCheck(t *testing.T) {
 
 func DummyCheckDestroy(_ *terraform.State) error {
 	return nil
+}
+
+// MainWorkspaceDomain returns the workspace created together with the token (the oldest one), only it carries the token's plan
+func MainWorkspaceDomain(t *testing.T) string {
+	workspaces, _, err := ApiClient.WorkspaceService.GetList()
+	if err != nil {
+		t.Fatal(err)
+	}
+	var main *buddy.Workspace
+	for _, w := range workspaces.Workspaces {
+		if main == nil || w.Id < main.Id {
+			main = w
+		}
+	}
+	if main == nil {
+		t.Fatal(fmt.Errorf("no workspace found"))
+	}
+	return main.Domain
 }

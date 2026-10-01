@@ -1,3 +1,9 @@
+# Release v1.52.0 (2026-10-01)
+* Bump api-go-sdk to v1.52.0
+* [Breaking] `buddy_domain`: destroying the resource now deletes the domain with all its records from the workspace, before it was only removed from the state
+* `buddy_domain`: `type` accepts `REGISTERED` and `CLAIMED`, new `auto_renew` (`REGISTERED` only) and `on_owner_behalf` (`REGISTERED` and `CLAIMED`, not returned by the API) attributes, new computed `html_url`. `PRIVATE` requires a plan with private zones
+* New `buddy_domains` data source: lists domains, optionally filtered by `type` and `domain_regex`
+
 # Release v1.51.0 (2026-09-25)
 * Bump api-go-sdk to v1.51.0
 * [Breaking] `buddy_pipeline`: `event.events` for `PULL_REQUEST` must be one of `OPENED`, `REOPENED`, `SYNCHRONIZED`, `CLOSED`, `MERGED`, `READY_FOR_REVIEW`, `LABELED`, `ASSIGNED`, `REVIEW_REQUESTED`, `EDITED`, the lowercase GitHub values (e.g. `opened`, `synchronize`) are no longer accepted
