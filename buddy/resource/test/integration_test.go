@@ -11,6 +11,10 @@ import (
 	"testing"
 )
 
+// an imported integration has no configuration to keep the deprecated DEFAULT from,
+// so it comes back under its new name
+var ignoreImportVerifyDefaultAuth = append([]string{"auth_type"}, ignoreImportVerify...)
+
 var ignoreImportVerify = []string{
 	"username",
 	"shop",
@@ -187,7 +191,7 @@ func TestAccIntegration_amazon_default(t *testing.T) {
 				ResourceName:            "buddy_integration.bar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: ignoreImportVerify,
+				ImportStateVerifyIgnore: ignoreImportVerifyDefaultAuth,
 			},
 		},
 	})
@@ -229,7 +233,7 @@ func TestAccIntegration_amazon_recreate(t *testing.T) {
 				ResourceName:            "buddy_integration.bar",
 				ImportState:             true,
 				ImportStateVerify:       true,
-				ImportStateVerifyIgnore: ignoreImportVerify,
+				ImportStateVerifyIgnore: ignoreImportVerifyDefaultAuth,
 			},
 		},
 	})
@@ -257,7 +261,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 				Config: testAccIntegrationAmazon(domain, name, scope, note, agentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeAccessKeys, scope, false, "", nil, true, false),
 					resource.TestCheckResourceAttr("buddy_integration.bar", "note", note),
 					resource.TestCheckResourceAttr("buddy_integration.bar", "agent_note", agentNote),
 				),
@@ -267,7 +271,7 @@ func TestAccIntegration_amazon(t *testing.T) {
 				Config: testAccIntegrationAmazon(domain, newName, scope, newNote, newAgentNote),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeDefault, scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAmazon, buddy.IntegrationAuthTypeAccessKeys, scope, false, "", nil, true, false),
 					resource.TestCheckResourceAttr("buddy_integration.bar", "note", newNote),
 					resource.TestCheckResourceAttr("buddy_integration.bar", "agent_note", newAgentNote),
 				),
@@ -300,7 +304,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 				Config: testAccIntegrationDigitalOcean(domain, name),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeDigitalOcean, "", buddy.IntegrationScopeWorkspace, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationAuthTypeToken, buddy.IntegrationScopeWorkspace, false, "", nil, true, false),
 				),
 			},
 			// update integration
@@ -308,7 +312,7 @@ func TestAccIntegration_digitalocean(t *testing.T) {
 				Config: testAccIntegrationDigitalOcean(domain, newName),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeDigitalOcean, "", buddy.IntegrationScopeWorkspace, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeDigitalOcean, buddy.IntegrationAuthTypeToken, buddy.IntegrationScopeWorkspace, false, "", nil, true, false),
 				),
 			},
 			// import integration
@@ -424,7 +428,7 @@ func TestAccIntegration_gitlab(t *testing.T) {
 				Config: testAccIntegrationGitLab(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitLab, "", scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitLab, buddy.IntegrationAuthTypeToken, scope, false, "", nil, true, false),
 				),
 			},
 			// update integration
@@ -432,7 +436,7 @@ func TestAccIntegration_gitlab(t *testing.T) {
 				Config: testAccIntegrationGitLab(domain, newName, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitLab, "", scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitLab, buddy.IntegrationAuthTypeToken, scope, false, "", nil, true, false),
 				),
 			},
 			// import integration
@@ -464,7 +468,7 @@ func TestAccIntegration_github(t *testing.T) {
 				Config: testAccIntegrationGitHub(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitHub, "", scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeGitHub, buddy.IntegrationAuthTypeToken, scope, false, "", nil, true, false),
 				),
 			},
 			// update integration
@@ -472,7 +476,7 @@ func TestAccIntegration_github(t *testing.T) {
 				Config: testAccIntegrationGitHub(domain, newName, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitHub, "", scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeGitHub, buddy.IntegrationAuthTypeToken, scope, false, "", nil, true, false),
 				),
 			},
 			// import integration
@@ -544,7 +548,7 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 				Config: testAccIntegrationCloudflare(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeCloudflare, "", scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeCloudflare, buddy.IntegrationAuthTypeToken, scope, false, "", nil, true, false),
 				),
 			},
 			// update integration
@@ -552,7 +556,7 @@ func TestAccIntegration_cloudflare(t *testing.T) {
 				Config: testAccIntegrationCloudflare(domain, newName, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeCloudflare, "", scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeCloudflare, buddy.IntegrationAuthTypeToken, scope, false, "", nil, true, false),
 				),
 			},
 			// import integration
@@ -750,7 +754,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 				Config: testAccIntegrationAzureCloud(domain, name, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeDefault, scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, name, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeServicePrincipal, scope, false, "", nil, true, false),
 				),
 			},
 			// update integration
@@ -758,7 +762,7 @@ func TestAccIntegration_azurecloud(t *testing.T) {
 				Config: testAccIntegrationAzureCloud(domain, newName, scope),
 				Check: resource.ComposeTestCheckFunc(
 					testAccIntegrationGet("buddy_integration.bar", &integration),
-					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeDefault, scope, false, "", nil, true, false),
+					testAccIntegrationAttributes("buddy_integration.bar", &integration, newName, buddy.IntegrationTypeAzureCloud, buddy.IntegrationAuthTypeServicePrincipal, scope, false, "", nil, true, false),
 				),
 			},
 			// import integration
@@ -806,7 +810,12 @@ func testAccIntegrationAttributes(n string, integration *buddy.Integration, name
 			}
 		}
 		if authType != "" {
-			if err := util.CheckFieldEqualAndSet("AuthType", integration.AuthType, authType); err != nil {
+			apiAuthType := authType
+			if authType == buddy.IntegrationAuthTypeDefault {
+				// the API stores the deprecated DEFAULT under its new name, the state keeps DEFAULT
+				apiAuthType = buddy.IntegrationAuthTypeAccessKeys
+			}
+			if err := util.CheckFieldEqualAndSet("AuthType", integration.AuthType, apiAuthType); err != nil {
 				return err
 			}
 			if err := util.CheckFieldEqualAndSet("auth_type", attrs["auth_type"], authType); err != nil {
@@ -1139,9 +1148,7 @@ resource "buddy_integration" "bar" {
    name = "%s"
    type = "%s"
    scope = "%s"
-   api_key = "ABC1234567890"
    token = "ABC1234567890"
-   email = "test@test.pl"
 }
 `, domain, name, buddy.IntegrationTypeCloudflare, scope)
 }

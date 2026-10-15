@@ -1,3 +1,14 @@
+# Release v1.53.0 (2026-10-15)
+* Bump api-go-sdk to v1.54.0
+* `buddy_sandbox`: new `fetch` blocks (`type` one of `PROJECT_REPO`, `PUBLIC_REPO`, `ARTIFACT`, plus `repository`, `ref`, `path`, `source_path`, `artifact`, `build_command`) to fetch repositories and artifacts into the sandbox. The API replaces the whole list and fetches every entry again, so the provider sends it only when the blocks change, removing all blocks removes the fetches
+* `buddy_sandbox`: new computed `fetches` with the fetch state returned by the API (`id`, `status`, `current_revision`, `behind`, `outdated`, `fetched_date`, `error_message`), the `fetch` blocks are not read back on import
+* `buddy_sandbox`: new `app` blocks (`command`, `identifier`, `path`), conflicts with `app_commands`, `apps` now also returns `identifier` and `path`
+* `buddy_sandbox` resource and data source: new computed `scope`, `ssh_host`, `ssh_port` and `create_date`, the data source also returns `fetches`
+* `buddy_sandbox`: endpoint `type` accepts `SSH`, `region` accepts `AS`, new `http.serve_path`
+* `buddy_integration`: the API now requires `auth_type` for types with several authentication methods. When it is not set the provider picks it from the type: `TOKEN` for `GIT_HUB`, `GIT_LAB`, `DIGITAL_OCEAN`, `SHOPIFY` and `CLOUDFLARE` with `token`, `API_KEY` for `CLOUDFLARE` with `api_key`, `ACCESS_KEYS` for `AMAZON`, `SERVICE_PRINCIPAL` for `AZURE_CLOUD`, `SERVICE_ACCOUNT_JSON` for `GOOGLE_SERVICE_ACCOUNT`
+* `buddy_integration`: `auth_type` accepts `TOKEN`, `API_KEY`, `ACCESS_KEYS`, `SERVICE_PRINCIPAL`, `SERVICE_ACCOUNT_JSON` and `TOKEN_APP_EXTENSION`. `DEFAULT` is deprecated, the API stores it as `ACCESS_KEYS`, `SERVICE_PRINCIPAL` or `SERVICE_ACCOUNT_JSON` - a configured `DEFAULT` stays in the state, an imported integration gets the new name
+* `buddy_integration`: the API validates only the fields of the chosen `auth_type`, `CLOUDFLARE` with `token` together with `api_key` is rejected - set `token` (`TOKEN`) or `api_key` and `email` (`API_KEY`)
+
 # Release v1.52.0 (2026-10-01)
 * Bump api-go-sdk to v1.52.0
 * [Breaking] `buddy_domain`: destroying the resource now deletes the domain with all its records from the workspace, before it was only removed from the state

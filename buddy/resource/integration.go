@@ -78,7 +78,11 @@ func (r *integrationResourceModel) loadAPI(ctx context.Context, domain string, i
 	r.Note = types.StringValue(integration.Note)
 	r.AgentNote = types.StringValue(integration.AgentNote)
 	r.Type = types.StringValue(integration.Type)
-	r.AuthType = types.StringValue(integration.AuthType)
+	if r.AuthType.ValueString() != buddy.IntegrationAuthTypeDefault || !isDefaultAuthTypeEquivalent(integration.AuthType) {
+		// the API stores the deprecated DEFAULT under its new name, keep DEFAULT so
+		// existing configurations do not end up with an inconsistent result
+		r.AuthType = types.StringValue(integration.AuthType)
+	}
 	r.Scope = types.StringValue(integration.Scope)
 	r.AllPipelinesAllowed = types.BoolValue(integration.AllPipelinesAllowed)
 	ids := make([]int64, len(integration.AllowedPipelines))
@@ -98,6 +102,36 @@ func (r *integrationResourceModel) loadAPI(ctx context.Context, domain string, i
 	r.Identifier = types.StringValue(integration.Identifier)
 	// rest of the attributes are not returned by api
 	return diags
+}
+
+func isDefaultAuthTypeEquivalent(authType string) bool {
+	return authType == buddy.IntegrationAuthTypeAccessKeys ||
+		authType == buddy.IntegrationAuthTypeServiceAccountJson ||
+		authType == buddy.IntegrationAuthTypeServicePrincipal
+}
+
+// defaultAuthType picks the auth type for integration types that have several of
+// them when the configuration does not set one, the API rejects a missing value
+func (r *integrationResourceModel) defaultAuthType() string {
+	switch r.Type.ValueString() {
+	case buddy.IntegrationTypeGitHub,
+		buddy.IntegrationTypeGitLab,
+		buddy.IntegrationTypeDigitalOcean,
+		buddy.IntegrationTypeShopify:
+		return buddy.IntegrationAuthTypeToken
+	case buddy.IntegrationTypeCloudflare:
+		if !r.Token.IsNull() && !r.Token.IsUnknown() {
+			return buddy.IntegrationAuthTypeToken
+		}
+		return buddy.IntegrationAuthTypeApiKey
+	case buddy.IntegrationTypeAmazon:
+		return buddy.IntegrationAuthTypeAccessKeys
+	case buddy.IntegrationTypeAzureCloud:
+		return buddy.IntegrationAuthTypeServicePrincipal
+	case buddy.IntegrationTypeGoogleServiceAccount:
+		return buddy.IntegrationAuthTypeServiceAccountJson
+	}
+	return ""
 }
 
 func (r *integrationResource) Metadata(_ context.Context, req resource.MetadataRequest, resp *resource.MetadataResponse) {
@@ -258,10 +292,21 @@ func (r *integrationResource) Schema(_ context.Context, _ resource.SchemaRequest
 				Optional:            true,
 			},
 			"auth_type": schema.StringAttribute{
-				MarkdownDescription: "The integration's auth type. Provide for: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`. Allowed: `DEFAULT, TRUSTED, OIDC`",
-				Optional:            true,
-				Computed:            true,
+				MarkdownDescription: "The integration's auth type. Allowed: `TOKEN`, `API_KEY`, `ACCESS_KEYS`, `SERVICE_PRINCIPAL`, " +
+					"`SERVICE_ACCOUNT_JSON`, `TOKEN_APP_EXTENSION`, `TRUSTED`, `OIDC`, `DEFAULT` (deprecated). " +
+					"When not set: `TOKEN` for `GIT_HUB`, `GIT_LAB`, `DIGITAL_OCEAN`, `SHOPIFY` and `CLOUDFLARE` with `token`, " +
+					"`API_KEY` for `CLOUDFLARE` with `api_key`, `ACCESS_KEYS` for `AMAZON`, `SERVICE_PRINCIPAL` for `AZURE_CLOUD`, " +
+					"`SERVICE_ACCOUNT_JSON` for `GOOGLE_SERVICE_ACCOUNT`, `TOKEN_APP_EXTENSION` when `partner_token` is set. " +
+					"`DEFAULT` is accepted only for `AMAZON`, `AZURE_CLOUD` and `GOOGLE_SERVICE_ACCOUNT`",
+				Optional: true,
+				Computed: true,
 				Validators: []validator.String{stringvalidator.OneOf(
+					buddy.IntegrationAuthTypeToken,
+					buddy.IntegrationAuthTypeApiKey,
+					buddy.IntegrationAuthTypeAccessKeys,
+					buddy.IntegrationAuthTypeServicePrincipal,
+					buddy.IntegrationAuthTypeServiceAccountJson,
+					buddy.IntegrationAuthTypeTokenAppExtension,
 					buddy.IntegrationAuthTypeDefault,
 					buddy.IntegrationAuthTypeTrusted,
 					buddy.IntegrationAuthTypeOidc,
@@ -473,6 +518,9 @@ func (r *integrationResource) Create(ctx context.Context, req resource.CreateReq
 		}
 		ops.RoleAssumptions = roles
 	}
+	if authType == "" {
+		authType = data.defaultAuthType()
+	}
 	if authType != "" {
 		ops.AuthType = &authType
 	}
@@ -619,6 +667,9 @@ func (r *integrationResource) Update(ctx context.Context, req resource.UpdateReq
 			return
 		}
 		ops.RoleAssumptions = roles
+	}
+	if authType == "" {
+		authType = data.defaultAuthType()
 	}
 	if authType != "" {
 		ops.AuthType = &authType

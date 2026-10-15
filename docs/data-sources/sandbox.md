@@ -26,9 +26,34 @@ Token scope required: `SANDBOX_READ`
 ### Read-Only
 
 - `agent_note` (String) The sandbox's agent note
+- `create_date` (String) The sandbox's creation date
+- `fetches` (Attributes List) The sources fetched into the sandbox (see [below for nested schema](#nestedatt--fetches))
 - `html_url` (String) The sandbox's URL
 - `id` (String) The Terraform resource identifier for this item
 - `identifier` (String) The sandbox's identifier
 - `name` (String) The sandbox's name
 - `note` (String) The sandbox's note
+- `scope` (String) The sandbox's scope: `PROJECT`, `ENVIRONMENT` or `WORKSPACE`
+- `ssh_host` (String) The sandbox's SSH host
+- `ssh_port` (Number) The sandbox's SSH port
 - `status` (String) The sandbox's status
+
+<a id="nestedatt--fetches"></a>
+### Nested Schema for `fetches`
+
+Read-Only:
+
+- `artifact` (String) The artifact in format `name:version`
+- `behind` (Number) How many commits the fetched revision is behind `ref`, null when it cannot be measured
+- `build_command` (String) The command run after fetching
+- `current_revision` (String) The revision checked out in the sandbox (repository fetches)
+- `error_message` (String) Why the last fetch failed
+- `fetched_date` (String) When the source was last fetched, empty when it has not been fetched yet
+- `id` (String) The fetch's ID
+- `outdated` (Boolean) Whether the fetched artifact version differs from the current one, null when it cannot be measured
+- `path` (String) The target directory in the sandbox
+- `ref` (String) The branch, tag or commit to checkout
+- `repository` (String) The URL of the git repository
+- `source_path` (String) The path inside the artifact
+- `status` (String) The fetch's status: `FETCHING`, `FETCHED`, `ERROR` or `STALE` (needs a refetch)
+- `type` (String) The fetch's type
