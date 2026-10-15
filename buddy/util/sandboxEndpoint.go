@@ -28,6 +28,7 @@ func sandboxEndpointHttpModelAttrs() map[string]attr.Type {
 		"auth_type":             types.StringType,
 		"circuit_breaker":       types.Int32Type,
 		"tls_ca":                types.StringType,
+		"serve_path":            types.StringType,
 	}
 }
 
@@ -73,6 +74,7 @@ type sandboxEndpointHttpModel struct {
 	CircuitBreaker      types.Int32  `tfsdk:"circuit_breaker"`
 	AuthType            types.String `tfsdk:"auth_type"`
 	TlsCa               types.String `tfsdk:"tls_ca"`
+	ServePath           types.String `tfsdk:"serve_path"`
 }
 
 func (r *sandboxEndpointTlsModel) loadAPI(e *buddy.SandboxEndpointTls) {
@@ -163,6 +165,9 @@ func (r *sandboxEndpointHttpModel) toAPI(ctx context.Context) (*buddy.SandboxEnd
 	if !r.TlsCa.IsNull() && !r.TlsCa.IsUnknown() {
 		e.TlsCa = r.TlsCa.ValueStringPointer()
 	}
+	if !r.ServePath.IsNull() && !r.ServePath.IsUnknown() {
+		e.ServePath = r.ServePath.ValueStringPointer()
+	}
 	return &e, diags
 }
 
@@ -244,6 +249,11 @@ func (r *sandboxEndpointHttpModel) loadAPI(ctx context.Context, e *buddy.Sandbox
 		r.TlsCa = types.StringValue(*e.TlsCa)
 	} else {
 		r.TlsCa = types.StringNull()
+	}
+	if e.ServePath != nil {
+		r.ServePath = types.StringValue(*e.ServePath)
+	} else {
+		r.ServePath = types.StringNull()
 	}
 	return diags
 }
@@ -404,6 +414,10 @@ func ResourceSandboxEndpointHttpModelAttributes() map[string]schema.Attribute {
 			Optional: true,
 			Computed: true,
 		},
+		"serve_path": schema.StringAttribute{
+			Optional: true,
+			Computed: true,
+		},
 	}
 }
 
@@ -419,6 +433,7 @@ func ResourceSandboxEndpointModelAttributes() map[string]schema.Attribute {
 					buddy.SandboxEndpointTypeTcp,
 					buddy.SandboxEndpointTypeHttp,
 					buddy.SandboxEndpointTypeTls,
+					buddy.SandboxEndpointTypeSsh,
 				),
 			},
 		},
@@ -429,6 +444,7 @@ func ResourceSandboxEndpointModelAttributes() map[string]schema.Attribute {
 				stringvalidator.OneOf(
 					buddy.SandboxEndpointRegionEu,
 					buddy.SandboxEndpointRegionUs,
+					buddy.SandboxEndpointRegionAs,
 				),
 			},
 		},

@@ -315,7 +315,7 @@ resource "buddy_integration" "google_service_account_oidc" {
 - `api_key` (String, Sensitive) The integration's API key. Provide for: `CLOUDFLARE`, `GOOGLE_SERVICE_ACCOUNT`, `STACK_HAWK`
 - `app_id` (String) The integration's application's ID. Provide for: `AZURE_CLOUD`
 - `audience` (String) The integration's audience. Provide for OIDC with: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`
-- `auth_type` (String) The integration's auth type. Provide for: `AMAZON`, `AZURE_CLOUD`, `GOOGLE_SERVICE_ACCOUNT`. Allowed: `DEFAULT, TRUSTED, OIDC`
+- `auth_type` (String) The integration's auth type. Allowed: `TOKEN`, `API_KEY`, `ACCESS_KEYS`, `SERVICE_PRINCIPAL`, `SERVICE_ACCOUNT_JSON`, `TOKEN_APP_EXTENSION`, `TRUSTED`, `OIDC`, `DEFAULT` (deprecated). When not set: `TOKEN` for `GIT_HUB`, `GIT_LAB`, `DIGITAL_OCEAN`, `SHOPIFY` and `CLOUDFLARE` with `token`, `API_KEY` for `CLOUDFLARE` with `api_key`, `ACCESS_KEYS` for `AMAZON`, `SERVICE_PRINCIPAL` for `AZURE_CLOUD`, `SERVICE_ACCOUNT_JSON` for `GOOGLE_SERVICE_ACCOUNT`, `TOKEN_APP_EXTENSION` when `partner_token` is set. `DEFAULT` is accepted only for `AMAZON`, `AZURE_CLOUD` and `GOOGLE_SERVICE_ACCOUNT`
 - `email` (String, Sensitive) The integration's email. Provide for: `CLOUDFLARE`
 - `google_config` (String) The integration's google config. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC
 - `google_project` (String) The integration's google project. Provide for `GOOGLE_SERVICE_ACCOUNT` OIDC

@@ -5,6 +5,7 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
 	"github.com/hashicorp/terraform-plugin-framework/datasource/schema"
+	"github.com/hashicorp/terraform-plugin-framework/diag"
 	"github.com/hashicorp/terraform-plugin-framework/types"
 	"terraform-provider-buddy/buddy/util"
 )
@@ -32,9 +33,14 @@ type sandboxSourceModel struct {
 	Status     types.String `tfsdk:"status"`
 	Identifier types.String `tfsdk:"identifier"`
 	HtmlUrl    types.String `tfsdk:"html_url"`
+	Scope      types.String `tfsdk:"scope"`
+	SshHost    types.String `tfsdk:"ssh_host"`
+	SshPort    types.Int32  `tfsdk:"ssh_port"`
+	CreateDate types.String `tfsdk:"create_date"`
+	Fetches    types.List   `tfsdk:"fetches"`
 }
 
-func (s *sandboxSourceModel) loadAPI(domain string, sandbox *buddy.Sandbox) {
+func (s *sandboxSourceModel) loadAPI(ctx context.Context, domain string, sandbox *buddy.Sandbox) diag.Diagnostics {
 	s.ID = types.StringValue(util.ComposeDoubleId(domain, sandbox.Id))
 	s.Domain = types.StringValue(domain)
 	s.SandboxId = types.StringValue(sandbox.Id)
@@ -44,6 +50,13 @@ func (s *sandboxSourceModel) loadAPI(domain string, sandbox *buddy.Sandbox) {
 	s.Status = types.StringValue(sandbox.Status)
 	s.Identifier = types.StringValue(sandbox.Identifier)
 	s.HtmlUrl = types.StringValue(sandbox.HtmlUrl)
+	s.Scope = types.StringValue(sandbox.Scope)
+	s.SshHost = types.StringValue(sandbox.SshHost)
+	s.SshPort = types.Int32Value(int32(sandbox.SshPort))
+	s.CreateDate = types.StringValue(sandbox.CreateDate)
+	fetches, diags := util.SandboxFetchesFromApi(ctx, &sandbox.Fetch)
+	s.Fetches = fetches
+	return diags
 }
 
 func (s *sandboxSource) Metadata(_ context.Context, req datasource.MetadataRequest, resp *datasource.MetadataResponse) {
@@ -99,6 +112,29 @@ func (s *sandboxSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				MarkdownDescription: "The sandbox's URL",
 				Computed:            true,
 			},
+			"scope": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's scope: `PROJECT`, `ENVIRONMENT` or `WORKSPACE`",
+				Computed:            true,
+			},
+			"ssh_host": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's SSH host",
+				Computed:            true,
+			},
+			"ssh_port": schema.Int32Attribute{
+				MarkdownDescription: "The sandbox's SSH port",
+				Computed:            true,
+			},
+			"create_date": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's creation date",
+				Computed:            true,
+			},
+			"fetches": schema.ListNestedAttribute{
+				MarkdownDescription: "The sources fetched into the sandbox",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceSandboxFetchModelAttributes(),
+				},
+			},
 		},
 	}
 }
@@ -120,6 +156,9 @@ func (s *sandboxSource) Read(ctx context.Context, req datasource.ReadRequest, re
 		resp.Diagnostics.Append(util.NewDiagnosticApiError("get sandbox", err))
 		return
 	}
-	data.loadAPI(domain, sandbox)
+	resp.Diagnostics.Append(data.loadAPI(ctx, domain, sandbox)...)
+	if resp.Diagnostics.HasError() {
+		return
+	}
 	resp.Diagnostics.Append(resp.State.Set(ctx, &data)...)
 }

@@ -286,6 +286,8 @@ func TestAccSandbox_scopes(t *testing.T) {
 					"status",
 					"setup_status",
 					"boot_logs",
+					"ssh_host",
+					"ssh_port",
 				},
 			},
 		},
@@ -809,4 +811,170 @@ func testAccSandboxCheckDestroy(s *terraform.State) error {
 		}
 	}
 	return nil
+}
+
+// TestAccSandbox_fetch covers the fetch and app blocks. The API replaces the whole fetch
+// list on update and gives every entry a new ID, so a step that changes only the name
+// must keep the fetch ID - that is how it is checked the provider did not resend it.
+func TestAccSandbox_fetch(t *testing.T) {
+	var sandbox buddy.Sandbox
+	var fetchId string
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	newName := util.RandString(10)
+	appIdentifier := util.UniqueString()
+	helloWorld := `
+	fetch {
+		type = "PUBLIC_REPO"
+		repository = "https://github.com/octocat/Hello-World"
+		ref = "master"
+		path = "/tmp/hello-world"
+		build_command = "ls"
+	}
+`
+	spoonKnife := `
+	fetch {
+		type = "PUBLIC_REPO"
+		repository = "https://github.com/octocat/Spoon-Knife"
+		path = "/tmp/spoon-knife"
+	}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccSandboxCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSandboxConfigFetch(domain, projectName, name, appIdentifier, helloWorld),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxFetches(&sandbox, []string{"/tmp/hello-world"}),
+					testAccSandboxFetchId(&sandbox, "/tmp/hello-world", &fetchId, false),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.#", "1"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.0.type", buddy.SandboxFetchTypePublicRepo),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.0.repository", "https://github.com/octocat/Hello-World"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.0.ref", "master"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.0.path", "/tmp/hello-world"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.0.build_command", "ls"),
+					resource.TestCheckResourceAttrSet("buddy_sandbox.bar", "fetches.0.id"),
+					resource.TestCheckResourceAttrSet("buddy_sandbox.bar", "fetches.0.status"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "apps.0.identifier", appIdentifier),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "apps.0.path", "/tmp"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "scope", buddy.SandboxScopeProject),
+					resource.TestCheckResourceAttrSet("buddy_sandbox.bar", "ssh_host"),
+					resource.TestCheckResourceAttrSet("buddy_sandbox.bar", "create_date"),
+				),
+			},
+			{
+				// only the name changes, the fetch must not be resent
+				Config: testAccSandboxConfigFetch(domain, projectName, newName, appIdentifier, helloWorld),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxFetches(&sandbox, []string{"/tmp/hello-world"}),
+					testAccSandboxFetchId(&sandbox, "/tmp/hello-world", &fetchId, true),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "name", newName),
+				),
+			},
+			{
+				Config: testAccSandboxConfigFetch(domain, projectName, newName, appIdentifier, helloWorld+spoonKnife),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxFetches(&sandbox, []string{"/tmp/hello-world", "/tmp/spoon-knife"}),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.#", "2"),
+				),
+			},
+			{
+				Config: testAccSandboxConfigFetch(domain, projectName, newName, appIdentifier, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxFetches(&sandbox, []string{}),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "fetches.#", "0"),
+				),
+			},
+			{
+				ResourceName:      "buddy_sandbox.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"app",
+					"wait_for_apps_timeout",
+					"wait_for_configured_timeout",
+					"wait_for_running_timeout",
+					"wait_for_running",
+					"wait_for_configured",
+					"permissions",
+					"apps.0.status",
+					"status",
+					"setup_status",
+					"boot_logs",
+					"ssh_host",
+					"ssh_port",
+				},
+			},
+		},
+	})
+}
+
+func testAccSandboxFetches(sandbox *buddy.Sandbox, paths []string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if err := util.CheckIntFieldEqual("len(Fetch)", len(sandbox.Fetch), len(paths)); err != nil {
+			return err
+		}
+		for i, p := range paths {
+			if err := util.CheckFieldEqualAndSet(fmt.Sprintf("Fetch[%d].Path", i), sandbox.Fetch[i].Path, p); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet(fmt.Sprintf("Fetch[%d].Type", i), sandbox.Fetch[i].Type, buddy.SandboxFetchTypePublicRepo); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+}
+
+func testAccSandboxFetchId(sandbox *buddy.Sandbox, path string, id *string, same bool) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		for _, f := range sandbox.Fetch {
+			if f.Path != path {
+				continue
+			}
+			if same {
+				return util.CheckFieldEqualAndSet("Fetch.Id", f.Id, *id)
+			}
+			*id = f.Id
+			return nil
+		}
+		return fmt.Errorf("fetch %s not found", path)
+	}
+}
+
+func testAccSandboxConfigFetch(domain string, projectName string, name string, appIdentifier string, fetch string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+	domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+	domain = "${buddy_workspace.foo.domain}"
+	display_name = "%s"
+}
+
+resource "buddy_sandbox" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	name = "%s"
+	wait_for_running = true
+	wait_for_configured = true
+
+	app {
+		command = "while :; do foo; sleep 2; done"
+		identifier = "%s"
+		path = "/tmp"
+	}
+%s
+}
+`, domain, projectName, name, appIdentifier, fetch)
 }

@@ -3,6 +3,7 @@ package resource
 import (
 	"context"
 	"github.com/buddy/api-go-sdk/buddy"
+	"github.com/hashicorp/terraform-plugin-framework-validators/listvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/setvalidator"
 	"github.com/hashicorp/terraform-plugin-framework-validators/stringvalidator"
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -48,6 +49,13 @@ type sandboxResourceModel struct {
 	Tags                     types.Set    `tfsdk:"tags"`
 	AppCommands              types.Set    `tfsdk:"app_commands"`
 	Apps                     types.Set    `tfsdk:"apps"`
+	App                      types.List   `tfsdk:"app"`
+	Fetch                    types.List   `tfsdk:"fetch"`
+	Fetches                  types.List   `tfsdk:"fetches"`
+	Scope                    types.String `tfsdk:"scope"`
+	SshHost                  types.String `tfsdk:"ssh_host"`
+	SshPort                  types.Int32  `tfsdk:"ssh_port"`
+	CreateDate               types.String `tfsdk:"create_date"`
 	Endpoints                types.Map    `tfsdk:"endpoints"`
 	WaitForRunning           types.Bool   `tfsdk:"wait_for_running"`
 	WaitForRunningTimeout    types.Int32  `tfsdk:"wait_for_running_timeout"`
@@ -102,6 +110,13 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	apps, d := util.SandboxAppsFromApi(ctx, &sandbox.Apps)
 	diags.Append(d...)
 	r.Apps = apps
+	fetches, d := util.SandboxFetchesFromApi(ctx, &sandbox.Fetch)
+	diags.Append(d...)
+	r.Fetches = fetches
+	r.Scope = types.StringValue(sandbox.Scope)
+	r.SshHost = types.StringValue(sandbox.SshHost)
+	r.SshPort = types.Int32Value(int32(sandbox.SshPort))
+	r.CreateDate = types.StringValue(sandbox.CreateDate)
 	r.Timeout = types.Int32Value(int32(sandbox.Timeout))
 	r.WaitForRunning = types.BoolValue(waitForRunning)
 	r.WaitForRunningTimeout = types.Int32Value(waitForRunningTimeout)
@@ -214,9 +229,35 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				Computed:            true,
 			},
 			"app_commands": schema.SetAttribute{
-				MarkdownDescription: "The sandbox's app commands",
+				MarkdownDescription: "The sandbox's app commands. Conflicts with `app` blocks",
 				Optional:            true,
 				ElementType:         types.StringType,
+			},
+			"fetches": schema.ListNestedAttribute{
+				MarkdownDescription: "The sources fetched into the sandbox, as returned by the API",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.ResourceSandboxFetchModelAttributes(),
+				},
+			},
+			"scope": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's scope: `PROJECT`, `ENVIRONMENT` or `WORKSPACE`",
+				Computed:            true,
+			},
+			"ssh_host": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's SSH host",
+				Computed:            true,
+			},
+			"ssh_port": schema.Int32Attribute{
+				MarkdownDescription: "The sandbox's SSH port",
+				Computed:            true,
+			},
+			"create_date": schema.StringAttribute{
+				MarkdownDescription: "The sandbox's creation date",
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"timeout": schema.Int32Attribute{
 				MarkdownDescription: "The sandbox's start timeout",
@@ -235,7 +276,13 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 						"id": schema.StringAttribute{
 							Computed: true,
 						},
+						"identifier": schema.StringAttribute{
+							Computed: true,
+						},
 						"command": schema.StringAttribute{
+							Computed: true,
+						},
+						"path": schema.StringAttribute{
 							Computed: true,
 						},
 						"status": schema.StringAttribute{
@@ -332,6 +379,22 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			},
 		},
 		Blocks: map[string]schema.Block{
+			"app": schema.ListNestedBlock{
+				MarkdownDescription: "The sandbox's app. Conflicts with `app_commands`",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: util.ResourceSandboxAppConfigModelAttributes(),
+				},
+				Validators: []validator.List{
+					listvalidator.ConflictsWith(path.MatchRoot("app_commands")),
+				},
+			},
+			"fetch": schema.ListNestedBlock{
+				MarkdownDescription: "The source (repository or artifact) to fetch into the sandbox. " +
+					"Changing the blocks replaces the whole list, every fetch is then fetched again",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: util.ResourceSandboxFetchConfigModelAttributes(),
+				},
+			},
 			"permissions": schema.SetNestedBlock{
 				MarkdownDescription: "The sandbox's permissions",
 				NestedObject: schema.NestedBlockObject{
@@ -426,12 +489,28 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 		ops.AppDir = data.AppDir.ValueStringPointer()
 	}
 	if !data.AppCommands.IsUnknown() && !data.AppCommands.IsNull() {
-		commands, d := util.StringSetToApi(ctx, &data.AppCommands)
+		apps, d := util.SandboxAppCommandsToApi(ctx, &data.AppCommands)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		ops.Apps = commands
+		ops.Apps = apps
+	}
+	if !data.App.IsUnknown() && !data.App.IsNull() && len(data.App.Elements()) > 0 {
+		apps, d := util.SandboxAppConfigsToApi(ctx, &data.App)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Apps = apps
+	}
+	if !data.Fetch.IsUnknown() && !data.Fetch.IsNull() && len(data.Fetch.Elements()) > 0 {
+		fetch, d := util.SandboxFetchConfigsToApi(ctx, &data.Fetch)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Fetch = fetch
 	}
 	if !data.Timeout.IsUnknown() && !data.Timeout.IsNull() {
 		timeout := int(data.Timeout.ValueInt32())
@@ -590,7 +669,9 @@ func (r *sandboxResource) Read(ctx context.Context, req resource.ReadRequest, re
 
 func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest, resp *resource.UpdateResponse) {
 	var data *sandboxResourceModel
+	var state *sandboxResourceModel
 	resp.Diagnostics.Append(req.Plan.Get(ctx, &data)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
 	if resp.Diagnostics.HasError() {
 		return
 	}
@@ -636,12 +717,30 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 		ops.Timeout = &timeout
 	}
 	if !data.AppCommands.IsUnknown() && !data.AppCommands.IsNull() {
-		commands, d := util.StringSetToApi(ctx, &data.AppCommands)
+		apps, d := util.SandboxAppCommandsToApi(ctx, &data.AppCommands)
 		resp.Diagnostics.Append(d...)
 		if resp.Diagnostics.HasError() {
 			return
 		}
-		ops.Apps = commands
+		ops.Apps = apps
+	}
+	if !data.App.IsUnknown() && !data.App.IsNull() && len(data.App.Elements()) > 0 {
+		apps, d := util.SandboxAppConfigsToApi(ctx, &data.App)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Apps = apps
+	}
+	// the API replaces the whole list and fetches every entry again, so it is sent
+	// only when the blocks changed, an empty list removes all fetches
+	if !data.Fetch.IsUnknown() && !data.Fetch.Equal(state.Fetch) {
+		fetch, d := util.SandboxFetchConfigsToApi(ctx, &data.Fetch)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.Fetch = fetch
 	}
 	if !data.Os.IsUnknown() && !data.Os.IsNull() {
 		ops.Os = data.Os.ValueStringPointer()
