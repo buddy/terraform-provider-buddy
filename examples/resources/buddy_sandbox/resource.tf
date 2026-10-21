@@ -45,3 +45,16 @@ resource "buddy_sandbox" "fetch" {
     path        = "/data"
   }
 }
+
+resource "buddy_sandbox" "pipelines" {
+  domain       = "mydomain"
+  project_name = "test"
+  name         = "pipelines"
+
+  # only the listed pipelines can use the sandbox, pipelines_access_level defaults to DENIED
+  allowed_pipeline {
+    project      = "test"
+    pipeline     = "deploy"
+    access_level = "USE_ONLY"
+  }
+}

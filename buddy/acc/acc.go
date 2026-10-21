@@ -48,6 +48,7 @@ func MainWorkspaceDomain(t *testing.T) string {
 	}
 	if main == nil {
 		t.Fatal(fmt.Errorf("no workspace found"))
+		return ""
 	}
 	return main.Domain
 }

@@ -1,3 +1,8 @@
+# Release v1.54.0 (2026-10-21)
+* Bump api-go-sdk to v1.55.0
+* `buddy_sandbox`: new `allowed_pipeline` blocks (`project`, `pipeline`, `access_level` one of `USE_ONLY`, `DENIED`) and `pipelines_access_level` (`USE_ONLY`, `DENIED`) to control which pipelines can use the sandbox's shadow target, the same way as for agents. By default all pipelines are allowed (`USE_ONLY`). When `pipelines_access_level` is not set it is `DENIED` with `allowed_pipeline` blocks and `USE_ONLY` without them, so removing the blocks restores the default. Not available for sandboxes in an environment
+* `buddy_sandbox` data source: new computed `pipelines_access_level` and `allowed_pipelines`
+
 # Release v1.53.0 (2026-10-15)
 * Bump api-go-sdk to v1.54.0
 * `buddy_sandbox`: new `fetch` blocks (`type` one of `PROJECT_REPO`, `PUBLIC_REPO`, `ARTIFACT`, plus `repository`, `ref`, `path`, `source_path`, `artifact`, `build_command`) to fetch repositories and artifacts into the sandbox. The API replaces the whole list and fetches every entry again, so the provider sends it only when the blocks change, removing all blocks removes the fetches

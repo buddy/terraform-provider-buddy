@@ -24,20 +24,22 @@ type sandboxSource struct {
 }
 
 type sandboxSourceModel struct {
-	ID         types.String `tfsdk:"id"`
-	Domain     types.String `tfsdk:"domain"`
-	SandboxId  types.String `tfsdk:"sandbox_id"`
-	Name       types.String `tfsdk:"name"`
-	Note       types.String `tfsdk:"note"`
-	AgentNote  types.String `tfsdk:"agent_note"`
-	Status     types.String `tfsdk:"status"`
-	Identifier types.String `tfsdk:"identifier"`
-	HtmlUrl    types.String `tfsdk:"html_url"`
-	Scope      types.String `tfsdk:"scope"`
-	SshHost    types.String `tfsdk:"ssh_host"`
-	SshPort    types.Int32  `tfsdk:"ssh_port"`
-	CreateDate types.String `tfsdk:"create_date"`
-	Fetches    types.List   `tfsdk:"fetches"`
+	ID                   types.String `tfsdk:"id"`
+	Domain               types.String `tfsdk:"domain"`
+	SandboxId            types.String `tfsdk:"sandbox_id"`
+	Name                 types.String `tfsdk:"name"`
+	Note                 types.String `tfsdk:"note"`
+	AgentNote            types.String `tfsdk:"agent_note"`
+	Status               types.String `tfsdk:"status"`
+	Identifier           types.String `tfsdk:"identifier"`
+	HtmlUrl              types.String `tfsdk:"html_url"`
+	Scope                types.String `tfsdk:"scope"`
+	SshHost              types.String `tfsdk:"ssh_host"`
+	SshPort              types.Int32  `tfsdk:"ssh_port"`
+	CreateDate           types.String `tfsdk:"create_date"`
+	Fetches              types.List   `tfsdk:"fetches"`
+	PipelinesAccessLevel types.String `tfsdk:"pipelines_access_level"`
+	AllowedPipelines     types.Set    `tfsdk:"allowed_pipelines"`
 }
 
 func (s *sandboxSourceModel) loadAPI(ctx context.Context, domain string, sandbox *buddy.Sandbox) diag.Diagnostics {
@@ -54,8 +56,12 @@ func (s *sandboxSourceModel) loadAPI(ctx context.Context, domain string, sandbox
 	s.SshHost = types.StringValue(sandbox.SshHost)
 	s.SshPort = types.Int32Value(int32(sandbox.SshPort))
 	s.CreateDate = types.StringValue(sandbox.CreateDate)
+	s.PipelinesAccessLevel = types.StringValue(sandbox.PipelinesAccessLevel)
 	fetches, diags := util.SandboxFetchesFromApi(ctx, &sandbox.Fetch)
 	s.Fetches = fetches
+	pipelines, d := util.SandboxPipelinesFromApi(ctx, &sandbox.AllowedPipelines)
+	diags.Append(d...)
+	s.AllowedPipelines = pipelines
 	return diags
 }
 
@@ -133,6 +139,17 @@ func (s *sandboxSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 				Computed:            true,
 				NestedObject: schema.NestedAttributeObject{
 					Attributes: util.SourceSandboxFetchModelAttributes(),
+				},
+			},
+			"pipelines_access_level": schema.StringAttribute{
+				MarkdownDescription: "Indicates if all pipelines are allowed to use this sandbox: `USE_ONLY` or `DENIED`, empty for sandboxes in an environment",
+				Computed:            true,
+			},
+			"allowed_pipelines": schema.SetNestedAttribute{
+				MarkdownDescription: "List of specific pipelines allowed to use this sandbox",
+				Computed:            true,
+				NestedObject: schema.NestedAttributeObject{
+					Attributes: util.SourceSandboxPipelineModelAttributes(),
 				},
 			},
 		},

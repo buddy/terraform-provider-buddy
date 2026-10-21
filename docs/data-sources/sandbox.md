@@ -26,6 +26,7 @@ Token scope required: `SANDBOX_READ`
 ### Read-Only
 
 - `agent_note` (String) The sandbox's agent note
+- `allowed_pipelines` (Attributes Set) List of specific pipelines allowed to use this sandbox (see [below for nested schema](#nestedatt--allowed_pipelines))
 - `create_date` (String) The sandbox's creation date
 - `fetches` (Attributes List) The sources fetched into the sandbox (see [below for nested schema](#nestedatt--fetches))
 - `html_url` (String) The sandbox's URL
@@ -33,10 +34,21 @@ Token scope required: `SANDBOX_READ`
 - `identifier` (String) The sandbox's identifier
 - `name` (String) The sandbox's name
 - `note` (String) The sandbox's note
+- `pipelines_access_level` (String) Indicates if all pipelines are allowed to use this sandbox: `USE_ONLY` or `DENIED`, empty for sandboxes in an environment
 - `scope` (String) The sandbox's scope: `PROJECT`, `ENVIRONMENT` or `WORKSPACE`
 - `ssh_host` (String) The sandbox's SSH host
 - `ssh_port` (Number) The sandbox's SSH port
 - `status` (String) The sandbox's status
+
+<a id="nestedatt--allowed_pipelines"></a>
+### Nested Schema for `allowed_pipelines`
+
+Read-Only:
+
+- `access_level` (String) The pipeline's access level
+- `pipeline` (String) The pipeline's identifier
+- `project` (String) The pipeline's project name
+
 
 <a id="nestedatt--fetches"></a>
 ### Nested Schema for `fetches`
