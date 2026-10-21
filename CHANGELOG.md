@@ -1,3 +1,7 @@
+# Release v1.55.0 (2026-10-21)
+* Bump api-go-sdk to v1.56.0
+* `buddy_sandbox`: `permissions.others` and `permissions.user/group.access_level` accept `USE_ONLY` - running commands, the terminal and file operations without managing the sandbox
+
 # Release v1.54.0 (2026-10-21)
 * Bump api-go-sdk to v1.55.0
 * `buddy_sandbox`: new `allowed_pipeline` blocks (`project`, `pipeline`, `access_level` one of `USE_ONLY`, `DENIED`) and `pipelines_access_level` (`USE_ONLY`, `DENIED`) to control which pipelines can use the sandbox's shadow target, the same way as for agents. By default all pipelines are allowed (`USE_ONLY`). When `pipelines_access_level` is not set it is `DENIED` with `allowed_pipeline` blocks and `USE_ONLY` without them, so removing the blocks restores the default. Not available for sandboxes in an environment
