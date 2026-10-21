@@ -425,11 +425,14 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"others": schema.StringAttribute{
+							MarkdownDescription: "Allowed: `DEFAULT`, `DENIED`, `READ_ONLY`, `USE_ONLY`, `READ_WRITE`. " +
+								"`USE_ONLY` allows running commands, the terminal and file operations without managing the sandbox",
 							Optional: true,
 							Validators: []validator.String{
 								stringvalidator.OneOf(
 									buddy.SandboxPermissionDenied,
 									buddy.SandboxPermissionReadOnly,
+									buddy.SandboxPermissionUseOnly,
 									buddy.SandboxPermissionDefault,
 									buddy.SandboxPermissionManage,
 								),

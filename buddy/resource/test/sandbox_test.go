@@ -1016,6 +1016,13 @@ func TestAccSandbox_pipelines(t *testing.T) {
 				Check: resource.ComposeTestCheckFunc(
 					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
 					testAccProjectGet("buddy_project.proj", &project),
+					testAccSandboxAttributes("buddy_sandbox.bar", &sandbox, &testAccSandboxExpectedAttributes{
+						Name:              name,
+						OthersAccessLevel: buddy.SandboxPermissionUseOnly,
+						Project:           &project,
+						WaitForRunning:    true,
+						WaitForConfigured: true,
+					}),
 					testAccSandboxPipelines(&sandbox, buddy.SandboxPipelineAccessLevelUseOnly, &project, pipelineIdentifier, ""),
 					resource.TestCheckResourceAttr("buddy_sandbox.bar", "pipelines_access_level", buddy.SandboxPipelineAccessLevelUseOnly),
 					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.#", "0"),
@@ -1127,6 +1134,9 @@ resource "buddy_sandbox" "bar" {
 	name = "%s"
 	wait_for_running = true
 	wait_for_configured = true
+	permissions {
+		others = "%s"
+	}
 %s
 }
 
@@ -1134,5 +1144,5 @@ data "buddy_sandbox" "get" {
 	domain = "${buddy_workspace.foo.domain}"
 	sandbox_id = "${buddy_sandbox.bar.sandbox_id}"
 }
-`, domain, projectName, pipelineIdentifier, pipelineIdentifier, name, pipelines)
+`, domain, projectName, pipelineIdentifier, pipelineIdentifier, name, buddy.SandboxPermissionUseOnly, pipelines)
 }

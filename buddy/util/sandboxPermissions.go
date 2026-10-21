@@ -77,12 +77,14 @@ func SandboxPermissionsAccessModelAttributes() map[string]schema.Attribute {
 			Required: true,
 		},
 		"access_level": schema.StringAttribute{
-			Required: true,
+			MarkdownDescription: "Allowed: `DEFAULT`, `DENIED`, `READ_ONLY`, `USE_ONLY`, `READ_WRITE`",
+			Required:            true,
 			Validators: []validator.String{
 				stringvalidator.OneOf(
 					buddy.SandboxPermissionDefault,
 					buddy.SandboxPermissionDenied,
 					buddy.SandboxPermissionReadOnly,
+					buddy.SandboxPermissionUseOnly,
 					buddy.SandboxPermissionManage,
 				),
 			},

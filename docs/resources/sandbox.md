@@ -223,7 +223,7 @@ Optional:
 Optional:
 
 - `group` (Block Set) (see [below for nested schema](#nestedblock--permissions--group))
-- `others` (String)
+- `others` (String) Allowed: `DEFAULT`, `DENIED`, `READ_ONLY`, `USE_ONLY`, `READ_WRITE`. `USE_ONLY` allows running commands, the terminal and file operations without managing the sandbox
 - `user` (Block Set) (see [below for nested schema](#nestedblock--permissions--user))
 
 <a id="nestedblock--permissions--group"></a>
@@ -231,7 +231,7 @@ Optional:
 
 Required:
 
-- `access_level` (String)
+- `access_level` (String) Allowed: `DEFAULT`, `DENIED`, `READ_ONLY`, `USE_ONLY`, `READ_WRITE`
 - `id` (Number)
 
 
@@ -240,7 +240,7 @@ Required:
 
 Required:
 
-- `access_level` (String)
+- `access_level` (String) Allowed: `DEFAULT`, `DENIED`, `READ_ONLY`, `USE_ONLY`, `READ_WRITE`
 - `id` (Number)
 
 
