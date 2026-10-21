@@ -64,6 +64,8 @@ type sandboxResourceModel struct {
 	WaitForApps              types.Bool   `tfsdk:"wait_for_apps"`
 	WaitForAppsTimeout       types.Int32  `tfsdk:"wait_for_apps_timeout"`
 	Permissions              types.Set    `tfsdk:"permissions"`
+	PipelinesAccessLevel     types.String `tfsdk:"pipelines_access_level"`
+	AllowedPipeline          types.Set    `tfsdk:"allowed_pipeline"`
 }
 
 func (r *sandboxResourceModel) decomposeId() (string, string, error) {
@@ -118,6 +120,14 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	r.SshPort = types.Int32Value(int32(sandbox.SshPort))
 	r.CreateDate = types.StringValue(sandbox.CreateDate)
 	r.Timeout = types.Int32Value(int32(sandbox.Timeout))
+	r.PipelinesAccessLevel = types.StringValue(sandbox.PipelinesAccessLevel)
+	// the API returns no rules as null, keep a null set as it is so an omitted block
+	// does not show up as a change
+	if len(sandbox.AllowedPipelines) > 0 || !r.AllowedPipeline.IsNull() {
+		pipelines, d := util.SandboxPipelinesFromApi(ctx, &sandbox.AllowedPipelines)
+		diags.Append(d...)
+		r.AllowedPipeline = pipelines
+	}
 	r.WaitForRunning = types.BoolValue(waitForRunning)
 	r.WaitForRunningTimeout = types.Int32Value(waitForRunningTimeout)
 	r.WaitForConfigured = types.BoolValue(waitForConfigured)
@@ -341,6 +351,15 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					Attributes: util.ResourceSandboxEndpointModelAttributes(),
 				},
 			},
+			"pipelines_access_level": schema.StringAttribute{
+				MarkdownDescription: "Indicates if all pipelines are allowed to use this sandbox (its shadow target). Allowed: `USE_ONLY` (default), `DENIED`. " +
+					"When not set it is `DENIED` with `allowed_pipeline` blocks and `USE_ONLY` without them. Not available for sandboxes in an environment",
+				Optional: true,
+				Computed: true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(buddy.SandboxPipelineAccessLevelUseOnly, buddy.SandboxPipelineAccessLevelDenied),
+				},
+			},
 			"wait_for_running": schema.BoolAttribute{
 				MarkdownDescription: "Wait until sandbox is running",
 				Optional:            true,
@@ -393,6 +412,12 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 					"Changing the blocks replaces the whole list, every fetch is then fetched again",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: util.ResourceSandboxFetchConfigModelAttributes(),
+				},
+			},
+			"allowed_pipeline": schema.SetNestedBlock{
+				MarkdownDescription: "List of specific pipelines allowed to use this sandbox (its shadow target). Not available for sandboxes in an environment",
+				NestedObject: schema.NestedBlockObject{
+					Attributes: util.ResourceSandboxPipelineModelAttributes(),
 				},
 			},
 			"permissions": schema.SetNestedBlock{
@@ -534,6 +559,19 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 			return
 		}
 		ops.Endpoints = endpoints
+	}
+	if !data.AllowedPipeline.IsUnknown() && !data.AllowedPipeline.IsNull() && len(data.AllowedPipeline.Elements()) > 0 {
+		pipelines, d := util.SandboxPipelinesModelToApi(ctx, &data.AllowedPipeline)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.AllowedPipelines = pipelines
+		denied := buddy.SandboxPipelineAccessLevelDenied
+		ops.PipelinesAccessLevel = &denied
+	}
+	if !data.PipelinesAccessLevel.IsUnknown() && !data.PipelinesAccessLevel.IsNull() {
+		ops.PipelinesAccessLevel = data.PipelinesAccessLevel.ValueStringPointer()
 	}
 	sandbox, _, err := r.client.SandboxService.Create(domain, &query, &ops)
 	if err != nil {
@@ -763,6 +801,25 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 			return
 		}
 		ops.Endpoints = endpoints
+	}
+	// sending an empty list removes all rules
+	if !data.AllowedPipeline.IsUnknown() && !data.AllowedPipeline.Equal(state.AllowedPipeline) {
+		pipelines, d := util.SandboxPipelinesModelToApi(ctx, &data.AllowedPipeline)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.AllowedPipelines = pipelines
+	}
+	if !data.PipelinesAccessLevel.IsUnknown() && !data.PipelinesAccessLevel.IsNull() {
+		ops.PipelinesAccessLevel = data.PipelinesAccessLevel.ValueStringPointer()
+	} else if state.Scope.ValueString() != buddy.SandboxScopeEnvironment {
+		// not set: the blocks are the only pipelines allowed, removing them restores the default
+		accessLevel := buddy.SandboxPipelineAccessLevelUseOnly
+		if !data.AllowedPipeline.IsNull() && len(data.AllowedPipeline.Elements()) > 0 {
+			accessLevel = buddy.SandboxPipelineAccessLevelDenied
+		}
+		ops.PipelinesAccessLevel = &accessLevel
 	}
 	_, d := r.waitForRunning(domain, sandboxId, false, waitForRunningTimeout)
 	resp.Diagnostics.Append(d...)

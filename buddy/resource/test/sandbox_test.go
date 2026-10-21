@@ -978,3 +978,161 @@ resource "buddy_sandbox" "bar" {
 }
 `, domain, projectName, name, appIdentifier, fetch)
 }
+
+// TestAccSandbox_pipelines covers the pipeline permissions of the sandbox's shadow target.
+// Without pipelines_access_level the allowed_pipeline blocks are the only pipelines allowed
+// (DENIED), removing them restores the default (USE_ONLY, no rules).
+func TestAccSandbox_pipelines(t *testing.T) {
+	var sandbox buddy.Sandbox
+	var project buddy.Project
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	pipelineIdentifier := util.UniqueString()
+	name := util.RandString(10)
+	useOnly := fmt.Sprintf(`
+	allowed_pipeline {
+		project = buddy_project.proj.name
+		pipeline = buddy_pipeline.pip.identifier
+		access_level = "%s"
+	}
+`, buddy.SandboxPipelineAccessLevelUseOnly)
+	denied := fmt.Sprintf(`
+	pipelines_access_level = "%s"
+	allowed_pipeline {
+		project = buddy_project.proj.name
+		pipeline = buddy_pipeline.pip.identifier
+		access_level = "%s"
+	}
+`, buddy.SandboxPipelineAccessLevelUseOnly, buddy.SandboxPipelineAccessLevelDenied)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccSandboxCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccSandboxConfigPipelines(domain, projectName, pipelineIdentifier, name, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccSandboxPipelines(&sandbox, buddy.SandboxPipelineAccessLevelUseOnly, &project, pipelineIdentifier, ""),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "pipelines_access_level", buddy.SandboxPipelineAccessLevelUseOnly),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.#", "0"),
+				),
+			},
+			{
+				Config: testAccSandboxConfigPipelines(domain, projectName, pipelineIdentifier, name, useOnly),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccSandboxPipelines(&sandbox, buddy.SandboxPipelineAccessLevelDenied, &project, pipelineIdentifier, buddy.SandboxPipelineAccessLevelUseOnly),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "pipelines_access_level", buddy.SandboxPipelineAccessLevelDenied),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.#", "1"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.0.pipeline", pipelineIdentifier),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.0.access_level", buddy.SandboxPipelineAccessLevelUseOnly),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "pipelines_access_level", buddy.SandboxPipelineAccessLevelDenied),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "allowed_pipelines.#", "1"),
+					resource.TestCheckResourceAttrPair("data.buddy_sandbox.get", "allowed_pipelines.0.project", "buddy_project.proj", "name"),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "allowed_pipelines.0.pipeline", pipelineIdentifier),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "allowed_pipelines.0.access_level", buddy.SandboxPipelineAccessLevelUseOnly),
+				),
+			},
+			{
+				Config: testAccSandboxConfigPipelines(domain, projectName, pipelineIdentifier, name, denied),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccSandboxPipelines(&sandbox, buddy.SandboxPipelineAccessLevelUseOnly, &project, pipelineIdentifier, buddy.SandboxPipelineAccessLevelDenied),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "pipelines_access_level", buddy.SandboxPipelineAccessLevelUseOnly),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.0.access_level", buddy.SandboxPipelineAccessLevelDenied),
+				),
+			},
+			{
+				ResourceName:      "buddy_sandbox.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"wait_for_apps_timeout",
+					"wait_for_configured_timeout",
+					"wait_for_running_timeout",
+					"wait_for_running",
+					"wait_for_configured",
+					"permissions",
+					"status",
+					"setup_status",
+					"boot_logs",
+					"ssh_host",
+					"ssh_port",
+				},
+			},
+			{
+				// blocks removed, the default is restored
+				Config: testAccSandboxConfigPipelines(domain, projectName, pipelineIdentifier, name, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccProjectGet("buddy_project.proj", &project),
+					testAccSandboxPipelines(&sandbox, buddy.SandboxPipelineAccessLevelUseOnly, &project, pipelineIdentifier, ""),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "pipelines_access_level", buddy.SandboxPipelineAccessLevelUseOnly),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "allowed_pipeline.#", "0"),
+				),
+			},
+		},
+	})
+}
+
+// testAccSandboxPipelines checks the API state, an empty ruleAccessLevel means no rules
+func testAccSandboxPipelines(sandbox *buddy.Sandbox, accessLevel string, project *buddy.Project, pipelineIdentifier string, ruleAccessLevel string) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if err := util.CheckFieldEqualAndSet("PipelinesAccessLevel", sandbox.PipelinesAccessLevel, accessLevel); err != nil {
+			return err
+		}
+		if ruleAccessLevel == "" {
+			return util.CheckIntFieldEqual("len(AllowedPipelines)", len(sandbox.AllowedPipelines), 0)
+		}
+		if err := util.CheckIntFieldEqual("len(AllowedPipelines)", len(sandbox.AllowedPipelines), 1); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("AllowedPipelines[0].Project", sandbox.AllowedPipelines[0].Project, project.Name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("AllowedPipelines[0].Pipeline", sandbox.AllowedPipelines[0].Pipeline, pipelineIdentifier); err != nil {
+			return err
+		}
+		return util.CheckFieldEqualAndSet("AllowedPipelines[0].AccessLevel", sandbox.AllowedPipelines[0].AccessLevel, ruleAccessLevel)
+	}
+}
+
+func testAccSandboxConfigPipelines(domain string, projectName string, pipelineIdentifier string, name string, pipelines string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+	domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+	domain = "${buddy_workspace.foo.domain}"
+	display_name = "%s"
+}
+
+resource "buddy_pipeline" "pip" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	name = "%s"
+	identifier = "%s"
+}
+
+resource "buddy_sandbox" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	name = "%s"
+	wait_for_running = true
+	wait_for_configured = true
+%s
+}
+
+data "buddy_sandbox" "get" {
+	domain = "${buddy_workspace.foo.domain}"
+	sandbox_id = "${buddy_sandbox.bar.sandbox_id}"
+}
+`, domain, projectName, pipelineIdentifier, pipelineIdentifier, name, pipelines)
+}
