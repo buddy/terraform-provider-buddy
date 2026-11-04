@@ -189,3 +189,54 @@ resource "buddy_target" "restricted" {
     }
   }
 }
+
+resource "buddy_target" "mysql" {
+  domain     = "myworkspace"
+  name       = "MySQL"
+  identifier = "mysql"
+  type       = "MYSQL"
+  host       = "mysql.example.com"
+  port       = "3306"
+  database   = "myapp"
+  ssl_mode   = "REQUIRE"
+  auth {
+    method   = "PASSWORD"
+    username = "deploy"
+    password = "secret"
+  }
+}
+
+resource "buddy_target" "mongo_via_ssh" {
+  domain      = "myworkspace"
+  name        = "MongoDB"
+  identifier  = "mongo"
+  type        = "MONGO"
+  host        = "10.0.0.5"
+  port        = "27017"
+  database    = "myapp"
+  auth_source = "admin"
+  auth {
+    method   = "PASSWORD"
+    username = "deploy"
+    password = "secret"
+  }
+  proxy {
+    name = buddy_target.restricted.identifier
+  }
+}
+
+resource "buddy_target" "clickhouse" {
+  domain     = "myworkspace"
+  name       = "ClickHouse"
+  identifier = "clickhouse"
+  type       = "CLICKHOUSE"
+  host       = "clickhouse.example.com"
+  port       = "9000"
+  database   = "default"
+  secure     = false
+  auth {
+    method   = "PASSWORD"
+    username = "default"
+    password = "secret"
+  }
+}

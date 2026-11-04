@@ -1,3 +1,9 @@
+# Release v1.56.0 (2026-11-04)
+* Bump api-go-sdk to v1.57.0
+* `buddy_target`: `type` accepts `MYSQL`, `MONGO` and `CLICKHOUSE` (`host`, `port`, `auth` with `method` = `PASSWORD`, optionally `proxy` with only `name` - the identifier of an SSH target to tunnel through)
+* `buddy_target`: new `database` (`MYSQL`, `MONGO`, `CLICKHOUSE`), `ssl_mode` (`MYSQL`: `DISABLE`, `REQUIRE` - default, `VERIFY_FULL`), `ca_certificate` (`MYSQL` with `VERIFY_FULL`, sensitive, not read back from the API) and `auth_source` (`MONGO`). `secure` turns on TLS for `CLICKHOUSE`
+* `buddy_target` data source: new computed `database`, `ssl_mode` and `auth_source`
+
 # Release v1.55.0 (2026-10-21)
 * Bump api-go-sdk to v1.56.0
 * `buddy_sandbox`: `permissions.others` and `permissions.user/group.access_level` accept `USE_ONLY` - running commands, the terminal and file operations without managing the sandbox

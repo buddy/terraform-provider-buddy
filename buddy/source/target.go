@@ -41,6 +41,9 @@ type targetSourceModel struct {
 	Integration types.String `tfsdk:"integration"`
 	Path        types.String `tfsdk:"path"`
 	Secure      types.Bool   `tfsdk:"secure"`
+	Database    types.String `tfsdk:"database"`
+	SslMode     types.String `tfsdk:"ssl_mode"`
+	AuthSource  types.String `tfsdk:"auth_source"`
 	Disabled    types.Bool   `tfsdk:"disabled"`
 }
 
@@ -62,6 +65,9 @@ func (m *targetSourceModel) loadAPI(ctx context.Context, domain string, target *
 	m.Port = types.StringValue(target.Port)
 	m.Path = types.StringValue(target.Path)
 	m.Secure = types.BoolValue(target.Secure)
+	m.Database = types.StringValue(target.Database)
+	m.SslMode = types.StringValue(target.SslMode)
+	m.AuthSource = types.StringValue(target.AuthSource)
 	m.Disabled = types.BoolValue(target.Disabled)
 	m.Integration = types.StringValue(target.Integration)
 	return d
@@ -140,6 +146,18 @@ func (s *targetSource) Schema(_ context.Context, _ datasource.SchemaRequest, res
 			},
 			"secure": schema.BoolAttribute{
 				MarkdownDescription: "The target's secure setting",
+				Computed:            true,
+			},
+			"database": schema.StringAttribute{
+				MarkdownDescription: "The target's default database (`MYSQL`, `MONGO`, `CLICKHOUSE`)",
+				Computed:            true,
+			},
+			"ssl_mode": schema.StringAttribute{
+				MarkdownDescription: "The target's SSL connection mode (`MYSQL`)",
+				Computed:            true,
+			},
+			"auth_source": schema.StringAttribute{
+				MarkdownDescription: "The target's authentication database (`MONGO`)",
 				Computed:            true,
 			},
 			"integration": schema.StringAttribute{

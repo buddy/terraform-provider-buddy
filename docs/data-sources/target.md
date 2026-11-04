@@ -33,6 +33,8 @@ data "buddy_target" "by_id" {
 ### Read-Only
 
 - `agent_note` (String) The target's agent note
+- `auth_source` (String) The target's authentication database (`MONGO`)
+- `database` (String) The target's default database (`MYSQL`, `MONGO`, `CLICKHOUSE`)
 - `disabled` (Boolean) Defines whether or not the target can be run
 - `host` (String) The target's host
 - `html_url` (String) The target's URL
@@ -46,5 +48,6 @@ data "buddy_target" "by_id" {
 - `repository` (String) The target's repository
 - `scope` (String) The target's scope
 - `secure` (Boolean) The target's secure setting
+- `ssl_mode` (String) The target's SSL connection mode (`MYSQL`)
 - `tags` (Set of String) The target's list of tags
 - `type` (String) The target's type
