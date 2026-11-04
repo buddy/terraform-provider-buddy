@@ -49,6 +49,10 @@ type targetResourceModel struct {
 	Port                 types.String `tfsdk:"port"`
 	Path                 types.String `tfsdk:"path"`
 	Secure               types.Bool   `tfsdk:"secure"`
+	Database             types.String `tfsdk:"database"`
+	SslMode              types.String `tfsdk:"ssl_mode"`
+	CaCertificate        types.String `tfsdk:"ca_certificate"`
+	AuthSource           types.String `tfsdk:"auth_source"`
 	Integration          types.String `tfsdk:"integration"`
 	Disabled             types.Bool   `tfsdk:"disabled"`
 	Auth                 types.Set    `tfsdk:"auth"`
@@ -91,6 +95,10 @@ func (m *targetResourceModel) loadAPI(ctx context.Context, domain string, target
 	m.Port = types.StringValue(target.Port)
 	m.Path = types.StringValue(target.Path)
 	m.Secure = types.BoolValue(target.Secure)
+	m.Database = types.StringValue(target.Database)
+	m.SslMode = types.StringValue(target.SslMode)
+	// ca_certificate is a secret, the API does not return it in plain text - the configured value is kept
+	m.AuthSource = types.StringValue(target.AuthSource)
 	m.Integration = types.StringValue(target.Integration)
 	m.Disabled = types.BoolValue(target.Disabled)
 	m.PipelinesAccessLevel = types.StringValue(target.PipelinesAccessLevel)
@@ -158,6 +166,18 @@ func (m *targetResourceModel) toOps(ctx context.Context) (*buddy.TargetOps, diag
 	}
 	if !m.Secure.IsNull() && !m.Secure.IsUnknown() {
 		ops.Secure = m.Secure.ValueBoolPointer()
+	}
+	if !m.Database.IsNull() && !m.Database.IsUnknown() {
+		ops.Database = m.Database.ValueStringPointer()
+	}
+	if !m.SslMode.IsNull() && !m.SslMode.IsUnknown() {
+		ops.SslMode = m.SslMode.ValueStringPointer()
+	}
+	if !m.CaCertificate.IsNull() && !m.CaCertificate.IsUnknown() {
+		ops.CaCertificate = m.CaCertificate.ValueStringPointer()
+	}
+	if !m.AuthSource.IsNull() && !m.AuthSource.IsUnknown() {
+		ops.AuthSource = m.AuthSource.ValueStringPointer()
 	}
 	if !m.Integration.IsNull() && !m.Integration.IsUnknown() {
 		ops.Integration = m.Integration.ValueStringPointer()
@@ -291,7 +311,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:            true,
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "The target's type. Allowed: `FTP`, `SSH`, `MATCH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `GIT`",
+				MarkdownDescription: "The target's type. Allowed: `FTP`, `SSH`, `MATCH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `GIT`, `MYSQL`, `MONGO`, `CLICKHOUSE`",
 				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
@@ -305,6 +325,9 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						buddy.TargetTypeVultr,
 						buddy.TargetTypeDigitalOcean,
 						buddy.TargetTypeGit,
+						buddy.TargetTypeMysql,
+						buddy.TargetTypeMongo,
+						buddy.TargetTypeClickhouse,
 					),
 				},
 			},
@@ -320,7 +343,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:            true,
 			},
 			"host": schema.StringAttribute{
-				MarkdownDescription: "The target's host. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`",
+				MarkdownDescription: "The target's host. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `MYSQL`, `MONGO`, `CLICKHOUSE`",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -330,7 +353,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:            true,
 			},
 			"port": schema.StringAttribute{
-				MarkdownDescription: "The target's port. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`",
+				MarkdownDescription: "The target's port. Set for `FTP`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `MYSQL`, `MONGO`, `CLICKHOUSE`",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -340,7 +363,34 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:            true,
 			},
 			"secure": schema.BoolAttribute{
-				MarkdownDescription: "The target's secure setting. Set for `FTP`",
+				MarkdownDescription: "The target's secure setting. Set for `FTP` and `CLICKHOUSE` (TLS on the native protocol)",
+				Optional:            true,
+				Computed:            true,
+			},
+			"database": schema.StringAttribute{
+				MarkdownDescription: "The default database. Set for `MYSQL`, `MONGO`, `CLICKHOUSE`",
+				Optional:            true,
+				Computed:            true,
+			},
+			"ssl_mode": schema.StringAttribute{
+				MarkdownDescription: "The SSL connection mode. Set for `MYSQL`. Allowed: `DISABLE`, `REQUIRE` (default, encrypted, certificate not validated), `VERIFY_FULL` (requires `ca_certificate`)",
+				Optional:            true,
+				Computed:            true,
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.TargetSslModeDisable,
+						buddy.TargetSslModeRequire,
+						buddy.TargetSslModeVerifyFull,
+					),
+				},
+			},
+			"ca_certificate": schema.StringAttribute{
+				MarkdownDescription: "The PEM-encoded CA certificate. Set for `MYSQL` with `ssl_mode` = `VERIFY_FULL`",
+				Optional:            true,
+				Sensitive:           true,
+			},
+			"auth_source": schema.StringAttribute{
+				MarkdownDescription: "The authentication database (e.g. `admin`), the target's `database` when not set. Set for `MONGO`",
 				Optional:            true,
 				Computed:            true,
 			},
@@ -404,7 +454,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"auth": schema.SetNestedBlock{
-				MarkdownDescription: "The target's auth. Set for `FTP`, `GIT`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`",
+				MarkdownDescription: "The target's auth. Set for `FTP`, `GIT`, `SSH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `MYSQL`, `MONGO`, `CLICKHOUSE` (`PASSWORD` only)",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: util.TargetAuthModelAttributes(),
 				},
@@ -413,7 +463,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"proxy": schema.SetNestedBlock{
-				MarkdownDescription: "The target's proxy. Set for `SSH`",
+				MarkdownDescription: "The target's proxy. Set for `SSH`. For `MYSQL`, `MONGO`, `CLICKHOUSE` only `name` - the identifier of an SSH target to tunnel through",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: util.TargetProxyModelAttributes(),
 					Blocks: map[string]schema.Block{

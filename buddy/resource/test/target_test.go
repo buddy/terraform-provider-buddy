@@ -720,6 +720,121 @@ func TestAccTarget_gitSsh(t *testing.T) {
 	})
 }
 
+func testAccTargetDatabase(t *testing.T, typ string, port string, extra string, newExtra string, ops func(o *buddy.TargetOps), newOps func(o *buddy.TargetOps)) {
+	var target buddy.Target
+	domain := util.UniqueString()
+	name := util.RandString(10)
+	identifier := util.UniqueString()
+	host := "1.1.1.1"
+	database := "db" + util.RandString(5)
+	username := util.RandString(10)
+	password := util.RandString(10)
+	newHost := "2.2.2.2"
+	newDatabase := "db" + util.RandString(5)
+	want := func(h string, db string, f func(o *buddy.TargetOps)) *buddy.TargetOps {
+		o := &buddy.TargetOps{
+			Name:       &name,
+			Identifier: &identifier,
+			Type:       &typ,
+			Host:       &h,
+			Port:       &port,
+			Database:   &db,
+			Auth: &buddy.TargetAuth{
+				Method:   buddy.TargetAuthMethodPassword,
+				Username: username,
+				Password: password,
+			},
+		}
+		f(o)
+		return o
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccTargetCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTargetDatabaseConfig(domain, name, identifier, typ, host, port, database, username, password, extra),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.test", &target),
+					testAccTargetAttributes("buddy_target.test", &target, want(host, database, ops)),
+				),
+			},
+			{
+				Config: testAccTargetDatabaseConfig(domain, name, identifier, typ, newHost, port, newDatabase, username, password, newExtra),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.test", &target),
+					testAccTargetAttributes("buddy_target.test", &target, want(newHost, newDatabase, newOps)),
+				),
+			},
+			{
+				ResourceName:            "buddy_target.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: append([]string{"ca_certificate"}, targetIgnoreImportVerify...),
+			},
+		},
+	})
+}
+
+func TestAccTarget_mysql(t *testing.T) {
+	disable := buddy.TargetSslModeDisable
+	require := buddy.TargetSslModeRequire
+	testAccTargetDatabase(t, buddy.TargetTypeMysql, "3306",
+		`ssl_mode = "DISABLE"`,
+		`ssl_mode = "REQUIRE"`,
+		func(o *buddy.TargetOps) { o.SslMode = &disable },
+		func(o *buddy.TargetOps) { o.SslMode = &require },
+	)
+}
+
+func TestAccTarget_mongo(t *testing.T) {
+	admin := "admin"
+	other := "other"
+	testAccTargetDatabase(t, buddy.TargetTypeMongo, "27017",
+		`auth_source = "admin"`,
+		`auth_source = "other"`,
+		func(o *buddy.TargetOps) { o.AuthSource = &admin },
+		func(o *buddy.TargetOps) { o.AuthSource = &other },
+	)
+}
+
+func TestAccTarget_clickhouse(t *testing.T) {
+	secure := true
+	insecure := false
+	testAccTargetDatabase(t, buddy.TargetTypeClickhouse, "9000",
+		`secure = true`,
+		`secure = false`,
+		func(o *buddy.TargetOps) { o.Secure = &secure },
+		func(o *buddy.TargetOps) { o.Secure = &insecure },
+	)
+}
+
+func testAccTargetDatabaseConfig(domain string, name string, identifier string, typ string, host string, port string, database string, username string, password string, extra string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "test" {
+    domain = "%s"
+}
+
+resource "buddy_target" "test" {
+    domain     = buddy_workspace.test.domain
+    name       = "%s"
+    identifier = "%s"
+    type       = "%s"
+    host       = "%s"
+    port       = "%s"
+    database   = "%s"
+    %s
+    auth {
+        method   = "PASSWORD"
+        username = "%s"
+        password = "%s"
+    }
+}`, domain, name, identifier, typ, host, port, database, extra, username, password)
+}
+
 func testAccTargetCheckDestroy(s *terraform.State) error {
 	for _, rs := range s.RootModule().Resources {
 		if rs.Type != "buddy_target" {
@@ -881,6 +996,33 @@ func testAccTargetAttributes(n string, target *buddy.Target, ops *buddy.TargetOp
 				return err
 			}
 			if err := util.CheckBoolFieldEqual("secure", attrsSecure, *ops.Secure); err != nil {
+				return err
+			}
+		}
+
+		if ops.Database != nil {
+			if err := util.CheckFieldEqualAndSet("Database", target.Database, *ops.Database); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("database", attrs["database"], *ops.Database); err != nil {
+				return err
+			}
+		}
+
+		if ops.SslMode != nil {
+			if err := util.CheckFieldEqualAndSet("SslMode", target.SslMode, *ops.SslMode); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("ssl_mode", attrs["ssl_mode"], *ops.SslMode); err != nil {
+				return err
+			}
+		}
+
+		if ops.AuthSource != nil {
+			if err := util.CheckFieldEqualAndSet("AuthSource", target.AuthSource, *ops.AuthSource); err != nil {
+				return err
+			}
+			if err := util.CheckFieldEqualAndSet("auth_source", attrs["auth_source"], *ops.AuthSource); err != nil {
 				return err
 			}
 		}
