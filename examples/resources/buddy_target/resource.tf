@@ -240,3 +240,22 @@ resource "buddy_target" "clickhouse" {
     password = "secret"
   }
 }
+
+# the repository target every project gets - import it first:
+# terraform import buddy_target.project_repo myworkspace:<target_id of identifier project_repository>
+resource "buddy_target" "project_repo" {
+  domain                 = "myworkspace"
+  project_name           = "myproject"
+  type                   = "PROJECT_REPO"
+  identifier             = "project_repository"
+  sandboxes_access_level = "DENIED"
+  allowed_environments {
+    project      = "myproject"
+    environment  = "staging"
+    access_level = "READ_WRITE"
+  }
+  allowed_environments {
+    environment  = "shared"
+    access_level = "READ_ONLY"
+  }
+}

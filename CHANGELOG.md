@@ -1,3 +1,11 @@
+# Release v1.57.0 (2026-11-05)
+* Bump api-go-sdk to v1.58.0
+* `buddy_target`: `type` accepts `PROJECT_REPO`, the project's repository target. Every project gets one with identifier `project_repository`, import it to manage its access rules - destroying the resource deletes it. Setting `project_name` on an imported `PROJECT_REPO` target does not replace it, the plan fails when the project does not own the target
+* `buddy_target`: `name` is optional for `PROJECT_REPO`, leave it out to keep the name of an imported target, other types still require it. The API does not update `name`, `note`, `agent_note`, `tags`, `disabled` and `permissions` of a `PROJECT_REPO` target, changing them fails at plan time, a changed `identifier` recreates the target
+* `buddy_target`: new `allowed_environments` blocks (`project`, `environment`, `access_level` one of `DENIED`, `READ_ONLY`, `READ_WRITE`) give every sandbox of an environment access to a `PROJECT_REPO` target. `project` is the project of a project environment, leave it out for a workspace environment. A rule for a specific sandbox in `allowed_sandboxes` takes precedence, at most 30 rules
+* `buddy_target`: `sandboxes_access_level`, `allowed_sandboxes` and `allowed_environments` apply only to `PROJECT_REPO`, other types ignore them. `sandboxes_access_level` keeps its current value when not set (`READ_ONLY` for a new target), adding rules does not change it. For `PROJECT_REPO` both rule lists are read back from the API, so import and rules changed outside of Terraform show up in the plan, and removing the blocks removes the rules
+* `buddy_variable`, `buddy_variable_ssh_key`: new `allowed_environments` blocks (`project`, `environment`, `access_level` one of `USE_ONLY`, `DENIED`) for workspace and project variables, read back from the API. Every rule must carry the opposite of `sandboxes_access_level` and all rules for one environment the same level. `sandboxes_access_level` cannot change while environment rules exist, remove them in a separate apply first
+
 # Release v1.56.0 (2026-11-04)
 * Bump api-go-sdk to v1.57.0
 * `buddy_target`: `type` accepts `MYSQL`, `MONGO` and `CLICKHOUSE` (`host`, `port`, `auth` with `method` = `PASSWORD`, optionally `proxy` with only `name` - the identifier of an SSH target to tunnel through)

@@ -57,6 +57,7 @@ resource "buddy_variable" "in_pipeline" {
 
 - `action_id` (Number) The variable's action ID. Set for action scope
 - `agent_note` (String) The variable's agent note
+- `allowed_environments` (Block Set) List of environments whose sandboxes get an exception from **sandboxes_access_level**. Every rule must carry the opposite access level and all rules for one environment the same one. A rule for a specific sandbox in `allowed_sandboxes` takes precedence over an environment rule. `sandboxes_access_level` cannot change while the variable has environment rules - remove them in a separate apply first. Only for workspace and project scope (see [below for nested schema](#nestedblock--allowed_environments))
 - `allowed_pipeline` (Block Set) List of exceptions from **pipelines_access_level**. Every rule must carry the opposite access level and only one form - whole pipeline or single **action** - may be used per pipeline. Only for workspace and project scope (see [below for nested schema](#nestedblock--allowed_pipeline))
 - `allowed_sandboxes` (Block Set) List of exceptions from **sandboxes_access_level**. Every rule must carry the opposite access level. Only for workspace and project scope (see [below for nested schema](#nestedblock--allowed_sandboxes))
 - `description` (String, Deprecated) The variable's description
@@ -77,6 +78,19 @@ resource "buddy_variable" "in_pipeline" {
 - `id` (String) The Terraform resource identifier for this item
 - `value_processed` (String, Sensitive) The variable's processed value. Encrypted if **encrypted** == true
 - `variable_id` (Number) The variable's ID
+
+<a id="nestedblock--allowed_environments"></a>
+### Nested Schema for `allowed_environments`
+
+Required:
+
+- `access_level` (String) The access level for the environment's sandboxes. Allowed: `USE_ONLY`, `DENIED`
+- `environment` (String) The environment's identifier
+
+Optional:
+
+- `project` (String) The environment's project name. Leave empty for a workspace environment
+
 
 <a id="nestedblock--allowed_pipeline"></a>
 ### Nested Schema for `allowed_pipeline`

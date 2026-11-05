@@ -57,6 +57,7 @@ type variableResourceModel struct {
 	SandboxesAccessLevel types.String `tfsdk:"sandboxes_access_level"`
 	AllowedPipeline      types.Set    `tfsdk:"allowed_pipeline"`
 	AllowedSandboxes     types.Set    `tfsdk:"allowed_sandboxes"`
+	AllowedEnvironments  types.Set    `tfsdk:"allowed_environments"`
 }
 
 func (r *variableResourceModel) decomposeId() (string, int, error) {
@@ -86,6 +87,7 @@ func (r *variableResourceModel) loadAPI(domain string, variable *buddy.Variable)
 	r.Disabled = types.BoolValue(variable.Disabled)
 	r.PipelinesAccessLevel = types.StringValue(variable.PipelinesAccessLevel)
 	r.SandboxesAccessLevel = types.StringValue(variable.SandboxesAccessLevel)
+	r.AllowedEnvironments = util.AllowedEnvironmentsApiToModel(util.VariableAllowedEnvironments(variable.AllowedEnvironments))
 	if variable.Project != nil {
 		r.ProjectName = types.StringValue(variable.Project.Name)
 	} else {
@@ -152,6 +154,11 @@ func (r *variableResourceModel) applyCommonOps(ctx context.Context, ops *buddy.V
 		sbs, d := util.VariableAllowedSandboxesModelToApi(ctx, &r.AllowedSandboxes)
 		diags.Append(d...)
 		ops.AllowedSandboxes = sbs
+	}
+	if !r.AllowedEnvironments.IsNull() && !r.AllowedEnvironments.IsUnknown() {
+		envs, d := util.VariableAllowedEnvironmentsModelToApi(ctx, &r.AllowedEnvironments)
+		diags.Append(d...)
+		ops.AllowedEnvironments = envs
 	}
 	return diags
 }
@@ -391,6 +398,11 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 					},
 				},
 			},
+			"allowed_environments": util.AllowedEnvironmentsBlock(
+				"List of environments whose sandboxes get an exception from **sandboxes_access_level**. Every rule must carry the opposite access level and all rules for one environment the same one. A rule for a specific sandbox in `allowed_sandboxes` takes precedence over an environment rule. `sandboxes_access_level` cannot change while the variable has environment rules - remove them in a separate apply first. Only for workspace and project scope",
+				"The access level for the environment's sandboxes. Allowed: `USE_ONLY`, `DENIED`",
+				buddy.VariableAccessLevelUseOnly, buddy.VariableAccessLevelDenied,
+			),
 		},
 	}
 }

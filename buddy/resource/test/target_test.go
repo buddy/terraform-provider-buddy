@@ -5,6 +5,7 @@ import (
 	"github.com/buddy/api-go-sdk/buddy"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
+	"regexp"
 	"strconv"
 	"terraform-provider-buddy/buddy/acc"
 	"terraform-provider-buddy/buddy/util"
@@ -833,6 +834,278 @@ resource "buddy_target" "test" {
         password = "%s"
     }
 }`, domain, name, identifier, typ, host, port, database, extra, username, password)
+}
+
+func TestAccTarget_projectRepo(t *testing.T) {
+	var target buddy.Target
+	var auto buddy.Target
+	var autoId string
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	projectEnv := util.UniqueString()
+	workspaceEnv := util.UniqueString()
+	name := util.RandString(10)
+	identifier := util.UniqueString()
+	newName := util.RandString(10)
+	bothRules := fmt.Sprintf(`
+   allowed_environments {
+      project = "${buddy_project.proj.name}"
+      environment = "%s"
+      access_level = "READ_WRITE"
+   }
+   allowed_environments {
+      environment = "%s"
+      access_level = "READ_ONLY"
+   }
+`, projectEnv, workspaceEnv)
+	oneRule := fmt.Sprintf(`
+   allowed_environments {
+      environment = "%s"
+      access_level = "READ_WRITE"
+   }
+`, workspaceEnv)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccTargetCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, bothRules, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.test", &target),
+					testAccTargetProjectRepoAttributes("buddy_target.test", &target, name, buddy.TargetSandboxAccessLevelReadOnly, []*buddy.TargetAllowedEnvironment{
+						{Project: projectName, Environment: projectEnv, AccessLevel: buddy.TargetSandboxAccessLevelReadWrite},
+						{Environment: workspaceEnv, AccessLevel: buddy.TargetSandboxAccessLevelReadOnly},
+					}),
+				),
+			},
+			{
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, oneRule, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.test", &target),
+					testAccTargetProjectRepoAttributes("buddy_target.test", &target, name, buddy.TargetSandboxAccessLevelReadOnly, []*buddy.TargetAllowedEnvironment{
+						{Environment: workspaceEnv, AccessLevel: buddy.TargetSandboxAccessLevelReadWrite},
+					}),
+				),
+			},
+			// sandbox rules are read back from the API
+			{
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, oneRule+`
+   allowed_sandboxes {
+      project = "${buddy_project.proj.name}"
+      sandbox = "${buddy_sandbox.sb.identifier}"
+      access_level = "READ_WRITE"
+   }
+`, `
+resource "buddy_sandbox" "sb" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   name = "sb"
+}
+`),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.test", &target),
+					testAccTargetProjectRepoAttributes("buddy_target.test", &target, name, buddy.TargetSandboxAccessLevelReadOnly, []*buddy.TargetAllowedEnvironment{
+						{Environment: workspaceEnv, AccessLevel: buddy.TargetSandboxAccessLevelReadWrite},
+					}),
+					func(s *terraform.State) error {
+						if err := util.CheckIntFieldEqual("len(AllowedSandboxes)", len(target.AllowedSandboxes), 1); err != nil {
+							return err
+						}
+						if err := util.CheckFieldEqualAndSet("AllowedSandboxes[0].Project", target.AllowedSandboxes[0].Project, projectName); err != nil {
+							return err
+						}
+						if err := util.CheckFieldEqualAndSet("AllowedSandboxes[0].AccessLevel", target.AllowedSandboxes[0].AccessLevel, buddy.TargetSandboxAccessLevelReadWrite); err != nil {
+							return err
+						}
+						return util.CheckIntFieldEqual("len(allowed_sandboxes)", attrsSetLen(s.RootModule().Resources["buddy_target.test"].Primary.Attributes, "allowed_sandboxes"), 1)
+					},
+				),
+			},
+			// removing the blocks removes the rules
+			{
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, "", ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.test", &target),
+					testAccTargetProjectRepoAttributes("buddy_target.test", &target, name, buddy.TargetSandboxAccessLevelReadOnly, nil),
+				),
+			},
+			{
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, "", `
+resource "buddy_target" "noname" {
+   domain = "${buddy_workspace.foo.domain}"
+   type = "SSH"
+   identifier = "noname"
+   host = "1.1.1.1"
+   port = "22"
+}
+`),
+				ExpectError: regexp.MustCompile("Missing required argument"),
+			},
+			// the API ignores a name change of a PROJECT_REPO target
+			{
+				Config:      testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, newName, identifier, "", ""),
+				ExpectError: regexp.MustCompile("Unsupported change"),
+			},
+			{
+				ResourceName:            "buddy_target.test",
+				ImportState:             true,
+				ImportStateVerify:       true,
+				ImportStateVerifyIgnore: targetIgnoreImportVerify,
+			},
+			// manage the target every project gets
+			{
+				Config:             testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, "", testAccTargetProjectRepoAutoConfig(projectName, "")),
+				ResourceName:       "buddy_target.auto",
+				ImportState:        true,
+				ImportStatePersist: true,
+				ImportStateIdFunc: func(s *terraform.State) (string, error) {
+					targets, _, err := acc.ApiClient.TargetService.GetList(domain, &buddy.TargetGetListQuery{ProjectName: projectName})
+					if err != nil {
+						return "", err
+					}
+					for _, t := range targets.Targets {
+						if t.Identifier == "project_repository" {
+							auto = *t
+							autoId = t.Id
+							return util.ComposeDoubleId(domain, t.Id), nil
+						}
+					}
+					return "", fmt.Errorf("project_repository target not found")
+				},
+			},
+			// project_name of an imported target must be its owner
+			{
+				Config:      testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, "", testAccTargetProjectRepoAutoConfig(projectName+"o", "")),
+				ExpectError: regexp.MustCompile("Invalid project"),
+			},
+			// rules set outside of terraform show up as a change and are removed
+			{
+				PreConfig: func() {
+					typ := buddy.TargetTypeProjectRepo
+					rules := []*buddy.TargetAllowedEnvironment{{Environment: workspaceEnv, AccessLevel: buddy.TargetSandboxAccessLevelReadOnly}}
+					_, _, err := acc.ApiClient.TargetService.Update(domain, auto.Id, &buddy.TargetOps{Type: &typ, AllowedEnvironments: &rules})
+					if err != nil {
+						t.Fatal(err)
+					}
+				},
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, "", testAccTargetProjectRepoAutoConfig(projectName, "")),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.auto", &auto),
+					func(s *terraform.State) error {
+						// managing the target must not replace it
+						return util.CheckFieldEqualAndSet("auto.Id", auto.Id, autoId)
+					},
+					testAccTargetProjectRepoAttributes("buddy_target.auto", &auto, "Project repository", buddy.TargetSandboxAccessLevelReadOnly, nil),
+				),
+			},
+			{
+				Config: testAccTargetProjectRepoConfig(domain, projectName, projectEnv, workspaceEnv, name, identifier, "", testAccTargetProjectRepoAutoConfig(projectName, oneRule)),
+				Check: resource.ComposeTestCheckFunc(
+					testAccTargetGet("buddy_target.auto", &auto),
+					func(s *terraform.State) error {
+						// managing the target must not replace it
+						return util.CheckFieldEqualAndSet("auto.Id", auto.Id, autoId)
+					},
+					testAccTargetProjectRepoAttributes("buddy_target.auto", &auto, "Project repository", buddy.TargetSandboxAccessLevelReadOnly, []*buddy.TargetAllowedEnvironment{
+						{Environment: workspaceEnv, AccessLevel: buddy.TargetSandboxAccessLevelReadWrite},
+					}),
+				),
+			},
+		},
+	})
+}
+
+func testAccTargetProjectRepoAttributes(n string, target *buddy.Target, name string, sandboxesAccessLevel string, allowedEnvironments []*buddy.TargetAllowedEnvironment) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		rs, ok := s.RootModule().Resources[n]
+		if !ok {
+			return fmt.Errorf("not found: %s", n)
+		}
+		attrs := rs.Primary.Attributes
+		if err := util.CheckFieldEqualAndSet("Type", target.Type, buddy.TargetTypeProjectRepo); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("Name", target.Name, name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("name", attrs["name"], name); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("SandboxesAccessLevel", target.SandboxesAccessLevel, sandboxesAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckFieldEqualAndSet("sandboxes_access_level", attrs["sandboxes_access_level"], sandboxesAccessLevel); err != nil {
+			return err
+		}
+		if err := util.CheckIntFieldEqual("len(allowed_environments)", attrsSetLen(attrs, "allowed_environments"), len(allowedEnvironments)); err != nil {
+			return err
+		}
+		return util.CheckAllowedEnvironments("AllowedEnvironments", util.TargetAllowedEnvironments(target.AllowedEnvironments), util.TargetAllowedEnvironments(allowedEnvironments))
+	}
+}
+
+// attrsSetLen returns the number of elements of a set in the flat state attributes
+func attrsSetLen(attrs map[string]string, name string) int {
+	n, _ := strconv.Atoi(attrs[name+".#"])
+	return n
+}
+
+func testAccTargetProjectRepoAutoConfig(projectName string, rules string) string {
+	return fmt.Sprintf(`
+resource "buddy_target" "auto" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "%s"
+   type = "PROJECT_REPO"
+   identifier = "project_repository"
+   %s
+   depends_on = [buddy_project.proj, buddy_project.other, buddy_environment.pe, buddy_environment.we]
+}
+`, projectName, rules)
+}
+
+func testAccTargetProjectRepoConfig(domain string, projectName string, projectEnv string, workspaceEnv string, name string, identifier string, rules string, extra string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_project" "other" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_environment" "pe" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   identifier = "%s"
+   name = "%s"
+}
+
+resource "buddy_environment" "we" {
+   domain = "${buddy_workspace.foo.domain}"
+   identifier = "%s"
+   name = "%s"
+}
+
+resource "buddy_target" "test" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   type = "PROJECT_REPO"
+   identifier = "%s"
+   name = "%s"
+   %s
+   depends_on = [buddy_environment.pe, buddy_environment.we]
+}
+%s
+`, domain, projectName, projectName+"o", projectEnv, projectEnv, workspaceEnv, workspaceEnv, identifier, name, rules, extra)
 }
 
 func testAccTargetCheckDestroy(s *terraform.State) error {
