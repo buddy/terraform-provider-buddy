@@ -19,9 +19,11 @@ import (
 )
 
 var (
-	_ resource.Resource                = &targetResource{}
-	_ resource.ResourceWithConfigure   = &targetResource{}
-	_ resource.ResourceWithImportState = &targetResource{}
+	_ resource.Resource                   = &targetResource{}
+	_ resource.ResourceWithConfigure      = &targetResource{}
+	_ resource.ResourceWithImportState    = &targetResource{}
+	_ resource.ResourceWithModifyPlan     = &targetResource{}
+	_ resource.ResourceWithValidateConfig = &targetResource{}
 )
 
 func NewTargetResource() resource.Resource {
@@ -65,6 +67,7 @@ type targetResourceModel struct {
 	AllowedPipeline      types.Set    `tfsdk:"allowed_pipeline"`
 	SandboxesAccessLevel types.String `tfsdk:"sandboxes_access_level"`
 	AllowedSandboxes     types.Set    `tfsdk:"allowed_sandboxes"`
+	AllowedEnvironments  types.Set    `tfsdk:"allowed_environments"`
 }
 
 func (m *targetResourceModel) decomposeId() (string, string, error) {
@@ -103,6 +106,11 @@ func (m *targetResourceModel) loadAPI(ctx context.Context, domain string, target
 	m.Disabled = types.BoolValue(target.Disabled)
 	m.PipelinesAccessLevel = types.StringValue(target.PipelinesAccessLevel)
 	m.SandboxesAccessLevel = types.StringValue(target.SandboxesAccessLevel)
+	// the API keeps sandbox rules only for PROJECT_REPO, other types keep the configured blocks
+	if target.Type == buddy.TargetTypeProjectRepo {
+		m.AllowedSandboxes = util.TargetSandboxesApiToModel(target.AllowedSandboxes)
+		m.AllowedEnvironments = util.AllowedEnvironmentsApiToModel(util.TargetAllowedEnvironments(target.AllowedEnvironments))
+	}
 	return diags
 }
 
@@ -131,14 +139,24 @@ func (m *targetResourceModel) toOps(ctx context.Context) (*buddy.TargetOps, diag
 	if !m.PipelinesAccessLevel.IsNull() && !m.PipelinesAccessLevel.IsUnknown() {
 		ops.PipelinesAccessLevel = m.PipelinesAccessLevel.ValueStringPointer()
 	}
+	isProjectRepo := m.Type.ValueString() == buddy.TargetTypeProjectRepo
 	if !m.AllowedSandboxes.IsNull() && !m.AllowedSandboxes.IsUnknown() {
 		sbs, d := util.TargetSandboxesModelToApi(ctx, &m.AllowedSandboxes)
 		diags.Append(d...)
 		ops.AllowedSandboxes = sbs
-		denied := buddy.TargetSandboxAccessLevelDenied
-		ops.SandboxesAccessLevel = &denied
+	} else if isProjectRepo {
+		// the API keeps the current rules when the list is left out, an empty list removes them
+		ops.AllowedSandboxes = &[]*buddy.TargetAllowedSandbox{}
 	}
-	if !m.SandboxesAccessLevel.IsNull() && !m.SandboxesAccessLevel.IsUnknown() {
+	if !m.AllowedEnvironments.IsNull() && !m.AllowedEnvironments.IsUnknown() {
+		envs, d := util.TargetAllowedEnvironmentsModelToApi(ctx, &m.AllowedEnvironments)
+		diags.Append(d...)
+		ops.AllowedEnvironments = envs
+	} else if isProjectRepo {
+		ops.AllowedEnvironments = &[]*buddy.TargetAllowedEnvironment{}
+	}
+	// other types than PROJECT_REPO have no sandboxes access level, the state keeps it empty
+	if !m.SandboxesAccessLevel.IsNull() && !m.SandboxesAccessLevel.IsUnknown() && m.SandboxesAccessLevel.ValueString() != "" {
 		ops.SandboxesAccessLevel = m.SandboxesAccessLevel.ValueStringPointer()
 	}
 	if !m.Tags.IsNull() && !m.Tags.IsUnknown() {
@@ -246,7 +264,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				MarkdownDescription: "The project's name. A target has a single owner, provide only one of: `project_name`, `pipeline_id`, `environment_id`",
 				Optional:            true,
 				PlanModifiers: []planmodifier.String{
-					stringplanmodifier.RequiresReplace(),
+					stringplanmodifier.RequiresReplaceIf(projectNameRequiresReplace, "Changing the project replaces the target", "Changing the project replaces the target"),
 				},
 				Validators: []validator.String{
 					stringvalidator.ConflictsWith(path.Expressions{
@@ -297,8 +315,12 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"name": schema.StringAttribute{
-				MarkdownDescription: "The target's name",
-				Required:            true,
+				MarkdownDescription: "The target's name. Required for every type except `PROJECT_REPO`, leave it out to keep the name of an imported `PROJECT_REPO` target",
+				Optional:            true,
+				Computed:            true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"note": schema.StringAttribute{
 				MarkdownDescription: "The target's note",
@@ -311,8 +333,10 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:            true,
 			},
 			"type": schema.StringAttribute{
-				MarkdownDescription: "The target's type. Allowed: `FTP`, `SSH`, `MATCH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `GIT`, `MYSQL`, `MONGO`, `CLICKHOUSE`",
-				Required:            true,
+				MarkdownDescription: "The target's type. Allowed: `FTP`, `SSH`, `MATCH`, `UPCLOUD`, `VULTR`, `DIGITAL_OCEAN`, `GIT`, `MYSQL`, `MONGO`, `CLICKHOUSE`, `PROJECT_REPO`. " +
+					"`PROJECT_REPO` is the project's repository, every project gets one with identifier `project_repository` - import it to manage its access rules, destroying the resource deletes it. " +
+					"The API does not update `name`, `note`, `agent_note`, `tags`, `disabled` and `permissions` of a `PROJECT_REPO` target, changing them is rejected at plan time",
+				Required: true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -328,6 +352,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 						buddy.TargetTypeMysql,
 						buddy.TargetTypeMongo,
 						buddy.TargetTypeClickhouse,
+						buddy.TargetTypeProjectRepo,
 					),
 				},
 			},
@@ -400,12 +425,15 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				Computed:            true,
 			},
 			"sandboxes_access_level": schema.StringAttribute{
-				MarkdownDescription: "Indicates if all sandboxes are allowed to use this target",
+				MarkdownDescription: "The default access level for sandboxes, `allowed_sandboxes` and `allowed_environments` are exceptions from it. Only for `PROJECT_REPO`, the API sets `READ_ONLY` when it is not set",
 				Validators: []validator.String{
 					stringvalidator.OneOf(buddy.TargetSandboxAccessLevelDenied, buddy.TargetSandboxAccessLevelReadWrite, buddy.TargetSandboxAccessLevelReadOnly),
 				},
 				Optional: true,
 				Computed: true,
+				PlanModifiers: []planmodifier.String{
+					stringplanmodifier.UseStateForUnknown(),
+				},
 			},
 			"pipelines_access_level": schema.StringAttribute{
 				MarkdownDescription: "Indicates if all pipelines are allowed to use this target",
@@ -504,7 +532,7 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 				},
 			},
 			"allowed_sandboxes": schema.SetNestedBlock{
-				MarkdownDescription: "List of specific sandboxes allowed to use this target",
+				MarkdownDescription: "List of specific sandboxes allowed to use this target. Only for `PROJECT_REPO`",
 				NestedObject: schema.NestedBlockObject{
 					Attributes: map[string]schema.Attribute{
 						"project": schema.StringAttribute{
@@ -525,8 +553,88 @@ func (r *targetResource) Schema(_ context.Context, _ resource.SchemaRequest, res
 					},
 				},
 			},
+			"allowed_environments": util.AllowedEnvironmentsBlock(
+				"List of environments whose sandboxes are allowed to use this target. A rule for a specific sandbox in `allowed_sandboxes` takes precedence over an environment rule. Only for `PROJECT_REPO`",
+				"The access level for the environment's sandboxes. Allowed: `DENIED`, `READ_ONLY`, `READ_WRITE`",
+				buddy.TargetSandboxAccessLevelDenied, buddy.TargetSandboxAccessLevelReadOnly, buddy.TargetSandboxAccessLevelReadWrite,
+			),
 		},
 	}
+}
+
+// projectNameRequiresReplace keeps an imported PROJECT_REPO target - the API does not return
+// the owner, so project_name is null after import and setting it in the config must not
+// replace (delete) the project's repository target
+func projectNameRequiresReplace(ctx context.Context, req planmodifier.StringRequest, resp *stringplanmodifier.RequiresReplaceIfFuncResponse) {
+	var typ types.String
+	resp.Diagnostics.Append(req.Plan.GetAttribute(ctx, path.Root("type"), &typ)...)
+	resp.RequiresReplace = !req.StateValue.IsNull() || typ.ValueString() != buddy.TargetTypeProjectRepo
+}
+
+func (r *targetResource) ValidateConfig(ctx context.Context, req resource.ValidateConfigRequest, resp *resource.ValidateConfigResponse) {
+	var data *targetResourceModel
+	resp.Diagnostics.Append(req.Config.Get(ctx, &data)...)
+	if resp.Diagnostics.HasError() || data.Type.IsUnknown() || data.Type.ValueString() == buddy.TargetTypeProjectRepo {
+		return
+	}
+	if data.Name.IsNull() {
+		resp.Diagnostics.AddAttributeError(path.Root("name"), "Missing required argument",
+			"The argument \"name\" is required for targets of type "+data.Type.ValueString())
+	}
+}
+
+// ModifyPlan rejects changes the API silently ignores on update of a PROJECT_REPO target,
+// otherwise the apply would end with an inconsistent result
+func (r *targetResource) ModifyPlan(ctx context.Context, req resource.ModifyPlanRequest, resp *resource.ModifyPlanResponse) {
+	if req.State.Raw.IsNull() || req.Plan.Raw.IsNull() {
+		return
+	}
+	var plan, state *targetResourceModel
+	resp.Diagnostics.Append(req.Plan.Get(ctx, &plan)...)
+	resp.Diagnostics.Append(req.State.Get(ctx, &state)...)
+	if resp.Diagnostics.HasError() || plan.Type.ValueString() != buddy.TargetTypeProjectRepo || state.Type.ValueString() != buddy.TargetTypeProjectRepo {
+		return
+	}
+	// after import project_name is null in the state (the API does not return the owner) and
+	// setting it does not replace the target, so make sure the project really owns it
+	if state.ProjectName.IsNull() && !plan.ProjectName.IsNull() && !plan.ProjectName.IsUnknown() && r.client != nil {
+		resp.Diagnostics.Append(r.checkProjectOwnsTarget(state.Domain.ValueString(), plan.ProjectName.ValueString(), state.TargetId.ValueString())...)
+	}
+	// identifier changes replace the target
+	if !plan.Identifier.Equal(state.Identifier) {
+		return
+	}
+	changed := map[string]bool{
+		"name":        !plan.Name.Equal(state.Name),
+		"note":        !plan.Note.IsUnknown() && !plan.Note.Equal(state.Note),
+		"agent_note":  !plan.AgentNote.IsUnknown() && !plan.AgentNote.Equal(state.AgentNote),
+		"tags":        !plan.Tags.IsUnknown() && !plan.Tags.Equal(state.Tags),
+		"disabled":    !plan.Disabled.IsUnknown() && !plan.Disabled.Equal(state.Disabled),
+		"permissions": !plan.Permissions.Equal(state.Permissions),
+	}
+	for _, attr := range []string{"name", "note", "agent_note", "tags", "disabled", "permissions"} {
+		if changed[attr] {
+			resp.Diagnostics.AddAttributeError(path.Root(attr), "Unsupported change",
+				"The API does not update "+attr+" of a PROJECT_REPO target. Revert the change, or change the identifier to recreate the target")
+		}
+	}
+}
+
+func (r *targetResource) checkProjectOwnsTarget(domain string, projectName string, targetId string) diag.Diagnostics {
+	var diags diag.Diagnostics
+	targets, _, err := r.client.TargetService.GetList(domain, &buddy.TargetGetListQuery{ProjectName: projectName})
+	if err != nil {
+		diags.Append(util.NewDiagnosticApiError("get targets of project "+projectName, err))
+		return diags
+	}
+	for _, t := range targets.Targets {
+		if t.Id == targetId {
+			return diags
+		}
+	}
+	diags.AddAttributeError(path.Root("project_name"), "Invalid project",
+		"The target "+targetId+" does not belong to the project "+projectName+". Set project_name to the project the target was imported from")
+	return diags
 }
 
 func (r *targetResource) Configure(_ context.Context, req resource.ConfigureRequest, _ *resource.ConfigureResponse) {

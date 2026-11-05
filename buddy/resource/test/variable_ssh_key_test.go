@@ -428,3 +428,76 @@ func testAccVariableSshKeyCheckDestroy(s *terraform.State) error {
 	}
 	return nil
 }
+
+func testAccVariableSshKeyEnvironmentRulesConfig(domain string, environment string, key string, val string, rules string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_environment" "we" {
+   domain = "${buddy_workspace.foo.domain}"
+   identifier = "%s"
+   name = "%s"
+}
+
+resource "buddy_variable_ssh_key" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   file_place = "CONTAINER"
+   file_path = "~/.ssh/test"
+   file_chmod = "600"
+   sandboxes_access_level = "DENIED"
+   %s
+   depends_on = [buddy_environment.we]
+   value = <<EOT
+%s
+EOT
+}
+`, domain, environment, environment, key, rules, val)
+}
+
+func TestAccVariableSshKey_environmentRules(t *testing.T) {
+	var variable buddy.Variable
+	domain := util.UniqueString()
+	environment := util.UniqueString()
+	key := util.UniqueString()
+	_, privateKey, err := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	rule := fmt.Sprintf(`
+   allowed_environments {
+      environment = "%s"
+      access_level = "USE_ONLY"
+   }
+`, environment)
+	check := func(want []*buddy.VariableAllowedEnvironment) resource.TestCheckFunc {
+		return func(s *terraform.State) error {
+			return util.CheckAllowedEnvironments("AllowedEnvironments", util.VariableAllowedEnvironments(variable.AllowedEnvironments), util.VariableAllowedEnvironments(want))
+		}
+	}
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableSshKeyCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVariableSshKeyEnvironmentRulesConfig(domain, environment, key, privateKey, rule),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
+					check([]*buddy.VariableAllowedEnvironment{{Environment: environment, AccessLevel: buddy.VariableAccessLevelUseOnly}}),
+				),
+			},
+			{
+				Config: testAccVariableSshKeyEnvironmentRulesConfig(domain, environment, key, privateKey, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable_ssh_key.bar", &variable),
+					check(nil),
+				),
+			},
+		},
+	})
+}

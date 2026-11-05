@@ -535,3 +535,109 @@ func TestAccVariable_accessRules(t *testing.T) {
 		},
 	})
 }
+
+func testAccVariableEnvironmentRulesConfig(domain string, projectName string, projectEnv string, workspaceEnv string, key string, val string, rules string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+   domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+   domain = "${buddy_workspace.foo.domain}"
+   display_name = "%s"
+}
+
+resource "buddy_environment" "pe" {
+   domain = "${buddy_workspace.foo.domain}"
+   project_name = "${buddy_project.proj.name}"
+   identifier = "%s"
+   name = "%s"
+}
+
+resource "buddy_environment" "we" {
+   domain = "${buddy_workspace.foo.domain}"
+   identifier = "%s"
+   name = "%s"
+}
+
+resource "buddy_variable" "bar" {
+   domain = "${buddy_workspace.foo.domain}"
+   key = "%s"
+   value = "%s"
+   sandboxes_access_level = "DENIED"
+   %s
+   depends_on = [buddy_environment.pe, buddy_environment.we]
+}
+`, domain, projectName, projectEnv, projectEnv, workspaceEnv, workspaceEnv, key, val, rules)
+}
+
+func testAccVariableEnvironmentRulesAttributes(variable *buddy.Variable, allowedEnvironments []*buddy.VariableAllowedEnvironment) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if err := util.CheckFieldEqualAndSet("SandboxesAccessLevel", variable.SandboxesAccessLevel, buddy.VariableAccessLevelDenied); err != nil {
+			return err
+		}
+		return util.CheckAllowedEnvironments("AllowedEnvironments", util.VariableAllowedEnvironments(variable.AllowedEnvironments), util.VariableAllowedEnvironments(allowedEnvironments))
+	}
+}
+
+func TestAccVariable_environmentRules(t *testing.T) {
+	var variable buddy.Variable
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	projectEnv := util.UniqueString()
+	workspaceEnv := util.UniqueString()
+	key := util.UniqueString()
+	val := util.RandString(10)
+	bothRules := fmt.Sprintf(`
+   allowed_environments {
+      project = "${buddy_project.proj.name}"
+      environment = "%s"
+      access_level = "USE_ONLY"
+   }
+   allowed_environments {
+      environment = "%s"
+      access_level = "USE_ONLY"
+   }
+`, projectEnv, workspaceEnv)
+	oneRule := fmt.Sprintf(`
+   allowed_environments {
+      environment = "%s"
+      access_level = "USE_ONLY"
+   }
+`, workspaceEnv)
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccVariableCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config: testAccVariableEnvironmentRulesConfig(domain, projectName, projectEnv, workspaceEnv, key, val, bothRules),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableEnvironmentRulesAttributes(&variable, []*buddy.VariableAllowedEnvironment{
+						{Project: projectName, Environment: projectEnv, AccessLevel: buddy.VariableAccessLevelUseOnly},
+						{Environment: workspaceEnv, AccessLevel: buddy.VariableAccessLevelUseOnly},
+					}),
+				),
+			},
+			{
+				Config: testAccVariableEnvironmentRulesConfig(domain, projectName, projectEnv, workspaceEnv, key, val, oneRule),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableEnvironmentRulesAttributes(&variable, []*buddy.VariableAllowedEnvironment{
+						{Environment: workspaceEnv, AccessLevel: buddy.VariableAccessLevelUseOnly},
+					}),
+				),
+			},
+			{
+				Config: testAccVariableEnvironmentRulesConfig(domain, projectName, projectEnv, workspaceEnv, key, val, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccVariableGet("buddy_variable.bar", &variable),
+					testAccVariableEnvironmentRulesAttributes(&variable, nil),
+				),
+			},
+		},
+	})
+}
