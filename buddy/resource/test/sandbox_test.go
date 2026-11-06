@@ -1146,3 +1146,169 @@ data "buddy_sandbox" "get" {
 }
 `, domain, projectName, pipelineIdentifier, pipelineIdentifier, name, buddy.SandboxPermissionUseOnly, pipelines)
 }
+
+// TestAccSandbox_backup covers backup and snapshot_retention: setting them, switching the
+// retention mode, import, and removing both, which turns backups off and removes the retention
+func TestAccSandbox_backup(t *testing.T) {
+	var sandbox buddy.Sandbox
+	domain := util.UniqueString()
+	projectName := util.UniqueString()
+	name := util.RandString(10)
+	daily := fmt.Sprintf(`
+	backup = "%s"
+	snapshot_retention = {
+		keep_last = 10
+	}
+`, buddy.SandboxBackupDaily)
+	weekly := fmt.Sprintf(`
+	backup = "%s"
+	snapshot_retention = {
+		keep_for_days = 30
+	}
+`, buddy.SandboxBackupWeekly)
+	both := `
+	snapshot_retention = {
+		keep_last = 10
+		keep_for_days = 30
+	}
+`
+	zero := `
+	snapshot_retention = {
+		keep_last = 0
+	}
+`
+	resource.Test(t, resource.TestCase{
+		PreCheck: func() {
+			acc.PreCheck(t)
+		},
+		ProtoV6ProviderFactories: acc.ProviderFactories,
+		CheckDestroy:             testAccSandboxCheckDestroy,
+		Steps: []resource.TestStep{
+			{
+				Config:      testAccSandboxConfigBackup(domain, projectName, name, both),
+				ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Combination`),
+			},
+			{
+				Config:      testAccSandboxConfigBackup(domain, projectName, name, zero),
+				ExpectError: regexp.MustCompile(`(?s)Invalid Attribute Value`),
+			},
+			{
+				Config: testAccSandboxConfigBackup(domain, projectName, name, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxBackup(&sandbox, buddy.SandboxBackupOff, 0, 0),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "backup", buddy.SandboxBackupOff),
+					resource.TestCheckNoResourceAttr("buddy_sandbox.bar", "snapshot_retention"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "last_backup_date", ""),
+				),
+			},
+			{
+				Config: testAccSandboxConfigBackup(domain, projectName, name, daily),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxBackup(&sandbox, buddy.SandboxBackupDaily, 10, 0),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "backup", buddy.SandboxBackupDaily),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "snapshot_retention.keep_last", "10"),
+					resource.TestCheckNoResourceAttr("buddy_sandbox.bar", "snapshot_retention.keep_for_days"),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "backup", buddy.SandboxBackupDaily),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "snapshot_retention.keep_last", "10"),
+					resource.TestCheckNoResourceAttr("data.buddy_sandbox.get", "snapshot_retention.keep_for_days"),
+				),
+			},
+			{
+				Config: testAccSandboxConfigBackup(domain, projectName, name, weekly),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxBackup(&sandbox, buddy.SandboxBackupWeekly, 0, 30),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "backup", buddy.SandboxBackupWeekly),
+					resource.TestCheckNoResourceAttr("buddy_sandbox.bar", "snapshot_retention.keep_last"),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "snapshot_retention.keep_for_days", "30"),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "backup", buddy.SandboxBackupWeekly),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "snapshot_retention.keep_for_days", "30"),
+				),
+			},
+			{
+				ResourceName:      "buddy_sandbox.bar",
+				ImportState:       true,
+				ImportStateVerify: true,
+				ImportStateVerifyIgnore: []string{
+					"wait_for_apps_timeout",
+					"wait_for_configured_timeout",
+					"wait_for_running_timeout",
+					"wait_for_running",
+					"wait_for_configured",
+					"permissions",
+					"status",
+					"setup_status",
+					"boot_logs",
+					"ssh_host",
+					"ssh_port",
+					"last_backup_date",
+				},
+			},
+			{
+				// both removed: backups off, no retention
+				Config: testAccSandboxConfigBackup(domain, projectName, name, ""),
+				Check: resource.ComposeTestCheckFunc(
+					testAccSandboxGet("buddy_sandbox.bar", &sandbox),
+					testAccSandboxBackup(&sandbox, buddy.SandboxBackupOff, 0, 0),
+					resource.TestCheckResourceAttr("buddy_sandbox.bar", "backup", buddy.SandboxBackupOff),
+					resource.TestCheckNoResourceAttr("buddy_sandbox.bar", "snapshot_retention"),
+					resource.TestCheckResourceAttr("data.buddy_sandbox.get", "backup", buddy.SandboxBackupOff),
+					resource.TestCheckNoResourceAttr("data.buddy_sandbox.get", "snapshot_retention"),
+				),
+			},
+		},
+	})
+}
+
+// testAccSandboxBackup checks the API state, 0 means the retention mode is not set
+func testAccSandboxBackup(sandbox *buddy.Sandbox, backup string, keepLast int, keepForDays int) resource.TestCheckFunc {
+	return func(s *terraform.State) error {
+		if err := util.CheckFieldEqualAndSet("Backup", sandbox.Backup, backup); err != nil {
+			return err
+		}
+		gotKeepLast := 0
+		gotKeepForDays := 0
+		if sandbox.SnapshotRetention != nil && sandbox.SnapshotRetention.KeepLast != nil {
+			gotKeepLast = *sandbox.SnapshotRetention.KeepLast
+		}
+		if sandbox.SnapshotRetention != nil && sandbox.SnapshotRetention.KeepForDays != nil {
+			gotKeepForDays = *sandbox.SnapshotRetention.KeepForDays
+		}
+		if err := util.CheckIntFieldEqual("SnapshotRetention.KeepLast", gotKeepLast, keepLast); err != nil {
+			return err
+		}
+		return util.CheckIntFieldEqual("SnapshotRetention.KeepForDays", gotKeepForDays, keepForDays)
+	}
+}
+
+func testAccSandboxConfigBackup(domain string, projectName string, name string, backup string) string {
+	return fmt.Sprintf(`
+resource "buddy_workspace" "foo" {
+	domain = "%s"
+}
+
+resource "buddy_project" "proj" {
+	domain = "${buddy_workspace.foo.domain}"
+	display_name = "%s"
+}
+
+resource "buddy_sandbox" "bar" {
+	domain = "${buddy_workspace.foo.domain}"
+	project_name = "${buddy_project.proj.name}"
+	name = "%s"
+	wait_for_running = true
+	wait_for_configured = true
+	permissions {
+		others = "%s"
+	}
+%s
+}
+
+data "buddy_sandbox" "get" {
+	domain = "${buddy_workspace.foo.domain}"
+	sandbox_id = "${buddy_sandbox.bar.sandbox_id}"
+}
+`, domain, projectName, name, buddy.SandboxPermissionUseOnly, backup)
+}

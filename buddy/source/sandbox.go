@@ -37,6 +37,9 @@ type sandboxSourceModel struct {
 	SshHost              types.String `tfsdk:"ssh_host"`
 	SshPort              types.Int32  `tfsdk:"ssh_port"`
 	CreateDate           types.String `tfsdk:"create_date"`
+	Backup               types.String `tfsdk:"backup"`
+	SnapshotRetention    types.Object `tfsdk:"snapshot_retention"`
+	LastBackupDate       types.String `tfsdk:"last_backup_date"`
 	Fetches              types.List   `tfsdk:"fetches"`
 	PipelinesAccessLevel types.String `tfsdk:"pipelines_access_level"`
 	AllowedPipelines     types.Set    `tfsdk:"allowed_pipelines"`
@@ -56,12 +59,17 @@ func (s *sandboxSourceModel) loadAPI(ctx context.Context, domain string, sandbox
 	s.SshHost = types.StringValue(sandbox.SshHost)
 	s.SshPort = types.Int32Value(int32(sandbox.SshPort))
 	s.CreateDate = types.StringValue(sandbox.CreateDate)
+	s.Backup = types.StringValue(sandbox.Backup)
+	s.LastBackupDate = types.StringValue(sandbox.LastBackupDate)
 	s.PipelinesAccessLevel = types.StringValue(sandbox.PipelinesAccessLevel)
 	fetches, diags := util.SandboxFetchesFromApi(ctx, &sandbox.Fetch)
 	s.Fetches = fetches
 	pipelines, d := util.SandboxPipelinesFromApi(ctx, &sandbox.AllowedPipelines)
 	diags.Append(d...)
 	s.AllowedPipelines = pipelines
+	retention, d := util.SandboxSnapshotRetentionFromApi(ctx, sandbox.SnapshotRetention)
+	diags.Append(d...)
+	s.SnapshotRetention = retention
 	return diags
 }
 
@@ -132,6 +140,19 @@ func (s *sandboxSource) Schema(_ context.Context, _ datasource.SchemaRequest, re
 			},
 			"create_date": schema.StringAttribute{
 				MarkdownDescription: "The sandbox's creation date",
+				Computed:            true,
+			},
+			"backup": schema.StringAttribute{
+				MarkdownDescription: "How often an automatic snapshot of the sandbox is taken: `OFF`, `HOURLY`, `DAILY` or `WEEKLY`",
+				Computed:            true,
+			},
+			"snapshot_retention": schema.SingleNestedAttribute{
+				MarkdownDescription: "Which snapshots of the sandbox are kept, null when there is no retention",
+				Computed:            true,
+				Attributes:          util.SourceSandboxSnapshotRetentionModelAttributes(),
+			},
+			"last_backup_date": schema.StringAttribute{
+				MarkdownDescription: "When the last automatic snapshot was taken, empty if never",
 				Computed:            true,
 			},
 			"fetches": schema.ListNestedAttribute{

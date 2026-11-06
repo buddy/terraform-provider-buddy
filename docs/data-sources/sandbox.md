@@ -27,15 +27,18 @@ Token scope required: `SANDBOX_READ`
 
 - `agent_note` (String) The sandbox's agent note
 - `allowed_pipelines` (Attributes Set) List of specific pipelines allowed to use this sandbox (see [below for nested schema](#nestedatt--allowed_pipelines))
+- `backup` (String) How often an automatic snapshot of the sandbox is taken: `OFF`, `HOURLY`, `DAILY` or `WEEKLY`
 - `create_date` (String) The sandbox's creation date
 - `fetches` (Attributes List) The sources fetched into the sandbox (see [below for nested schema](#nestedatt--fetches))
 - `html_url` (String) The sandbox's URL
 - `id` (String) The Terraform resource identifier for this item
 - `identifier` (String) The sandbox's identifier
+- `last_backup_date` (String) When the last automatic snapshot was taken, empty if never
 - `name` (String) The sandbox's name
 - `note` (String) The sandbox's note
 - `pipelines_access_level` (String) Indicates if all pipelines are allowed to use this sandbox: `USE_ONLY` or `DENIED`, empty for sandboxes in an environment
 - `scope` (String) The sandbox's scope: `PROJECT`, `ENVIRONMENT` or `WORKSPACE`
+- `snapshot_retention` (Attributes) Which snapshots of the sandbox are kept, null when there is no retention (see [below for nested schema](#nestedatt--snapshot_retention))
 - `ssh_host` (String) The sandbox's SSH host
 - `ssh_port` (Number) The sandbox's SSH port
 - `status` (String) The sandbox's status
@@ -69,3 +72,12 @@ Read-Only:
 - `source_path` (String) The path inside the artifact
 - `status` (String) The fetch's status: `FETCHING`, `FETCHED`, `ERROR` or `STALE` (needs a refetch)
 - `type` (String) The fetch's type
+
+
+<a id="nestedatt--snapshot_retention"></a>
+### Nested Schema for `snapshot_retention`
+
+Read-Only:
+
+- `keep_for_days` (Number) Keep only the snapshots taken within the last N days
+- `keep_last` (Number) Keep only the N most recent snapshots

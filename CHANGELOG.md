@@ -1,3 +1,10 @@
+# Release v1.58.0 (2026-11-06)
+* Bump api-go-sdk to v1.59.0
+* `buddy_sandbox`: new `backup` (`OFF` - default, `HOURLY`, `DAILY`, `WEEKLY`), how often an automatic snapshot is taken. Snapshots are taken on schedule only while the sandbox is running, stopped sandboxes are skipped. Leaving it out turns backups off
+* `buddy_sandbox`: new `snapshot_retention` (`keep_last` - the N most recent snapshots, or `keep_for_days` - the snapshots from the last N days, exactly one, at least 1). It applies to all snapshots of the sandbox, manual ones too, whether `backup` is on or not, and a change removes the excess snapshots right away. Leaving it out removes the retention, a retention set outside of Terraform shows up in the plan
+* `buddy_sandbox`: new computed `last_backup_date`, when the last automatic snapshot was taken
+* `buddy_sandbox` data source: new computed `backup`, `snapshot_retention` and `last_backup_date`
+
 # Release v1.57.0 (2026-11-05)
 * Bump api-go-sdk to v1.58.0
 * `buddy_target`: `type` accepts `PROJECT_REPO`, the project's repository target. Every project gets one with identifier `project_repository`, import it to manage its access rules - destroying the resource deletes it. Setting `project_name` on an imported `PROJECT_REPO` target does not replace it, the plan fails when the project does not own the target
