@@ -46,6 +46,9 @@ type sandboxResourceModel struct {
 	Os                       types.String `tfsdk:"os"`
 	Resources                types.String `tfsdk:"resources"`
 	Timeout                  types.Int32  `tfsdk:"timeout"`
+	Backup                   types.String `tfsdk:"backup"`
+	SnapshotRetention        types.Object `tfsdk:"snapshot_retention"`
+	LastBackupDate           types.String `tfsdk:"last_backup_date"`
 	Tags                     types.Set    `tfsdk:"tags"`
 	AppCommands              types.Set    `tfsdk:"app_commands"`
 	Apps                     types.Set    `tfsdk:"apps"`
@@ -120,6 +123,15 @@ func (r *sandboxResourceModel) loadAPI(ctx context.Context, domain string, sandb
 	r.SshPort = types.Int32Value(int32(sandbox.SshPort))
 	r.CreateDate = types.StringValue(sandbox.CreateDate)
 	r.Timeout = types.Int32Value(int32(sandbox.Timeout))
+	backup := sandbox.Backup
+	if backup == "" {
+		backup = buddy.SandboxBackupOff
+	}
+	r.Backup = types.StringValue(backup)
+	retention, d := util.SandboxSnapshotRetentionFromApi(ctx, sandbox.SnapshotRetention)
+	diags.Append(d...)
+	r.SnapshotRetention = retention
+	r.LastBackupDate = types.StringValue(sandbox.LastBackupDate)
 	r.PipelinesAccessLevel = types.StringValue(sandbox.PipelinesAccessLevel)
 	// the API returns no rules as null, keep a null set as it is so an omitted block
 	// does not show up as a change
@@ -272,6 +284,31 @@ func (r *sandboxResource) Schema(_ context.Context, _ resource.SchemaRequest, re
 			"timeout": schema.Int32Attribute{
 				MarkdownDescription: "The sandbox's start timeout",
 				Optional:            true,
+				Computed:            true,
+			},
+			"backup": schema.StringAttribute{
+				MarkdownDescription: "How often an automatic snapshot of the sandbox is taken. Allowed: `OFF` (default), `HOURLY`, `DAILY`, `WEEKLY`. " +
+					"Snapshots are taken on schedule only while the sandbox is running, stopped sandboxes are skipped",
+				Optional: true,
+				Computed: true,
+				Default:  stringdefault.StaticString(buddy.SandboxBackupOff),
+				Validators: []validator.String{
+					stringvalidator.OneOf(
+						buddy.SandboxBackupOff,
+						buddy.SandboxBackupHourly,
+						buddy.SandboxBackupDaily,
+						buddy.SandboxBackupWeekly,
+					),
+				},
+			},
+			"snapshot_retention": schema.SingleNestedAttribute{
+				MarkdownDescription: "Which snapshots of the sandbox are kept: `keep_last` (the N most recent) or `keep_for_days` (those from the last N days), exactly one of them. " +
+					"Applies to all snapshots, manual ones too, whether `backup` is on or not. A change removes the excess snapshots right away, leaving it out removes the retention",
+				Optional:   true,
+				Attributes: util.ResourceSandboxSnapshotRetentionModelAttributes(),
+			},
+			"last_backup_date": schema.StringAttribute{
+				MarkdownDescription: "When the last automatic snapshot was taken, empty if never",
 				Computed:            true,
 			},
 			"boot_logs": schema.StringAttribute{
@@ -544,6 +581,17 @@ func (r *sandboxResource) Create(ctx context.Context, req resource.CreateRequest
 		timeout := int(data.Timeout.ValueInt32())
 		ops.Timeout = &timeout
 	}
+	if !data.Backup.IsUnknown() && !data.Backup.IsNull() {
+		ops.Backup = data.Backup.ValueStringPointer()
+	}
+	if !data.SnapshotRetention.IsUnknown() && !data.SnapshotRetention.IsNull() {
+		retention, d := util.SandboxSnapshotRetentionToApi(ctx, &data.SnapshotRetention)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.SnapshotRetention = retention
+	}
 	if !data.Resources.IsUnknown() && !data.Resources.IsNull() {
 		ops.Resources = data.Resources.ValueStringPointer()
 	}
@@ -756,6 +804,18 @@ func (r *sandboxResource) Update(ctx context.Context, req resource.UpdateRequest
 	if !data.Timeout.IsUnknown() && !data.Timeout.IsNull() {
 		timeout := int(data.Timeout.ValueInt32())
 		ops.Timeout = &timeout
+	}
+	if !data.Backup.IsUnknown() && !data.Backup.IsNull() {
+		ops.Backup = data.Backup.ValueStringPointer()
+	}
+	// sent only when changed, a null object sends an empty retention, which removes it
+	if !data.SnapshotRetention.IsUnknown() && !data.SnapshotRetention.Equal(state.SnapshotRetention) {
+		retention, d := util.SandboxSnapshotRetentionToApi(ctx, &data.SnapshotRetention)
+		resp.Diagnostics.Append(d...)
+		if resp.Diagnostics.HasError() {
+			return
+		}
+		ops.SnapshotRetention = retention
 	}
 	if !data.AppCommands.IsUnknown() && !data.AppCommands.IsNull() {
 		apps, d := util.SandboxAppCommandsToApi(ctx, &data.AppCommands)

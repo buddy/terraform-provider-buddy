@@ -58,3 +58,17 @@ resource "buddy_sandbox" "pipelines" {
     access_level = "USE_ONLY"
   }
 }
+
+resource "buddy_sandbox" "backup" {
+  domain       = "mydomain"
+  project_name = "test"
+  name         = "backup"
+
+  # automatic snapshot every day while the sandbox is running
+  backup = "DAILY"
+
+  # applies to all snapshots of the sandbox, keep_last or keep_for_days
+  snapshot_retention = {
+    keep_last = 10
+  }
+}
