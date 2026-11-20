@@ -401,9 +401,10 @@ func (r *pipelineResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 				},
 			},
 			"do_not_create_commit_status": schema.BoolAttribute{
-				MarkdownDescription: "Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution",
-				Optional:            true,
-				Computed:            true,
+				MarkdownDescription: "When `true`, the pipeline run result does not mark the commit: it does not affect the commit, branch and tag status in Buddy, is not sent to the Git provider, " +
+					"is not shown in pull request checks and the pipeline cannot be a required check of a `buddy_ruleset`. It cannot be set to `true` while a ruleset requires the pipeline",
+				Optional: true,
+				Computed: true,
 			},
 			"clone_depth": schema.Int64Attribute{
 				MarkdownDescription: "The pipeline's filesystem clone depth. Creates a shallow clone with a history truncated to the specified number of commits",

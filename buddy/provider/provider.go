@@ -213,6 +213,7 @@ func (p *BuddyProvider) Resources(_ context.Context) []func() resource.Resource 
 		buddyresource.NewSandboxStatusResource,
 		buddyresource.NewEnvironmentResource,
 		buddyresource.NewTargetResource,
+		buddyresource.NewRulesetResource,
 	}
 }
 
@@ -251,6 +252,8 @@ func (p *BuddyProvider) DataSources(_ context.Context) []func() datasource.DataS
 		buddysource.NewEnvironmentsSource,
 		buddysource.NewTargetSource,
 		buddysource.NewTargetsSource,
+		buddysource.NewRulesetSource,
+		buddysource.NewRulesetsSource,
 	}
 }
 
