@@ -1,3 +1,6 @@
+# Release v1.59.0 (2026-11-20)
+* `buddy_variable`, `buddy_variable_ssh_key`: changing a variable no longer replaces it - adding access rules or changing `note`, `*_access_level` or `file_chmod` updates it in place and keeps its `variable_id`. Removing a scope field (`project_name`, `pipeline_id`, `action_id`, `environment_id`, `sandbox_id`) from the configuration now replaces the variable instead of being silently ignored
+
 # Release v1.58.0 (2026-11-06)
 * Bump api-go-sdk to v1.59.0
 * `buddy_sandbox`: new `backup` (`OFF` - default, `HOURLY`, `DAILY`, `WEEKLY`), how often an automatic snapshot is taken. Snapshots are taken on schedule only while the sandbox is running, stopped sandboxes are skipped. Leaving it out turns backups off

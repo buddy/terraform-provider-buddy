@@ -501,3 +501,17 @@ func TestAccVariableSshKey_environmentRules(t *testing.T) {
 		},
 	})
 }
+
+func TestAccVariableSshKey_scopeInPlaceUpdate(t *testing.T) {
+	_, privateKey, err := util.GenerateRsaKeyPair()
+	if err != nil {
+		t.Fatal(err.Error())
+	}
+	body := fmt.Sprintf(`file_place = "%s"
+   file_path = "~/.ssh/test"
+   file_chmod = "600"
+   value = <<EOT
+%s
+EOT`, buddy.VariableSshKeyFilePlaceContainer, privateKey)
+	testAccVariableScopeInPlaceUpdate(t, "buddy_variable_ssh_key", body, testAccVariableSshKeyCheckDestroy)
+}

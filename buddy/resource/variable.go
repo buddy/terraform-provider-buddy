@@ -208,7 +208,6 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The variable's project name. Set for project scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -224,7 +223,6 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's pipeline ID. Set for pipeline scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -240,7 +238,6 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's action ID. Set for action scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -256,7 +253,6 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"environment_id": schema.StringAttribute{
 				MarkdownDescription: "The variable's environmental ID. Set for envrionment scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -272,7 +268,6 @@ func (r *variableResource) Schema(_ context.Context, _ resource.SchemaRequest, r
 			"sandbox_id": schema.StringAttribute{
 				MarkdownDescription: "The variable's sandbox ID. Set for sandbox scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},

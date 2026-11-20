@@ -222,7 +222,6 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"project_name": schema.StringAttribute{
 				MarkdownDescription: "The variable's project name",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -238,7 +237,6 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"pipeline_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's pipeline ID",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -254,7 +252,6 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"action_id": schema.Int64Attribute{
 				MarkdownDescription: "The variable's action ID",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.Int64{
 					int64planmodifier.RequiresReplace(),
 				},
@@ -270,7 +267,6 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"environment_id": schema.StringAttribute{
 				MarkdownDescription: "The variable's environmental ID. Set for envrionment scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
@@ -286,7 +282,6 @@ func (r *variableSshKeyResource) Schema(_ context.Context, _ resource.SchemaRequ
 			"sandbox_id": schema.StringAttribute{
 				MarkdownDescription: "The variable's sandbox ID. Set for sandbox scope",
 				Optional:            true,
-				Computed:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},
