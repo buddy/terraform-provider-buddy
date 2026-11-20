@@ -1,3 +1,10 @@
+# Release v1.60.0 (2026-11-20)
+* Bump api-go-sdk to v1.60.0
+* New resource `buddy_ruleset`: a ruleset that protects branches and tags of a project (`refs`, 1-20 patterns with the syntax of refs in pipelines, `:default` for the default branch). Rules: `required_pipelines`, `required_unit_tests_suites`, `required_visual_tests_suites` (identifiers, each must mark commits with its status), `require_up_to_date`, `require_pull_request`, `block_force_push`, `restrict_deletion`, `restrict_creation`, `restrict_update`. Bypass: `bypass_admins`, `bypass_others` and `bypass_user` / `bypass_group` blocks (`ALLOWED` / `DENIED`). Also `name`, `note`, `agent_note`, `disabled` and the computed `missing_sources`. Project rulesets only, workspace administrators and project managers only, token scopes `RULESET_READ` and `RULESET_MANAGE`. Import with `domain:project_name:ruleset_id`
+* `buddy_ruleset` sends the whole ruleset on every change: a field or block removed from the configuration is cleared in Buddy, a ruleset changed outside of Terraform shows up in the plan
+* New data sources `buddy_ruleset` (by `ruleset_id` or `identifier`, letter case does not matter) and `buddy_rulesets` (optionally filtered by `identifier_regex`)
+* `buddy_pipeline`: `do_not_create_commit_status` now also means the run does not mark the commit in Buddy (commit, branch and tag status, pull request checks) and the pipeline cannot be a required check of a ruleset, not only that no status is sent to the Git provider. It cannot be set to `true` while a ruleset requires the pipeline
+
 # Release v1.59.0 (2026-11-20)
 * `buddy_variable`, `buddy_variable_ssh_key`: changing a variable no longer replaces it - adding access rules or changing `note`, `*_access_level` or `file_chmod` updates it in place and keeps its `variable_id`. Removing a scope field (`project_name`, `pipeline_id`, `action_id`, `environment_id`, `sandbox_id`) from the configuration now replaces the variable instead of being silently ignored
 

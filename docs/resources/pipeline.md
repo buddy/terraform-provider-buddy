@@ -198,7 +198,7 @@ resource "buddy_pipeline" "conditions" {
 - `description_required` (Boolean) Defines whether or not pipeline's execution must be commented
 - `disabled` (Boolean) Defines whether or not the pipeline can be run
 - `disabling_reason` (String) The pipeline's disabling reason
-- `do_not_create_commit_status` (Boolean) Defines whether or not to omit sending commit statuses to GitHub or GitLab upon execution
+- `do_not_create_commit_status` (Boolean) When `true`, the pipeline run result does not mark the commit: it does not affect the commit, branch and tag status in Buddy, is not sent to the Git provider, is not shown in pull request checks and the pipeline cannot be a required check of a `buddy_ruleset`. It cannot be set to `true` while a ruleset requires the pipeline
 - `event` (Block Set) The pipeline's list of events (see [below for nested schema](#nestedblock--event))
 - `execution_message_template` (String) The pipeline's run title. Default: `$BUDDY_EXECUTION_REVISION_SUBJECT`
 - `fail_on_prepare_env_warning` (Boolean) Defines either or not run should fail if any warning occurs in prepare environment
